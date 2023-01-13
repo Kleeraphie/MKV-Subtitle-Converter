@@ -27,8 +27,6 @@ class PGSReader:
             
 
     def make_segment(self, bytes_):
-        #print(bytes_[10]) # TODO could be devided by something because it's much larger than the dict's size
-        print(int(str(bytes_[10]), base=16))
         cls = SEGMENT_TYPE[bytes_[10]]
         return cls(bytes_) # can return any segment, but cls is no segment
 

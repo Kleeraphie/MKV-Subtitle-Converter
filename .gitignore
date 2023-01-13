@@ -1,0 +1,5 @@
+img/
+*.srt
+*.sup
+*.mkv
+__pycache__/

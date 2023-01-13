@@ -8,8 +8,19 @@ from pysrt import SubRipFile, SubRipItem, SubRipTime
 import srtchecker
 import shutil
 
-def convert_to_srt(lang:str, srt_file:str, pgs:PGSReader, img_dir:str, save_images:bool=False):
+def get_lang(lang_code: str) -> str | None:
+    if lang_code == "None":
+        return None
+    else:
+        return lang_code
+
+def convert_to_srt(lang:str, track_id: int, img_dir:str, save_images:bool=False) -> str:
+    srt_file = f"{track_id}.srt"
+    pgs_file = f"{track_id}.sup" # TODO change so that it can use any PGS file, not just .sup
+    pgs = PGSReader(pgs_file)
     srt = SubRipFile()
+
+    print("Using language: " + lang)
     
     if save_images:
         os.makedirs(img_dir, exist_ok=True)
@@ -17,7 +28,7 @@ def convert_to_srt(lang:str, srt_file:str, pgs:PGSReader, img_dir:str, save_imag
     print("Loading DisplaySets...")
     all_sets = [ds for ds in tqdm(pgs.iter_displaysets())]
 
-    print(f"Running OCR on {len(all_sets)} DisplaySets and building SRT file...")
+    print(f"Buildung SRT file based on {len(all_sets)} DisplaySets...")
     sub_text = ""
     sub_start = 0
     sub_index = 0
@@ -38,51 +49,78 @@ def convert_to_srt(lang:str, srt_file:str, pgs:PGSReader, img_dir:str, save_imag
             srt.append(SubRipItem(sub_index, start_time, end_time, sub_text))
             sub_index += 1
 
-    srt.save(srt_file, encoding='utf-8')
+    srt.save(srt_file)
     print(f"Done. SRT file saved as {srt_file}")
+    return srt_file
+
+def extract_and_convert(file: str): # TODO add return type
+    # TODO get path from mkv and change so that mkv is given, not file
+    mkv = pymkv.MKVFile(file.name)
+    subtitle_ids = []
+
+    for track in mkv.tracks:
+        if track.track_type == "subtitles":
+
+            track: pymkv.MKVTrack
+            track_id = track.track_id
+
+            if track.track_codec != "HDMV PGS":
+                continue
+
+            os.system(f"mkvextract \"{file.name}\" tracks {track_id}:{track_id}.sup")
+
+            subtitle_ids.append(track_id)
+
+            # get language used in subtitle
+            lang_code = track.language
+            language = get_lang(lang_code)
+
+            srt_file = convert_to_srt(language, track_id, f"img/{track_id}", False)
+
+            print("Checking SRT file...")
+            srtchecker.check_srt(srt_file)
+            
+    return subtitle_ids
+
+def clean(file_name: str, ids): # TODO add type hint
+    print("Cleaning up...")
+    print(file_name)
+    for track_id in ids:
+        os.remove(f"{track_id}.sup")
+        os.remove(f"{track_id}.srt")
+        shutil.rmtree(f"img/{track_id}")
 
 def main():
-    
     for file in os.scandir():
         if not file.name.endswith(".mkv"):
             continue
 
+        file_name = os.path.splitext(os.path.basename(file.path))[0]
+
+        print(f"Processing {file_name}...")
+        subtitle_ids = extract_and_convert(file)
+
+        if len(subtitle_ids) == 0:
+            print("No subtitles found.\n")
+            continue
+
         mkv = pymkv.MKVFile(file.name)
-        subtitle_ids = []
 
-        print(f"Processing {mkv.mkvmerge_path}...")
-    
-        for track in mkv.tracks:
-            if track.track_type == "subtitles":
-
-                track: pymkv.MKVTrack
-                track_id = track.track_id
-
-                if track.track_codec != "HDMV PGS":
-                    continue
-
-                #os.system(f"mkvextract \"HOTD S01E01.mkv\" tracks {track_id}:{track_id}.sup")
-                subtitle_ids.append(track_id)
-
-                srt_file = f"{track_id}.srt"
-                pgs = PGSReader(f"{track_id}.sup")
-                convert_to_srt("ger", srt_file, pgs, f"img/{track_id}", True)
-
-                print("Checking SRT file...")
-                srtchecker.check_srt(srt_file)
-
-        print(f"Replacing subtitles in {mkv.title}...")
+        print(f"Replacing subtitles in {file_name}...")
         for track_id in subtitle_ids:
-            #mkv.replace_track(track_id, f"{track_id}.srt")
-            mkv.remove_track(track_id)
-            mkv.add_track(f"{track_id}.srt")
-            #print(mkv.tracks[track_id].info)
+            track = mkv.tracks[track_id]
+            # make new track from new .srt file and settings from old PGS subtitle
+            new_sub = pymkv.MKVTrack(f"{track_id}.srt", track_name=track.track_name, language=track.language, default_track=track.default_track, forced_track=track.forced_track)
+            mkv.replace_track(track_id, new_sub)
 
-        
-        shutil.copyfile(file, f"{file.name} (1).mkv")
-        mkv2 = pymkv.MKVFile(f"{file.name} (1).mkv")
-        mkv.mux(f"{file.name} (1).mkv")
-        print(f"Finished {mkv.title}\n")
+        print("Copying file...")
+        shutil.copy(file.name, f"{file_name} (1).mkv")
+        shutil.copy(file.name, f"{file_name} (original).mkv")
+        print("Muxing file...")
+        mkv.mux(f"{file_name} (1).mkv", silent=True)
+        clean(file.name, subtitle_ids)
+
+        print(f"Finished {file_name}\n")
 
 if __name__ == "__main__":
     main()

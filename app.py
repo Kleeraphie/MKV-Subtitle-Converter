@@ -7,28 +7,27 @@ from tqdm import tqdm
 from pysrt import SubRipFile, SubRipItem, SubRipTime
 import srtchecker
 import shutil
+import threading
 
-def get_lang(lang_code: str) -> str | None: 
+def get_lang(lang_code: str) -> str | None:
     if lang_code == "None":
         return None
     else:
         return lang_code
 
-def convert_to_srt(lang:str, track_id: int, img_dir:str, save_images:bool=False):
+def convert_to_srt(lang:str, track_id: int, img_dir:str='', save_images:bool=False):
     srt_file = f"{track_id}.srt"
-    pgs_file = f"{track_id}.sup" # TODO change so that it can use any PGS file, not just .sup
+    pgs_file = f"{track_id}.sup"
     pgs = PGSReader(pgs_file)
     srt = SubRipFile()
-
-    print("Using language: " + lang)
     
     if save_images:
         os.makedirs(img_dir, exist_ok=True)
 
-    print("Loading DisplaySets...")
+    # loading DisplaySets
     all_sets = [ds for ds in tqdm(pgs.iter_displaysets())]
 
-    print(f"Buildung SRT file based on {len(all_sets)} DisplaySets...")
+    # building SRT file from DisplaySets
     sub_text = ""
     sub_start = 0
     sub_index = 0
@@ -51,14 +50,18 @@ def convert_to_srt(lang:str, track_id: int, img_dir:str, save_images:bool=False)
 
     # check and save SRT file
     srt.save(srt_file)
-    print("Checking SRT file...")
-    srtchecker.check_srt(srt_file)
+    srtchecker.check_srt(srt_file, True)
     print(f"Done. SRT file saved as {srt_file}")
+
+# helper function for threading
+def extract(file: str, track_id: int):
+    os.system(f"mkvextract \"{file.name}\" tracks {track_id}:{track_id}.sup")
 
 def extract_subtitles(file: str): # TODO add return type
     # TODO get path from mkv and change so that mkv is given, not file
     mkv = pymkv.MKVFile(file.name)
     subtitle_ids = []
+    thread_pool = []
 
     for track in mkv.tracks:
         if track.track_type == "subtitles":
@@ -69,19 +72,24 @@ def extract_subtitles(file: str): # TODO add return type
             if track.track_codec != "HDMV PGS":
                 continue
 
-            os.system(f"mkvextract \"{file.name}\" tracks {track_id}:{track_id}.sup")
+            thread = threading.Thread(name=f"Extract subtitle #{track_id}", target=extract, args=(file, track_id))
+            thread.start()
+            thread_pool.append(thread)
 
             subtitle_ids.append(track_id)
+
+    for thread in thread_pool:
+        thread.join()
             
     return subtitle_ids
 
-def clean(file_name: str, ids): # TODO add type hint
+def clean(subtitle_ids):
     print("Cleaning up...")
-    print(file_name)
-    for track_id in ids:
+    if os.path.exists("img/"):
+        shutil.rmtree("img/")
+    for track_id in subtitle_ids:
         os.remove(f"{track_id}.sup")
         os.remove(f"{track_id}.srt")
-        shutil.rmtree(f"img/{track_id}")
 
 def main():
     for file in os.scandir():
@@ -90,9 +98,14 @@ def main():
 
         file_name = os.path.splitext(os.path.basename(file.path))[0]
         mkv = pymkv.MKVFile(file.name)
+        thread_pool = []
 
         print(f"Processing {file_name}...")
         subtitle_ids = extract_subtitles(file)
+
+        if len(subtitle_ids) == 0:
+            print("No subtitles found.\n")
+            continue
 
         for track_id in subtitle_ids:
             track = mkv.tracks[track_id]
@@ -101,11 +114,12 @@ def main():
             lang_code = track.language
             language = get_lang(lang_code)
 
-            convert_to_srt(language, track_id, f"img/{track_id}", True)
+            thread = threading.Thread(name=f"Convert subtitle #{track_id}", target=convert_to_srt, args=(language, track_id))
+            thread.start()
+            thread_pool.append(thread)
 
-        if len(subtitle_ids) == 0:
-            print("No subtitles found.\n")
-            continue
+        for thread in thread_pool:
+            thread.join()
 
         print(f"Replacing subtitles in {file_name}...")
         for track_id in subtitle_ids:
@@ -114,11 +128,12 @@ def main():
             new_sub = pymkv.MKVTrack(f"{track_id}.srt", track_name=track.track_name, language=track.language, default_track=track.default_track, forced_track=track.forced_track)
             mkv.replace_track(track_id, new_sub)
 
-        print("Copying file...")
-        shutil.copy(file.name, f"{file_name} (1).mkv")
+        # create empty .mkv file
+        open(f"{file_name} (1).mkv", "w").close()
+        
         print("Muxing file...")
         mkv.mux(f"{file_name} (1).mkv", silent=True)
-        clean(file.name, subtitle_ids)
+        clean(subtitle_ids)
 
         print(f"Finished {file_name}\n")
 

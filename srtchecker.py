@@ -1,4 +1,4 @@
-def check_srt(srt_file: str):
+def check_srt(srt_file: str, silent: bool = False):
     with open(srt_file, 'r', encoding="utf8") as f:
         lines = f.readlines()
 
@@ -17,4 +17,5 @@ def check_srt(srt_file: str):
     with open(srt_file, 'w', encoding="utf8") as f:
         f.writelines(lines)
 
-    print(f"Replaced '|' with 'I' {replaced_i} times")
+    if not silent:
+        print(f"Replaced '|' with 'I' {replaced_i} times")

@@ -12,7 +12,7 @@ The program was tested on Python 3.10 and needs the following python modules to 
 - [Pillow](https://github.com/python-pillow/Pillow)
 
 ## Usage
-Place the files from this repository in the folder with the .mkv files you want to change the subtitles from. Then simply run the run.bat file. The program then extracts the subtitles of one file after another, converts them, and replaces them. If successfull, the output should look something like this:
+Place the files from this repository in the folder with the .mkv files you want to change the subtitles from. Then simply run the run.bat file. Firstly, you will be asked if you want to edit the converted subtitles before the program replaces the subtitles. The program then extracts the subtitles of one file after another, converts them, and replaces them.
 
 ## Tips
 For better OCR results you should download the language models for the languages of the subtitles. But if an english subtitles uses letters like ä, ö or ü, using the german language model instead of the english model because the german model contains all letters that the english one has, plus these special letters.

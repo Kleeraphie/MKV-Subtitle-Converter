@@ -8,6 +8,7 @@ from pysrt import SubRipFile, SubRipItem, SubRipTime
 import srtchecker
 import shutil
 import threading
+import sys
 
 def get_lang(lang_code: str) -> str | None:
     if lang_code == "None":
@@ -51,7 +52,6 @@ def convert_to_srt(lang:str, track_id: int, img_dir:str='', save_images:bool=Fal
     # check and save SRT file
     srt.save(srt_file)
     srtchecker.check_srt(srt_file, True)
-    print(f"Done. SRT file saved as {srt_file}")
 
 # helper function for threading
 def extract(file: str, track_id: int):
@@ -91,7 +91,7 @@ def clean(subtitle_ids):
         os.remove(f"{track_id}.sup")
         os.remove(f"{track_id}.srt")
 
-def main():
+def main(edit: bool):
     for file in os.scandir():
         if not file.name.endswith(".mkv"):
             continue
@@ -121,8 +121,17 @@ def main():
         for thread in thread_pool:
             thread.join()
 
+        if edit:
+            print("You can now edit the SRT files. Press Enter when you are done.")
+            input()
+
         print(f"Replacing subtitles in {file_name}...")
-        for track_id in subtitle_ids:
+        for track_id in subtitle_ids.copy():
+            # if a subtitle was deleted during editing, skip it
+            if not os.path.exists(f"{track_id}.srt"):
+                subtitle_ids.remove(track_id)
+                continue
+
             track = mkv.tracks[track_id]
             # make new track from new .srt file and settings from old PGS subtitle
             new_sub = pymkv.MKVTrack(f"{track_id}.srt", track_name=track.track_name, language=track.language, default_track=track.default_track, forced_track=track.forced_track)
@@ -138,4 +147,5 @@ def main():
         print(f"Finished {file_name}\n")
 
 if __name__ == "__main__":
-    main()
+    edit = bool(sys.argv[1])
+    main(edit)

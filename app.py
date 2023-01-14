@@ -83,13 +83,19 @@ def extract_subtitles(file: str): # TODO add return type
             
     return subtitle_ids
 
+def silent_remove(file: str):
+    try:
+        os.remove(file)
+    except OSError:
+        pass
+
 def clean(subtitle_ids):
     print("Cleaning up...")
     if os.path.exists("img/"):
         shutil.rmtree("img/")
     for track_id in subtitle_ids:
-        os.remove(f"{track_id}.sup")
-        os.remove(f"{track_id}.srt")
+        silent_remove(f"{track_id}.sup")
+        silent_remove(f"{track_id}.srt")
 
 def main(edit: bool):
     for file in os.scandir():
@@ -125,23 +131,28 @@ def main(edit: bool):
             print("You can now edit the SRT files. Press Enter when you are done.")
             input()
 
+        deleted_tracks = 0
+
         print(f"Replacing subtitles in {file_name}...")
-        for track_id in subtitle_ids.copy():
+        for track_id in subtitle_ids:
+            print(f"Replacing subtitle #{track_id}...")
             # if a subtitle was deleted during editing, skip it
             if not os.path.exists(f"{track_id}.srt"):
-                subtitle_ids.remove(track_id)
+                mkv.remove_track(track_id - deleted_tracks)
+                deleted_tracks += 1
                 continue
 
-            track = mkv.tracks[track_id]
+            track = mkv.tracks[track_id - deleted_tracks]
             # make new track from new .srt file and settings from old PGS subtitle
             new_sub = pymkv.MKVTrack(f"{track_id}.srt", track_name=track.track_name, language=track.language, default_track=track.default_track, forced_track=track.forced_track)
-            mkv.replace_track(track_id, new_sub)
+            mkv.replace_track(track_id - deleted_tracks, new_sub)
 
         # create empty .mkv file
         open(f"{file_name} (1).mkv", "w").close()
         
         print("Muxing file...")
         mkv.mux(f"{file_name} (1).mkv", silent=True)
+
         clean(subtitle_ids)
 
         print(f"Finished {file_name}\n")

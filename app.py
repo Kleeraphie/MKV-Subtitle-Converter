@@ -57,13 +57,13 @@ def convert_to_srt(lang:str, track_id: int, img_dir:str='', save_images:bool=Fal
         os.makedirs(img_dir, exist_ok=True)
 
     # loading DisplaySets
-    all_sets = [ds for ds in tqdm(pgs.iter_displaysets())]
+    all_sets = [ds for ds in tqdm(pgs.iter_displaysets(), unit="ds")]
 
     # building SRT file from DisplaySets
     sub_text = ""
     sub_start = 0
     sub_index = 0
-    for ds in tqdm(all_sets):
+    for ds in tqdm(all_sets, unit="ds"):
         if ds.has_image:
             pds = ds.pds[0] # get Palette Display Segment
             ods = ds.ods[0] # get Object Display Segment
@@ -137,13 +137,13 @@ def silent_remove(file: str):
 
 def clean(subtitle_ids):
     print("Cleaning up...")
-    if os.path.exists("img/"):
+    if save_images:
         shutil.rmtree("img/")
     for track_id in subtitle_ids:
         silent_remove(f"{track_id}.sup")
         silent_remove(f"{track_id}.srt")
 
-def main(edit: bool):
+def main():
     for file in os.scandir():
         if not file.name.endswith(".mkv"):
             continue
@@ -168,7 +168,7 @@ def main(edit: bool):
             lang_code = track.language
             language = get_lang(lang_code)
 
-            thread = threading.Thread(name=f"Convert subtitle #{id}", target=convert_to_srt, args=(language, id))
+            thread = threading.Thread(name=f"Convert subtitle #{id}", target=convert_to_srt, args=(language, id, f"img/{file_name}/{id}/", save_images))
             thread.start()
             thread_pool.append(thread)
 
@@ -190,8 +190,13 @@ def main(edit: bool):
         print(f"Finished {file_name}\n")
 
 if __name__ == "__main__":
+    edit = None
+    save_images = None
+
     try:
         edit = bool(sys.argv[1] == '1')
+        save_images = bool(sys.argv[2] == '1')
     except IndexError:
-        edit = False
-    main(edit)
+        edit = False if edit is None else edit
+        save_images = False if save_images is None else save_images
+    main()

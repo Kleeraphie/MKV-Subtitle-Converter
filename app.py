@@ -42,10 +42,10 @@ def extract_subtitles(file: str) -> list[int]:
     return subtitle_ids
 
 def get_lang(lang_code: str) -> str | None:
-    if lang_code == "None":
-        return None
-    else:
+    if lang_code in pytesseract.get_languages():
         return lang_code
+    else:
+        return None
 
 def convert_to_srt(lang:str, track_id: int, img_dir:str='', save_images:bool=False):
     srt_file = f"{track_id}.srt"

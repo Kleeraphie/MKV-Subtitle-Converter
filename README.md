@@ -15,14 +15,14 @@ The program was tested on Python 3.10 and needs the following python modules to 
 Place the files from this repository in the folder with the .mkv files you want to change the subtitles from. Then simply run the run.bat file. Firstly, you will be asked if you want to edit the converted subtitles before the program replaces the subtitles. The program then extracts the subtitles of one file after another, converts them, and replaces them.
 
 ## Tips
-For better OCR results you should download the language models for the languages of the subtitles. You can download them [here](https://tesseract-ocr.github.io/tessdoc/Data-Files.html). \
-If a subtitle uses letters of a different language, e.g., an english subtitles uses letters like ä, ö or ü, using the german language model instead of the english model because the german model contains all letters that the english one has, plus these special letters. This can be done by changing the `get_lang()` to:
-```
-def get_lang(lang_code: str) -> str | None: 
+- For better OCR results you should download the language models for the languages of the subtitles. You can download them [here](https://tesseract-ocr.github.io/tessdoc/Data-Files.html).
+- If a subtitle uses letters of a different language, e.g., an english subtitles uses letters like ä, ö or ü, using the german language model instead of the english model because the german model contains all letters that the english one has, plus these special letters. This can be done by changing the `get_lang()` to:
+  ```
+  def get_lang(lang_code: str) -> str | None: 
     if lang_code in pytesseract.get_languages(): 
         if lang_code == "eng":
             return "ger"
         return lang_code
     else:
         return None
-```
+  ```

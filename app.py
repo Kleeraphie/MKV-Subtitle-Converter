@@ -42,7 +42,16 @@ def extract_subtitles(file: str) -> list[int]:
     return subtitle_ids
 
 def get_lang(lang_code: str) -> str | None:
-    if lang_code in pytesseract.get_languages():
+
+    new_lang = diff_langs.get(lang_code) # check if user wants to use a different language
+
+    if new_lang is  not None:
+        if new_lang in pytesseract.get_languages():
+            return new_lang
+        else:
+            print(f"Language {new_lang} is not installed, using {lang_code} instead")
+
+    if lang_code in pytesseract.get_languages(): # when user doesn't want to change language or changed language is not installed
         return lang_code
     else:
         return None
@@ -190,13 +199,37 @@ def main():
         print(f"Finished {file_name}\n")
 
 if __name__ == "__main__":
-    edit = None
-    save_images = None
+    edit = None # if the user wants to edit the subtitles before muxing
+    save_images = None # if the user wants to save the images extracted from the PGS subtitles
+    diff_langs = {} # if the user wants to use a different language for some subtitles
 
     try:
-        edit = bool(sys.argv[1] == '1')
-        save_images = bool(sys.argv[2] == '1')
+        edit = sys.argv[1] == '1'
+        save_images = sys.argv[2] == '1'
     except IndexError:
         edit = False if edit is None else edit
         save_images = False if save_images is None else save_images
+
+    print("Do you want to use a different language for some subtitles?")
+    print("1) Yes")
+    print("2) No (Default)")
+
+    answer = input("Your Input: ")
+    if answer == '1':
+        while answer.strip() != "":
+            print("Enter your changes like this: ger->eng : " )
+            answer = input("Your Input: ")
+
+            if "->" in answer:
+                old_lang, new_lang = answer.split("->")
+                old_lang = old_lang.strip()
+                new_lang = new_lang.strip()
+
+                diff_langs[old_lang] = new_lang
+                print("Added language change.")
+            elif answer.strip() != "":
+                print("Invalid input. Try again.")
+        
+        print("Starting conversion...\n")
+
     main()

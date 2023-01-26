@@ -17,5 +17,5 @@ Download the files from this repository and place them in a folder. Then simply 
 
 ## Tips
 - For better OCR results you should download the language models for the languages of the subtitles. You can download them [here](https://tesseract-ocr.github.io/tessdoc/Data-Files.html).
-- If a subtitle uses letters of a different language, e.g., an english subtitles uses letters like ä, ö or ü, using the german language model instead of the english model because the german model contains all letters that the english one has, plus these special letters. This can be done by entering the language codes like this after ticking the third checkbox: `old -> new`. In this example it would be `eng -> ger`
+- If a subtitle uses letters of a different language, e.g., an english subtitles uses letters like ä, ö or ü, using the german language model instead of the english model because the german model contains all letters that the english one has, plus these special letters. This can be done by entering the language codes like this after ticking the third checkbox: `old -> new`. In this example it would be `eng -> ger`. Enter only one change per line
 - You can select MKV files from different directories, just select the MKV files you want to use and browse to another directory to select the next files.

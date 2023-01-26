@@ -10,24 +10,12 @@ The program was tested on Python 3.10 and needs the following python modules to 
 - [pysrt](https://github.com/byroot/pysrt)
 - [NumPy](https://numpy.org/)
 - [Pillow](https://github.com/python-pillow/Pillow)
+- [PySimpleGUI](https://github.com/PySimpleGUI/PySimpleGUI#jump-start-get-the-demo-programs--demo-browser-)
 
 ## Usage
-Place the files from this repository in the folder with the .mkv files you want to change the subtitles from. Then simply run the run.bat file. Firstly, you will be asked if you want to edit the converted subtitles before the program replaces the subtitles. The program then extracts the subtitles of one file after another, converts them, and replaces them.
+Download the files from this repository and place them in a folder. Then simply run the run.bat file. Via the "Browse" button in the top you can go to a directory. Simply select the MKV files you want to use.
 
 ## Tips
 - For better OCR results you should download the language models for the languages of the subtitles. You can download them [here](https://tesseract-ocr.github.io/tessdoc/Data-Files.html).
-- If a subtitle uses letters of a different language, e.g., an english subtitles uses letters like ä, ö or ü, using the german language model instead of the english model because the german model contains all letters that the english one has, plus these special letters. This can be done by entering the language codes at the third question like this: `old->new`, so that your console looks like this:
- ```
- [...]
- Do you want to use a different language for some subtitles?
- 1) Yes
- 2) No (Default)
- Your Input: 1
- Enter your changes like this: ger->eng :
- Your Input: eng->ger
- Added language change.
- Enter your changes like this: ger->eng :
- Your Input:
- Starting conversion...
- [...]
- ```
+- If a subtitle uses letters of a different language, e.g., an english subtitles uses letters like ä, ö or ü, using the german language model instead of the english model because the german model contains all letters that the english one has, plus these special letters. This can be done by entering the language codes like this after ticking the third checkbox: `old -> new`. In this example it would be `eng -> ger`
+- You can select MKV files from different directories, just select the MKV files you want to use and browse to another directory to select the next files.

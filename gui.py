@@ -52,6 +52,7 @@ layout = [
 ]
 
 window = sg.Window("MKV Subtitle Changer", layout)
+old_path = ""
 
 while True: # Run the Event Loop
     event, values = window.read()
@@ -63,9 +64,15 @@ while True: # Run the Event Loop
         if not os.path.isdir(values["-FOLDER-"]):
             continue
 
+        if values["-FOLDER-"] == old_path:
+            continue
+
+        old_path = values["-FOLDER-"]
+
         file_list = os.listdir(values["-FOLDER-"]) # get list of files in selected folder
 
-        fnames = [f for f in file_list.copy() if f.lower().endswith((".mkv"))]
+        # show only MKV files in the left list that are not already selected
+        fnames = [f for f in file_list.copy() if f.lower().endswith((".mkv")) and os.path.join(values["-FOLDER-"], f) not in selected_paths]
         window["-unselected-"].update(fnames)
 
     elif event == "-unselected-":  # A file was chosen from the left box

@@ -3,3 +3,6 @@ img/
 *.sup
 *.mkv
 __pycache__/
+build/
+dist/
+*.spec

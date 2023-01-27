@@ -8,11 +8,10 @@ from pysrt import SubRipFile, SubRipItem, SubRipTime
 import srtchecker
 import shutil
 import threading
-import sys
 import time
 
-edit = None # if the user wants to edit the subtitles before muxing
-save_images = None # if the user wants to save the images extracted from the PGS subtitles
+edit_flag = None # if the user wants to edit the subtitles before muxing
+save_flag = None # if the user wants to save the images extracted from the PGS subtitles
 diff_langs = {} # if the user wants to use a different language for some subtitles
 mkv = None
 
@@ -77,6 +76,7 @@ def get_lang(lang_code: str) -> str | None:
     if lang_code in pytesseract.get_languages(): # when user doesn't want to change language or changed language is not installed
         return lang_code
     else:
+        print(f"Language \"{lang_code}\" is not installed, using English instead")
         return None
 
 def convert_to_srt(lang:str, track_id: int, img_dir:str='', save_images:bool=False):
@@ -171,17 +171,18 @@ def silent_remove(file: str):
 
 def clean(subtitle_ids):
     print("Cleaning up...")
-    if save_images:
+    if save_flag:
         shutil.rmtree("img/")
     for track_id in subtitle_ids:
         silent_remove(f"{track_id}.sup")
         silent_remove(f"{track_id}.srt")
 
-def main(file_paths: list[str], edit2: bool, save_images2: bool, diff_langs2: dir):
-    global edit, save_images, diff_langs, mkv
-    edit = edit2
-    save_images = save_images2
-    diff_langs = diff_langs2
+def main(file_paths: list[str], edit_subs: bool, save_images: bool, different_languages: dir):
+    global edit_flag, save_flag, diff_langs, mkv
+
+    edit_flag = edit_subs
+    save_flag = save_images
+    diff_langs = different_languages
 
     for file_path in file_paths:
         try:
@@ -206,15 +207,16 @@ def main(file_paths: list[str], edit2: bool, save_images2: bool, diff_langs2: di
                 lang_code = track.language
                 language = get_lang(lang_code)
 
-                thread = threading.Thread(name=f"Convert subtitle #{id}", target=convert_to_srt, args=(language, id, f"img/{file_name}/{id}/", save_images))
+                thread = threading.Thread(name=f"Convert subtitle #{id}", target=convert_to_srt, args=(language, id, f"img/{file_name}/{id}/", save_flag))
                 thread.start()
                 thread_pool.append(thread)
 
             for thread in thread_pool:
                 thread.join()
 
-            if edit:
+            if edit_flag:
                 print("You can now edit the SRT files. Press Enter when you are done.")
+                print(f"They can be found at: {os.getcwd()}")
                 input()
 
             replace_subtitles(subtitle_ids, file_name)
@@ -231,35 +233,3 @@ def main(file_paths: list[str], edit2: bool, save_images2: bool, diff_langs2: di
             print(f"Finished {file_name}\n")
         except Exception as e:
             print(f"Error while processing {file_name}: {e}\n")
-
-if __name__ == "__main__":
-    try:
-        edit = sys.argv[1] == '1'
-        save_images = sys.argv[2] == '1'
-    except IndexError:
-        edit = False if edit is None else edit
-        save_images = False if save_images is None else save_images
-
-    print("Do you want to use a different language for some subtitles?")
-    print("1) Yes")
-    print("2) No (Default)")
-
-    answer = input("Your Input: ")
-    if answer == '1':
-        while answer.strip() != "":
-            print("Enter your changes like this: ger->eng : " )
-            answer = input("Your Input: ")
-
-            if "->" in answer:
-                old_lang, new_lang = answer.split("->")
-                old_lang = old_lang.strip()
-                new_lang = new_lang.strip()
-
-                diff_langs[old_lang] = new_lang
-                print("Added language change.")
-            elif answer.strip() != "":
-                print("Invalid input. Try again.")
-        
-        print("Starting conversion...\n")
-
-    main(os.listdir(), edit, save_images, diff_langs)

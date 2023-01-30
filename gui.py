@@ -35,10 +35,10 @@ settings_column = [
     [sg.Checkbox("Save images of PGS subtitles", key="-save-")],
     [sg.Checkbox("Use different language for some subtitles", enable_events=True, key="-diff-")],
     [sg.Text(text="Usage: one change per line; old language code -> new language code, example: ger -> eng", visible=False, key="-diff_langs_text-")],
-    [sg.Multiline(enable_events=True, size=(89, 20), key="-diff_langs-", visible=False)]
+    [sg.Multiline(enable_events=True, size=(89, 20), key="-diff_langs-", visible=False)],
+    [sg.Checkbox("Keep original MKV files", key="-keep-")]
 ]
 
-# ----- Full layout -----
 layout = [
     [
         sg.Column(unselected_list_column),
@@ -104,7 +104,7 @@ while True: # Run the Event Loop
 
             fnames.append(filename)
 
-            update_selections
+            update_selections(window, selected, fnames)
         except ValueError:
             pass
 
@@ -147,4 +147,4 @@ while True: # Run the Event Loop
             diff_langs = values["-diff_langs-"]
         
         window.close()
-        app.main(selected_paths, values["-edit-"], values["-save-"], app.diff_langs_from_text(diff_langs))
+        app.main(selected_paths, values["-edit-"], values["-save-"], values["-keep-"], app.diff_langs_from_text(diff_langs))

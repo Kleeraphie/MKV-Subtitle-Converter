@@ -12,6 +12,7 @@ import time
 
 edit_flag = None # if the user wants to edit the subtitles before muxing
 save_flag = None # if the user wants to save the images extracted from the PGS subtitles
+keep_flag = None # if the user wants to keep the original MKV files
 diff_langs = {} # if the user wants to use a different language for some subtitles
 mkv = None
 
@@ -38,8 +39,7 @@ def diff_langs_from_text(text) -> dict[str, str]:
 def extract(file_path: str, track_id: int):
     os.system(f"mkvextract \"{file_path}\" tracks {track_id}:{track_id}.sup")
 
-def extract_subtitles(file_path: str) -> list[int]: 
-    # TODO get path from mkv instead of parameter
+def extract_subtitles(file_path: str) -> list[int]:
     subtitle_ids = []
     thread_pool = []
 
@@ -146,16 +146,16 @@ def mux_file(subtitle_ids: list[int], file_path: str):
     file_size = os.path.getsize(file_path)
     file_name = os.path.splitext(os.path.basename(file_path))[0]
     new_file_dir = os.path.dirname(file_path)
-    new_file_name = f"{new_file_dir}/{file_name} (1).mkv"
+    new_file_path = f"{new_file_dir}/{file_name} (1).mkv"
     old_file_size = 0
 
     pbar = tqdm(total=calc_size(file_size, subtitle_ids), unit='B', unit_scale=True, unit_divisor=1024)
 
-    thread = threading.Thread(name="Muxing", target=mkv.mux, args=(new_file_name, True))
+    thread = threading.Thread(name="Muxing", target=mkv.mux, args=(new_file_path, True))
     thread.start()
 
     while thread.is_alive():
-        new_file_size = os.path.getsize(f"{file_name} (1).mkv")
+        new_file_size = os.path.getsize(new_file_path)
         pbar.update(new_file_size - old_file_size)
         old_file_size = new_file_size
         time.sleep(0.1)
@@ -169,20 +169,29 @@ def silent_remove(file: str):
     except OSError:
         pass
 
-def clean(subtitle_ids):
-    print("Cleaning up...")
+def clean(file_path, subtitle_ids):
+    file_name = os.path.splitext(os.path.basename(file_path))[0]
+    new_file_dir = os.path.dirname(file_path)
+    new_file_path = f"{new_file_dir}/{file_name} (1).mkv"
+
+    print("Cleaning up...n")
     if save_flag:
         shutil.rmtree("img/")
     for track_id in subtitle_ids:
         silent_remove(f"{track_id}.sup")
         silent_remove(f"{track_id}.srt")
 
-def main(file_paths: list[str], edit_subs: bool, save_images: bool, different_languages: dir):
-    global edit_flag, save_flag, diff_langs, mkv
+    if not keep_files:
+        os.remove(file_path)
+        os.rename(new_file_path, file_path)
+
+def main(file_paths: list[str], edit_subs: bool, save_images: bool, keep_flag: bool, different_languages: dir):
+    global edit_flag, save_flag, keep_files, diff_langs, mkv
 
     edit_flag = edit_subs
     save_flag = save_images
     diff_langs = different_languages
+    keep_files = keep_flag
 
     for file_path in file_paths:
         try:
@@ -227,9 +236,12 @@ def main(file_paths: list[str], edit_subs: bool, save_images: bool, different_la
 
             open(new_file_name, "w").close()
             
-            mux_file(subtitle_ids, file_path)  
-            clean(subtitle_ids)
+            mux_file(subtitle_ids, file_path)
 
-            print(f"Finished {file_name}\n")
+            print(f"Finished {file_name}")
         except Exception as e:
             print(f"Error while processing {file_name}: {e}\n")
+            input("Press Enter to continue with the next file...")
+            print()
+
+        clean(file_path, subtitle_ids)

@@ -33,10 +33,11 @@ selected_column = [
 settings_column = [
     [sg.Checkbox("Edit subtitles before muxing", key="-edit-")],
     [sg.Checkbox("Save images of PGS subtitles", key="-save-")],
+    [sg.Checkbox("Keep original MKV files", key="-keep_old_mkvs-")],
+    [sg.Checkbox("Keep SRT files", key="-keep_srt-")],
     [sg.Checkbox("Use different language for some subtitles", enable_events=True, key="-diff-")],
     [sg.Text(text="Usage: one change per line; old language code -> new language code, example: ger -> eng", visible=False, key="-diff_langs_text-")],
-    [sg.Multiline(enable_events=True, size=(89, 20), key="-diff_langs-", visible=False)],
-    [sg.Checkbox("Keep original MKV files", key="-keep-")]
+    [sg.Multiline(enable_events=True, size=(89, 20), key="-diff_langs-", visible=False)]
 ]
 
 layout = [
@@ -147,4 +148,4 @@ while True: # Run the Event Loop
             diff_langs = values["-diff_langs-"]
         
         window.close()
-        app.main(selected_paths, values["-edit-"], values["-save-"], values["-keep-"], app.diff_langs_from_text(diff_langs))
+        app.main(selected_paths, values["-edit-"], values["-save-"], values["-keep_old_mkvs-"], values["-keep_srt-"], app.diff_langs_from_text(diff_langs))

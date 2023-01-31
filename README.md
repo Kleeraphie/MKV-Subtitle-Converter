@@ -1,4 +1,4 @@
-# MKV-Subtitle-Changer
+# MKV-Subtitle-Converter
 
 This program extracts all PGS subtitles (i.e .sup files) in a MKV file, converts them to text based subtitles (in this case .srt files) using OCR and replace the old PGS subtitles with the newly created .srt-files.
 

@@ -131,7 +131,7 @@ def replace_subtitles(subtitle_ids: list[int], file_name: str):
 
         track = mkv.tracks[track_id - deleted_tracks]
         # make new track from new .srt file and settings from old PGS subtitle
-        new_sub = pymkv.MKVTrack(f"{track_id}.srt", track_name=track.track_name, language=track.language, default_track=track.default_track, forced_track=track.forced_track)
+        new_sub = pymkv.MKVTrack(f"subtitles/{file_name}/subtitles/{track_id}.srt", track_name=track.track_name, language=track.language, default_track=track.default_track, forced_track=track.forced_track)
         mkv.replace_track(track_id - deleted_tracks, new_sub)
 
 # estimate new file size based on size of new subtitles
@@ -139,7 +139,7 @@ def calc_size(file_name: str, old_size: int, subtitle_ids: list[int]) -> int:
     new_size = old_size
     for track_id in subtitle_ids:
         new_size -= os.path.getsize(f"subtitles/{file_name}/subtitles/{track_id}.sup")
-        if os.path.exists(f"{track_id}.srt"):
+        if os.path.exists(f"subtitles/{file_name}/subtitles/{track_id}.srt"):
             new_size += os.path.getsize(f"subtitles/{file_name}/subtitles/{track_id}.srt")
     return new_size
 

@@ -52,7 +52,7 @@ layout = [
     [sg.Button("Start", enable_events=True, key="-start-"), sg.Button("Exit")]
 ]
 
-window = sg.Window("MKV Subtitle Changer", layout)
+window = sg.Window("MKV Subtitle Converter", layout)
 old_path = ""
 
 while True: # Run the Event Loop

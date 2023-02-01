@@ -1,1 +1,1 @@
-pyinstaller gui.py -c -n "MKV Subtitle Changer" --add-data "./iso639;./iso639" -y --collect-submodules pymkv --clean  --onefile
+pyinstaller gui.py -c -n "MKV Subtitle Converter" --add-data "./iso639;./iso639" -y --collect-submodules pymkv --clean  --onefile

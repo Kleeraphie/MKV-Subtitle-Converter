@@ -2,150 +2,141 @@ import app
 import PySimpleGUI as sg
 import os
 
-def update_selections(window, selected, fnames):
-    window["-selected-"].update(selected)
-    window["-unselected-"].update(fnames)
+class GUI:
+    nothing_selected = "Select a file from the left list"
+    selected = [nothing_selected] # names of the selected files
+    fnames = []
+    selected_paths = [] # paths of the selected files
 
-nothing_selected = "Select a file from the left list"
-selected = [nothing_selected] # names of the selected files
-selected_paths = [] # paths of the selected files with names
-fnames = []
-diff_langs = ""
+    def __init__(self):
+        # list of not selected MKV files
+        self.unselected_list_column = [
+            [
+                sg.Text("Directory:"),
+                sg.In(size=(25, 1), enable_events=True, key="-FOLDER-"),
+                sg.FolderBrowse(),
+            ],
+            [sg.Listbox(values=[self.fnames], enable_events=True, size=(40, 20), key="-unselected-")],
+            [sg.Button("Select all", enable_events=True, key="-select_all-")]
+        ]
 
-# list of not selected MKV files
-unselected_list_column = [
-    [
-        sg.Text("Directory:"),
-        sg.In(size=(25, 1), enable_events=True, key="-FOLDER-"),
-        sg.FolderBrowse(),
-    ],
-    [sg.Listbox(values=[fnames], enable_events=True, size=(40, 20), key="-unselected-")],
-    [sg.Button("Select all", enable_events=True, key="-select_all-")]
-]
+        # list of selected MKV files
+        self.selected_column = [
+            [sg.Text("Selected files:")],
+            [sg.Listbox(values=[self.nothing_selected], enable_events=True, size=(40, 20), key="-selected-")],
+            [sg.Button("Unselect all", enable_events=True, key="-unselect_all-")]
+        ]
 
-# list of selected MKV files
-selected_column = [
-    [sg.Text("Selected files:")],
-    [sg.Listbox(values=[nothing_selected], enable_events=True, size=(40, 20), key="-selected-")],
-    [sg.Button("Unselect all", enable_events=True, key="-unselect_all-")]
-]
+        self.settings_column = [
+            [sg.Checkbox("Edit subtitles before muxing", key="-edit-")],
+            [sg.Checkbox("Save images of PGS subtitles", key="-save-")],
+            [sg.Checkbox("Keep original MKV files", key="-keep_old_mkvs-")],
+            [sg.Checkbox("Keep SRT files", key="-keep_srt-")],
+            [sg.Checkbox("Use different language for some subtitles", enable_events=True, key="-diff-")],
+            [sg.Text(text="Usage: one change per line; old language code -> new language code, example: ger -> eng", visible=False, key="-diff_langs_text-")],
+            [sg.Multiline(enable_events=True, size=(89, 20), key="-diff_langs-", visible=False)]
+        ]
 
-settings_column = [
-    [sg.Checkbox("Edit subtitles before muxing", key="-edit-")],
-    [sg.Checkbox("Save images of PGS subtitles", key="-save-")],
-    [sg.Checkbox("Keep original MKV files", key="-keep_old_mkvs-")],
-    [sg.Checkbox("Keep SRT files", key="-keep_srt-")],
-    [sg.Checkbox("Use different language for some subtitles", enable_events=True, key="-diff-")],
-    [sg.Text(text="Usage: one change per line; old language code -> new language code, example: ger -> eng", visible=False, key="-diff_langs_text-")],
-    [sg.Multiline(enable_events=True, size=(89, 20), key="-diff_langs-", visible=False)]
-]
+        self.layout = [
+            [
+                sg.Column(self.unselected_list_column),
+                sg.VSeperator(),
+                sg.Column(self.selected_column),   
+            ],
+            [sg.HSeparator()],
+            [sg.Column(self.settings_column)],
+            [sg.HSeparator()],
+            [sg.Button("Start", enable_events=True, key="-start-"), sg.Button("Exit")],
+            [sg.HSeparator()]
+        ]
 
-layout = [
-    [
-        sg.Column(unselected_list_column),
-        sg.VSeperator(),
-        sg.Column(selected_column),   
-    ],
-    [sg.HSeparator()],
-    [sg.Column(settings_column)],
-    [sg.HSeparator()],
-    [sg.Button("Start", enable_events=True, key="-start-"), sg.Button("Exit")]
-]
+        self.window = sg.Window("MKV Subtitle Converter", self.layout)
+        self.old_path = ""
 
-window = sg.Window("MKV Subtitle Converter", layout)
-old_path = ""
+    def update_selections(self, selected):
+        self.window["-selected-"].update(selected)
+        self.window["-unselected-"].update(self.fnames)
 
-while True: # Run the Event Loop
-    event, values = window.read()
-    
-    if event == "Exit" or event == sg.WIN_CLOSED:
-        break
+    def select_folder(self, dir_path: str):
 
-    elif event == "-FOLDER-": # Folder name was filled in, make a list of files in the folder
-        if not os.path.isdir(values["-FOLDER-"]):
-            continue
+        if not os.path.isdir(dir_path) or dir_path == self.old_path:
+            return
 
-        if values["-FOLDER-"] == old_path:
-            continue
-
-        old_path = values["-FOLDER-"]
-
-        file_list = os.listdir(values["-FOLDER-"]) # get list of files in selected folder
+        file_list = os.listdir(dir_path) # get list of files in selected folder
 
         # show only MKV files in the left list that are not already selected
-        fnames = [f for f in file_list.copy() if f.lower().endswith((".mkv")) and os.path.join(values["-FOLDER-"], f) not in selected_paths]
-        window["-unselected-"].update(fnames)
+        self.fnames = [f for f in file_list if f.lower().endswith((".mkv")) and os.path.join(dir_path, f) not in self.selected_paths]
+        self.window["-unselected-"].update(self.fnames)
 
-    elif event == "-unselected-":  # A file was chosen from the left box
+    def select_file(self, file_name: str, dir_path: str):
         try:
-            filename =  values["-unselected-"][0]
+            self.fnames.remove(file_name)
+            self.selected.append(file_name)
+            self.selected_paths.append(os.path.join(dir_path, file_name))
 
-            fnames.remove(filename)
-            selected.append(filename)
-            selected_paths.append(os.path.join(values["-FOLDER-"], filename))
+            if self.nothing_selected in self.selected:
+                self.selected.remove(self.nothing_selected)
 
-            if nothing_selected in selected:
-                selected.remove(nothing_selected)
-
-            update_selections(window, selected, fnames)
+            self.update_selections(self.selected)
         except ValueError:
             pass
 
-    elif event == "-selected-":  # A file was chosen from the right box
+    def unselect_file(self, file_name: str, dir_path: str):
         try:
-            filename =  values["-selected-"][0]
+            if file_name == self.nothing_selected:
+                return
 
-            if filename == nothing_selected:
-                continue
+            self.selected.remove(file_name)
+            self.selected_paths.remove(os.path.join(dir_path, file_name))
+            self.fnames.append(file_name)
 
-            selected.remove(filename)
-            selected_paths.remove(os.path.join(values["-FOLDER-"], filename))
-            if len(selected) == 0:
-                selected.append(nothing_selected)
+            if len(self.selected) == 0:
+                self.selected.append(self.nothing_selected)
 
-            fnames.append(filename)
-
-            update_selections(window, selected, fnames)
+            self.update_selections(self.selected)
         except ValueError:
             pass
 
-    elif event == "-diff-":  # checkbox for different languages was clicked
-        window["-diff_langs-"].update(visible=values["-diff-"])
-        window["-diff_langs_text-"].update(visible=values["-diff-"])
-        window.refresh()
+    def change_visibility(self, key: str, visibility: bool):
+        self.window[key].update(visible=visibility)
+        self.window.refresh()
 
-    elif event == "-select_all-":  # select all button was clicked
-        if len(fnames) == 0:
-            continue
+    def start(self, values):
+        diff_langs = values["-diff_langs-"] if values["-diff-"] else ""
+        self.change_visibility("-log-", True)
+        #window["-start-"].update(disabled=True) TODO app.main should be async
 
-        if nothing_selected in selected:
-                selected.remove(nothing_selected)
+        app.main(self.selected_paths, values["-edit-"], values["-save-"], values["-keep_old_mkvs-"], values["-keep_srt-"], app.diff_langs_from_text(diff_langs))
 
-        selected += fnames
+    def run(self) -> tuple[int, dict]:
+        while True: # Run the Event Loop
+            event, values = self.window.read()
+            
+            if event == "Exit" or event == sg.WIN_CLOSED:
+                return 1, None
 
-        for fname in fnames:
-            selected_paths.append(os.path.join(values["-FOLDER-"], fname))
+            elif event == "-FOLDER-": # Folder name was filled in, make a list of files in the folder
+                self.select_folder(values["-FOLDER-"])
+                self.old_path = values["-FOLDER-"]
 
-        fnames = []
+            elif event == "-unselected-":  # A file was chosen from the left box
+                self.select_file(values["-unselected-"][0], values["-FOLDER-"])
 
-        update_selections(window, selected, fnames)
+            elif event == "-selected-":  # A file was chosen from the right box
+                self.unselect_file(values["-selected-"][0], values["-FOLDER-"])
 
-    elif event == "-unselect_all-":  # unselect all button was clicked
-        if nothing_selected in selected:
-            continue
+            elif event == "-diff-":  # checkbox for different languages was clicked
+                self.change_visibility("-diff_langs-", values["-diff-"])
+                self.change_visibility("-diff_langs_text-", values["-diff-"])
 
-        fnames += selected
+            elif event == "-select_all-":  # select all button was clicked
+                for fname in self.fnames.copy():
+                    self.select_file(fname, values["-FOLDER-"])
 
-        for fname in selected:
-            selected_paths.remove(os.path.join(values["-FOLDER-"], fname))
+            elif event == "-unselect_all-":  # unselect all button was clicked
+                for fname in self.selected.copy():
+                    self.unselect_file(fname, values["-FOLDER-"])
 
-        selected = [nothing_selected]
-
-        update_selections(window, selected, fnames)
-
-    elif event == "-start-":  # start button was clicked
-        if values["-diff-"]:
-            diff_langs = values["-diff_langs-"]
-        
-        window.close()
-        app.main(selected_paths, values["-edit-"], values["-save-"], values["-keep_old_mkvs-"], values["-keep_srt-"], app.diff_langs_from_text(diff_langs))
+            elif event == "-start-":  # start button was clicked
+                # self.start(values)
+                return 0, values

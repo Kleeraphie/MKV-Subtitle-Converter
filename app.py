@@ -8,7 +8,7 @@ from pysrt import SubRipFile, SubRipItem, SubRipTime
 import srtchecker
 import threading
 import time
-import pgsreader
+import subprocess
 
 edit_flag = None # if the user wants to edit the subtitles before muxing
 diff_langs = {} # if the user wants to use a different language for some subtitles
@@ -39,7 +39,8 @@ def diff_langs_from_text(text) -> dict[str, str]:
 def extract(file_path: str, track_id: int):
     file_name = os.path.splitext(os.path.basename(file_path))[0]
     
-    os.system(f"mkvextract \"{file_path}\" tracks {track_id}:\"subtitles/{file_name}/subtitles/{track_id}.sup\"")
+    #os.system(f"mkvextract \"{file_path}\" tracks {track_id}:\"subtitles/{file_name}/subtitles/{track_id}.sup\"")
+    subprocess.run(["mkvextract", file_path, "tracks", f"{track_id}:subtitles/{file_name}/subtitles/{track_id}.sup"])
 
 def extract_subtitles(file_path: str) -> list[int]:
     subtitle_ids = []

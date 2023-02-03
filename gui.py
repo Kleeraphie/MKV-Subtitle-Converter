@@ -101,13 +101,6 @@ class GUI:
         self.window[key].update(visible=visibility)
         self.window.refresh()
 
-    def start(self, values):
-        diff_langs = values["-diff_langs-"] if values["-diff-"] else ""
-        self.change_visibility("-log-", True)
-        #window["-start-"].update(disabled=True) TODO app.main should be async
-
-        app.main(self.selected_paths, values["-edit-"], values["-save-"], values["-keep_old_mkvs-"], values["-keep_srt-"], app.diff_langs_from_text(diff_langs))
-
     def run(self) -> tuple[int, dict]:
         while True: # Run the Event Loop
             event, values = self.window.read()

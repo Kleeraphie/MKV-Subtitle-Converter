@@ -9,10 +9,25 @@ import srtchecker
 import threading
 import time
 import subprocess
+import pysubs2
 
 edit_flag = None # if the user wants to edit the subtitles before muxing
 diff_langs = {} # if the user wants to use a different language for some subtitles
 mkv = None
+
+def sub_formats() -> list[str]:
+    subs = [
+        "SubRip Text (.srt)",
+        "Advanced SubStation Alpha (.ass)",
+        "SubStation Alpha (.ssa)",
+        "MicroDVD (.sub)",
+        "JSON (.json)",
+        "MPL2 (.mpl)",
+        "TMP (.tmp)",
+        "VTT (.vtt)",
+    ]
+    
+    return subs
 
 def diff_langs_from_text(text) -> dict[str, str]:
     if text == "":
@@ -119,32 +134,36 @@ def convert_to_srt(file_name: str, lang:str, track_id: int, img_dir:str='', save
     srt.save(srt_file)
     srtchecker.check_srt(srt_file, True)
 
-def replace_subtitles(subtitle_ids: list[int], file_name: str):
+def replace_subtitles(subtitle_ids: list[int], file_name: str, format: str):
     deleted_tracks = 0
 
     print(f"Replacing subtitles in {file_name}...")
     for track_id in subtitle_ids:
         # if a subtitle was deleted during editing
-        if not os.path.exists(f"subtitles/{file_name}/subtitles/{track_id}.srt"):
+        if not os.path.exists(f"subtitles/{file_name}/subtitles/{track_id}.{str.lower(format)}"):
             mkv.remove_track(track_id - deleted_tracks)
             deleted_tracks += 1
             continue
 
         track = mkv.tracks[track_id - deleted_tracks]
         # make new track from new .srt file and settings from old PGS subtitle
-        new_sub = pymkv.MKVTrack(f"subtitles/{file_name}/subtitles/{track_id}.srt", track_name=track.track_name, language=track.language, default_track=track.default_track, forced_track=track.forced_track)
+        new_sub = pymkv.MKVTrack(f"subtitles/{file_name}/subtitles/{track_id}.{str.lower(format)}", track_name=track.track_name, language=track.language, default_track=track.default_track, forced_track=track.forced_track)
         mkv.replace_track(track_id - deleted_tracks, new_sub)
 
 # estimate new file size based on size of new subtitles
-def calc_size(file_name: str, old_size: int, subtitle_ids: list[int]) -> int:
+def calc_size(file_name: str, old_size: int, subtitle_ids: list[int], format: str) -> int:
     new_size = old_size
     for track_id in subtitle_ids:
-        new_size -= os.path.getsize(f"subtitles/{file_name}/subtitles/{track_id}.sup")
-        if os.path.exists(f"subtitles/{file_name}/subtitles/{track_id}.srt"):
-            new_size += os.path.getsize(f"subtitles/{file_name}/subtitles/{track_id}.srt")
+        path = f"subtitles/{file_name}/subtitles/{track_id}" # path to subtitle file without extension
+
+        new_size -= os.path.getsize(f"{path}.sup")
+
+        if os.path.exists(f"{path}.{str.lower(format)}"):
+            new_size += os.path.getsize(f"{path}.{str.lower(format)}")
+
     return new_size
 
-def mux_file(subtitle_ids: list[int], file_path: str):
+def mux_file(subtitle_ids: list[int], file_path: str, format: str):
     print("Muxing file...")
     file_size = os.path.getsize(file_path)
     file_name = os.path.splitext(os.path.basename(file_path))[0]
@@ -152,7 +171,7 @@ def mux_file(subtitle_ids: list[int], file_path: str):
     new_file_path = f"{new_file_dir}/{file_name} (1).mkv"
     old_file_size = 0
 
-    pbar = tqdm(total=calc_size(file_name, file_size, subtitle_ids), unit='B', unit_scale=True, unit_divisor=1024)
+    pbar = tqdm(total=calc_size(file_name, file_size, subtitle_ids, format), unit='B', unit_scale=True, unit_divisor=1024)
 
     thread = threading.Thread(name="Muxing", target=mkv.mux, args=(new_file_path, True))
     thread.start()
@@ -172,26 +191,36 @@ def silent_remove(file: str):
     except OSError:
         pass
 
-def clean(file_path: str, subtitle_ids: list[int], keep_old_mkv: bool, keep_srt: bool):
+#TODO srt files are not deleted if other format is used
+def clean(file_path: str, subtitle_ids: list[int], keep_old_mkv: bool, keep_imgs: bool, keep_subs: bool, format: str):
     file_name = os.path.splitext(os.path.basename(file_path))[0]
     new_file_dir = os.path.dirname(file_path)
     new_file_path = f"{new_file_dir}/{file_name} (1).mkv"
 
     print("Cleaning up...\n")
     for track_id in subtitle_ids:
-        silent_remove(f"subtitles/{file_name}/subtitles/{track_id}.sup")
-        if not keep_srt:
-            silent_remove(f"subtitles/{file_name}/subtitles/{track_id}.srt")
+        sub_path = f"subtitles/{file_name}/subtitles/{track_id}" # path to subtitle file without extension
+
+        silent_remove(f"{sub_path}.sup")
+        silent_remove(f"{sub_path}.srt")
+        if not keep_subs:
+            silent_remove(f"{sub_path}.{str.lower(format)}")
+            os.rmdir(f"subtitles/{file_name}/subtitles")
+
+    if not keep_imgs and not keep_subs:
+        os.rmdir(f"subtitles/{file_name}")
 
     if not keep_old_mkv:
         os.remove(file_path)
         os.rename(new_file_path, file_path)
 
-def main(file_paths: list[str], edit_subs: bool, keep_imgs: bool, keep_old_mkvs: bool, keep_srt: bool, different_languages: dir):
+def main(file_paths: list[str], edit_subs: bool, keep_imgs: bool, keep_old_mkvs: bool, keep_subs: bool, different_languages: dir, format: str):
     global edit_flag, diff_langs, mkv
 
     edit_flag = edit_subs
     diff_langs = different_languages
+
+    format = format[len(format) - 4:len(format) - 1] # get file extension from format string
 
     for file_path in file_paths:
         try:
@@ -229,7 +258,12 @@ def main(file_paths: list[str], edit_subs: bool, keep_imgs: bool, keep_old_mkvs:
                 os.system("explorer.exe " + os.getcwd())
                 input()
 
-            replace_subtitles(subtitle_ids, file_name)
+            # no multithreading here because it's already fast enough
+            if format != "SRT":
+                for id in subtitle_ids:
+                    os.system(f"pysubs2 \"subtitles/{file_name}/subtitles/{id}.srt\" -t {str.lower(format)}")
+
+            replace_subtitles(subtitle_ids, file_name, format)
 
             # create empty .mkv file
             new_file_dir = os.path.dirname(file_path)
@@ -237,7 +271,7 @@ def main(file_paths: list[str], edit_subs: bool, keep_imgs: bool, keep_old_mkvs:
 
             open(new_file_name, "w").close()
             
-            mux_file(subtitle_ids, file_path)
+            mux_file(subtitle_ids, file_path, format)
 
             print(f"Finished {file_name}")
         except Exception as e:
@@ -245,4 +279,4 @@ def main(file_paths: list[str], edit_subs: bool, keep_imgs: bool, keep_old_mkvs:
             input("Press Enter to continue with the next file...")
             print()
 
-        clean(file_path, subtitle_ids, keep_old_mkvs, keep_srt)
+        clean(file_path, subtitle_ids, keep_old_mkvs, keep_imgs, keep_subs, format)

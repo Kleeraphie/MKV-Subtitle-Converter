@@ -74,11 +74,11 @@ class GUI:
     def select_file(self, file_name: str, dir_path: str):
         try:
             self.fnames.remove(file_name)
-            self.selected.append(file_name)
-            self.selected_paths.append(os.path.join(dir_path, file_name))
-
             if self.nothing_selected in self.selected:
                 self.selected.remove(self.nothing_selected)
+
+            self.selected.append(file_name)
+            self.selected_paths.append(os.path.join(dir_path, file_name))
 
             self.update_selections(self.selected)
         except ValueError:
@@ -89,9 +89,12 @@ class GUI:
             if file_name == self.nothing_selected:
                 return
 
-            self.selected.remove(file_name)
-            self.selected_paths.remove(os.path.join(dir_path, file_name))
-            self.fnames.append(file_name)
+            index = self.selected.index(file_name)
+            self.selected.pop(index)
+            self.selected_paths.pop(index)
+
+            if (dir_path == self.old_path):
+                self.fnames.append(file_name)
 
             if len(self.selected) == 0:
                 self.selected.append(self.nothing_selected)

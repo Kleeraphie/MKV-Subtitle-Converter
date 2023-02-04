@@ -71,29 +71,31 @@ class GUI:
         self.fnames = [f for f in file_list if f.lower().endswith((".mkv")) and os.path.join(dir_path, f) not in self.selected_paths]
         self.window["-unselected-"].update(self.fnames)
 
-    def select_file(self, file_name: str, dir_path: str):
+    def select_file(self, file_name: str):
         try:
             self.fnames.remove(file_name)
             if self.nothing_selected in self.selected:
                 self.selected.remove(self.nothing_selected)
 
             self.selected.append(file_name)
-            self.selected_paths.append(os.path.join(dir_path, file_name))
+            self.selected_paths.append(os.path.join(self.old_path, file_name))
 
             self.update_selections(self.selected)
         except ValueError:
             pass
 
-    def unselect_file(self, file_name: str, dir_path: str):
+    def unselect_file(self, file_name: str):
         try:
             if file_name == self.nothing_selected:
                 return
 
             index = self.selected.index(file_name)
+            unselected_file_path = self.selected_paths[index][:self.selected_paths[index].rfind(os.sep)]
+
             self.selected.pop(index)
             self.selected_paths.pop(index)
 
-            if (dir_path == self.old_path):
+            if (unselected_file_path == self.old_path):
                 self.fnames.append(file_name)
 
             if len(self.selected) == 0:
@@ -119,10 +121,10 @@ class GUI:
                 self.old_path = values["-FOLDER-"]
 
             elif event == "-unselected-":  # A file was chosen from the left box
-                self.select_file(values["-unselected-"][0], values["-FOLDER-"])
+                self.select_file(values["-unselected-"][0])
 
             elif event == "-selected-":  # A file was chosen from the right box
-                self.unselect_file(values["-selected-"][0], values["-FOLDER-"])
+                self.unselect_file(values["-selected-"][0])
 
             elif event == "-diff-":  # checkbox for different languages was clicked
                 self.change_visibility("-diff_langs-", values["-diff-"])
@@ -130,11 +132,11 @@ class GUI:
 
             elif event == "-select_all-":  # select all button was clicked
                 for fname in self.fnames.copy():
-                    self.select_file(fname, values["-FOLDER-"])
+                    self.select_file(fname)
 
             elif event == "-unselect_all-":  # unselect all button was clicked
                 for fname in self.selected.copy():
-                    self.unselect_file(fname, values["-FOLDER-"])
+                    self.unselect_file(fname)
 
             elif event == "-start-":  # start button was clicked
                 # self.start(values)

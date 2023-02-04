@@ -28,10 +28,14 @@ class GUI:
         ]
 
         self.settings_column = [
+            [
+                sg.Text("Format of the new subtitles:"),
+                sg.DropDown(app.sub_formats(), default_value=app.sub_formats()[0], key="-format-", readonly=True)
+            ],
             [sg.Checkbox("Edit subtitles before muxing", key="-edit-")],
             [sg.Checkbox("Save images of PGS subtitles", key="-save-")],
             [sg.Checkbox("Keep original MKV files", key="-keep_old_mkvs-")],
-            [sg.Checkbox("Keep SRT files", key="-keep_srt-")],
+            [sg.Checkbox("Keep a copy of the new subtitle files", key="-keep_subs-")],
             [sg.Checkbox("Use different language for some subtitles", enable_events=True, key="-diff-")],
             [sg.Text(text="Usage: one change per line; old language code -> new language code, example: ger -> eng", visible=False, key="-diff_langs_text-")],
             [sg.Multiline(enable_events=True, size=(89, 20), key="-diff_langs-", visible=False)]
@@ -46,8 +50,7 @@ class GUI:
             [sg.HSeparator()],
             [sg.Column(self.settings_column)],
             [sg.HSeparator()],
-            [sg.Button("Start", enable_events=True, key="-start-"), sg.Button("Exit")],
-            [sg.HSeparator()]
+            [sg.Button("Start", enable_events=True, key="-start-"), sg.Button("Exit")]
         ]
 
         self.window = sg.Window("MKV Subtitle Converter", self.layout)

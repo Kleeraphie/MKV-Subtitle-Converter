@@ -1,11 +1,13 @@
 # MKV-Subtitle-Converter
 
-This program extracts all PGS subtitles (i.e .sup files) in a MKV file, converts them to text based subtitles (e.g. .srt, .ass, ...) using OCR and replace the old PGS subtitles with the newly created subtitle files.
+This program extracts all PGS subtitles (i.e .sup files) in a MKV file, converts them to text based subtitles (e.g. .srt, .ass, ...) using OCR and replace the old PGS subtitles with the newly created subtitle files. It also allows you to edit the subtitles before replacing them. \
+Using text based subtitles instead of PGS subtitles is useful because they can be edited and are supported by more players.
 
 ## Requirements
 
 - The program needs [Tesseract](https://github.com/tesseract-ocr/tesseract) to be installed to use OCR. If you use Windows, you also need to put the `tessdata` folder in your PATH.
 - To extract and replace the subtitles the program also needs [MKVToolNix](https://mkvtoolnix.download/).
+- If you want to convert the subtitles to a different format than SRT, you need to install [pysubs2](https://github.com/tkarabela/pysubs2).
 
 ## Tips
 

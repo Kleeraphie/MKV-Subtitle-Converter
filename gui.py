@@ -1,14 +1,15 @@
-import app
+from subconverter import SubtitleConverter
 import PySimpleGUI as sg
 import os
 
 class GUI:
-    nothing_selected = "Select a file from the left list"
-    selected = [nothing_selected] # names of the selected files
-    fnames = []
-    selected_paths = [] # paths of the selected files
-
+    
     def __init__(self):
+        self.__nothing_selected = "Select a file from the left list"
+        self.__selected = [self.__nothing_selected] # names of the selected files
+        self.__fnames = []
+        self.selected_paths = [] # paths of the selected files
+
         # list of not selected MKV files
         self.unselected_list_column = [
             [
@@ -16,21 +17,21 @@ class GUI:
                 sg.In(size=(25, 1), enable_events=True, key="-FOLDER-"),
                 sg.FolderBrowse(),
             ],
-            [sg.Listbox(values=[self.fnames], enable_events=True, size=(40, 20), key="-unselected-")],
+            [sg.Listbox(values=[self.__fnames], enable_events=True, size=(40, 20), key="-unselected-")],
             [sg.Button("Select all", enable_events=True, key="-select_all-")]
         ]
 
         # list of selected MKV files
         self.selected_column = [
             [sg.Text("Selected files:")],
-            [sg.Listbox(values=[self.nothing_selected], enable_events=True, size=(40, 20), key="-selected-")],
+            [sg.Listbox(values=[self.__nothing_selected], enable_events=True, size=(40, 20), key="-selected-")],
             [sg.Button("Unselect all", enable_events=True, key="-unselect_all-")]
         ]
 
         self.settings_column = [
             [
                 sg.Text("Format of the new subtitles:"),
-                sg.DropDown(app.sub_formats(), default_value=app.sub_formats()[0], key="-format-", readonly=True)
+                sg.DropDown(SubtitleConverter.sub_formats(None), default_value=SubtitleConverter.sub_formats(None)[0], key="-format-", readonly=True)
             ],
             [sg.Checkbox("Edit subtitles before muxing", key="-edit-")],
             [sg.Checkbox("Save images of PGS subtitles", key="-save-")],
@@ -58,7 +59,7 @@ class GUI:
 
     def update_selections(self, selected):
         self.window["-selected-"].update(selected)
-        self.window["-unselected-"].update(self.fnames)
+        self.window["-unselected-"].update(self.__fnames)
 
     def select_folder(self, dir_path: str):
 
@@ -68,40 +69,40 @@ class GUI:
         file_list = os.listdir(dir_path) # get list of files in selected folder
 
         # show only MKV files in the left list that are not already selected
-        self.fnames = [f for f in file_list if f.lower().endswith((".mkv")) and os.path.join(dir_path, f) not in self.selected_paths]
-        self.window["-unselected-"].update(self.fnames)
+        self.__fnames = [f for f in file_list if f.lower().endswith((".mkv")) and os.path.join(dir_path, f) not in self.selected_paths]
+        self.window["-unselected-"].update(self.__fnames)
 
     def select_file(self, file_name: str):
         try:
-            self.fnames.remove(file_name)
-            if self.nothing_selected in self.selected:
-                self.selected.remove(self.nothing_selected)
+            self.__fnames.remove(file_name)
+            if self.__nothing_selected in self.__selected:
+                self.__selected.remove(self.__nothing_selected)
 
-            self.selected.append(file_name)
+            self.__selected.append(file_name)
             self.selected_paths.append(os.path.join(self.old_path, file_name))
 
-            self.update_selections(self.selected)
+            self.update_selections(self.__selected)
         except ValueError:
             pass
 
     def unselect_file(self, file_name: str):
         try:
-            if file_name == self.nothing_selected:
+            if file_name == self.__nothing_selected:
                 return
 
-            index = self.selected.index(file_name)
+            index = self.__selected.index(file_name)
             unselected_file_path = self.selected_paths[index][:self.selected_paths[index].rfind(os.sep)]
 
-            self.selected.pop(index)
+            self.__selected.pop(index)
             self.selected_paths.pop(index)
 
             if (unselected_file_path == self.old_path):
-                self.fnames.append(file_name)
+                self.__fnames.append(file_name)
 
-            if len(self.selected) == 0:
-                self.selected.append(self.nothing_selected)
+            if len(self.__selected) == 0:
+                self.__selected.append(self.__nothing_selected)
 
-            self.update_selections(self.selected)
+            self.update_selections(self.__selected)
         except ValueError:
             pass
 
@@ -131,11 +132,11 @@ class GUI:
                 self.change_visibility("-diff_langs_text-", values["-diff-"])
 
             elif event == "-select_all-":  # select all button was clicked
-                for fname in self.fnames.copy():
+                for fname in self.__fnames.copy():
                     self.select_file(fname)
 
             elif event == "-unselect_all-":  # unselect all button was clicked
-                for fname in self.selected.copy():
+                for fname in self.__selected.copy():
                     self.unselect_file(fname)
 
             elif event == "-start-":  # start button was clicked

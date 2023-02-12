@@ -2,7 +2,7 @@ import pymkv
 import os
 import pytesseract
 from pgsreader import PGSReader
-from imagemaker import make_image
+from imagemaker import ImageMaker
 from tqdm import tqdm
 from pysrt import SubRipFile, SubRipItem, SubRipTime
 import srtchecker
@@ -99,6 +99,11 @@ class SubtitleConverter:
         for thread in thread_pool:
             thread.join()
 
+        # no multithreading here because it's already fast enough
+        if self.format != "SRT":
+            for id in self.subtitle_ids:
+                os.system(f"pysubs2 \"{self.sub_dir}/{id}.srt\" -t {str.lower(self.format)}")
+
     def get_lang(self, lang_code: str) -> str | None:
 
         new_lang = self.diff_langs.get(lang_code) # check if user wants to use a different language
@@ -119,11 +124,14 @@ class SubtitleConverter:
         srt_file = f"{self.sub_dir}/{track_id}.srt"
         pgs_file = f"{self.sub_dir}/{track_id}.sup"
 
+        open(srt_file, "w").close() # create empty SRT file
+
         pgs = PGSReader(pgs_file)
         srt = SubRipFile()
         
         if self.keep_imgs:
-            os.makedirs(f"self.img_dir/{track_id}", exist_ok=True)
+            #os.makedirs(f"self.img_dir/{track_id}", exist_ok=True)
+            os.makedirs(f"{self.img_dir}/{track_id}", exist_ok=True)
 
         # loading DisplaySets
         all_sets = [ds for ds in tqdm(pgs.iter_displaysets(), unit="ds")]
@@ -132,14 +140,15 @@ class SubtitleConverter:
         sub_text = ""
         sub_start = 0
         sub_index = 0
+        im = ImageMaker()
         for ds in tqdm(all_sets, unit="ds"):
             if ds.has_image:
                 pds = ds.pds[0] # get Palette Definition Segment
                 ods = ds.ods[0] # get Object Definition Segment
-                img = make_image(ods, pds)
+                img = im.make_image(ods, pds)
                 
                 if self.keep_imgs:
-                    img.save(f"{self.img_dir}/{sub_index}.jpg")
+                    img.save(f"{self.img_dir}/{track_id}/{sub_index}.jpg")
                 
                 sub_text = pytesseract.image_to_string(img, lang)
                 sub_start = ods.presentation_timestamp
@@ -152,11 +161,6 @@ class SubtitleConverter:
         # check and save SRT file
         srt.save(srt_file)
         srtchecker.check_srt(srt_file, True)
-
-        # no multithreading here because it's already fast enough
-        if self.format != "SRT":
-            for id in self.subtitle_ids:
-                os.system(f"pysubs2 \"{self.sub_dir}/{id}.srt\" -t {str.lower(self.format)}")
 
     def replace_subtitles(self):
         deleted_tracks = 0

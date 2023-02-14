@@ -11,6 +11,8 @@ PCS = int('0x16', base=16) # Presentation Composition Segment, 0x16
 WDS = int('0x17', base=16) # Window Definition Segment, 0x17
 END = int('0x80', base=16) # End of Display Set Segment, 0x80
 
+exit_code = 0
+
 # Named tuple access for static PDS palettes 
 Palette = namedtuple('Palette', "Y Cr Cb Alpha")
 
@@ -40,6 +42,8 @@ class PGSReader:
     def iter_displaysets(self):
         ds = []
         for s in self.iter_segments():
+            if exit_code != 0:
+                break
             ds.append(s)
             if s.type == 'END':
                 yield DisplaySet(ds)
@@ -199,6 +203,8 @@ class ObjectDefinitionSegment(BaseSegment):
     }
     
     def __init__(self, bytes_):
+        global exit_code
+        
         BaseSegment.__init__(self, bytes_)
         self.id = int(self.data[0:2].hex(), base=16)
         self.version = self.data[2]
@@ -208,8 +214,9 @@ class ObjectDefinitionSegment(BaseSegment):
         self.height = int(self.data[9:11].hex(), base=16)
         self.img_data = self.data[11:]
         if len(self.img_data) != self.data_len - 4:
-            print('Warning: Image data length asserted does not match the '
-                  'length found.')
+            print("Image data length asserted does not match the "
+                  "length found.")
+            exit_code = 1
 
 
 class EndSegment(BaseSegment):

@@ -57,8 +57,7 @@ class ImageMaker:
             i += incr
 
         if line_builder:
-            #print(f'Probably an error; hanging pixels: {line_builder}')
-            print("Error")
+            raise Exception("RLE data ended before end of line was reached")
 
         return pixels
                             

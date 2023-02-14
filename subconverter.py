@@ -1,7 +1,7 @@
 import pymkv
 import os
 import pytesseract
-from pgsreader import PGSReader
+import pgsreader
 from imagemaker import ImageMaker
 from tqdm import tqdm
 from pysrt import SubRipFile, SubRipItem, SubRipTime
@@ -14,8 +14,14 @@ class SubtitleConverter:
 
     # TODO try to use pysubs2 in code
 
-    def __init__(self) -> None:
-        pass
+    def __init__(self, files: list, edit_flag: bool = False, keep_imgs: bool = False, keep_old_mkvs: bool = False, keep_subs: bool = False, diff_langs: bool = False, sub_format: str = "SubRip Text (.srt)"):
+        self.file_paths = files
+        self.edit_flag = edit_flag
+        self.keep_imgs = keep_imgs
+        self.keep_old_mkvs = keep_old_mkvs
+        self.keep_subs = keep_subs
+        self.diff_langs = diff_langs
+        self.format = sub_format
 
     def sub_formats(self) -> list[str]:
         subs = [
@@ -32,6 +38,11 @@ class SubtitleConverter:
         return subs
     
     def sub_format_extension(self, format: str) -> str:
+
+        # check if format is valid
+        if format not in self.sub_formats():
+            return "srt"
+
         return format[len(format) - 4:len(format) - 1]
 
     def diff_langs_from_text(self, text) -> dict[str, str]:
@@ -99,8 +110,12 @@ class SubtitleConverter:
         for thread in thread_pool:
             thread.join()
 
+        if pgsreader.exit_code != 0:
+            raise Exception(f"Error while converting subtitle #{id}. See console for more info.")
+            # TODO Print error message by exit code, therefore check which warnings trigger exceptions
+
         # no multithreading here because it's already fast enough
-        if self.format != "SRT":
+        if self.format != "srt":
             for id in self.subtitle_ids:
                 os.system(f"pysubs2 \"{self.sub_dir}/{id}.srt\" -t {str.lower(self.format)}")
 
@@ -126,15 +141,17 @@ class SubtitleConverter:
 
         open(srt_file, "w").close() # create empty SRT file
 
-        pgs = PGSReader(pgs_file)
+        pgs = pgsreader.PGSReader(pgs_file)
         srt = SubRipFile()
         
         if self.keep_imgs:
-            #os.makedirs(f"self.img_dir/{track_id}", exist_ok=True)
             os.makedirs(f"{self.img_dir}/{track_id}", exist_ok=True)
 
         # loading DisplaySets
         all_sets = [ds for ds in tqdm(pgs.iter_displaysets(), unit="ds")]
+
+        if pgsreader.exit_code != 0:
+            return
 
         # building SRT file from DisplaySets
         sub_text = ""
@@ -146,6 +163,8 @@ class SubtitleConverter:
                 pds = ds.pds[0] # get Palette Definition Segment
                 ods = ds.ods[0] # get Object Definition Segment
                 img = im.make_image(ods, pds)
+
+                # TODO add exit code check for ImageMaker
                 
                 if self.keep_imgs:
                     img.save(f"{self.img_dir}/{track_id}/{sub_index}.jpg")
@@ -282,7 +301,7 @@ class SubtitleConverter:
 
                 print(f"Finished {self.file_name}")
             except Exception as e:
-                print(f"Error while processing {self.file_name}: {e}\n")
+                print(f"Error while processing {self.file_name}: {e}")
                 input("Press Enter to continue with the next file...")
                 self.clean()
                 print()

@@ -9,10 +9,9 @@ import srtchecker
 import threading
 import time
 import shutil
+import pysubs2
 
 class SubtitleConverter:
-
-    # TODO try to use pysubs2 in code
 
     def __init__(self, files: list = None, edit_flag: bool = False, keep_imgs: bool = False, keep_old_mkvs: bool = False, keep_subs: bool = False, diff_langs: bool = False, sub_format: str = "SubRip Text (.srt)"):
         if files is None:
@@ -71,7 +70,7 @@ class SubtitleConverter:
 
     # helper function for threading
     def extract(self, track_id: int):        
-        os.system(f"mkvextract \"{self.file_path}\" tracks {track_id}:\"{self.sub_dir}/{track_id}.sup\"")
+        os.system(f"mkvextract \"{self.file_path}\" tracks {track_id}:\"{self.sub_dir}\{track_id}.sup\"")
 
     def extract_subtitles(self) -> list[int]:
         self.subtitle_ids = []
@@ -120,7 +119,9 @@ class SubtitleConverter:
         # no multithreading here because it's already fast enough
         if self.format != "srt":
             for id in self.subtitle_ids:
-                os.system(f"pysubs2 \"{self.sub_dir}/{id}.srt\" -t {str.lower(self.format)}")
+                subs = pysubs2.load(f"{self.sub_dir}\{id}.srt")
+                open(f"{self.sub_dir}\{id}.{self.format}", 'w').close()
+                subs.save(f"{self.sub_dir}\{id}.{self.format}")
 
     def get_lang(self, lang_code: str) -> str | None:
 
@@ -139,8 +140,8 @@ class SubtitleConverter:
             return None
 
     def convert_to_srt(self, lang:str, track_id: int):
-        srt_file = f"{self.sub_dir}/{track_id}.srt"
-        pgs_file = f"{self.sub_dir}/{track_id}.sup"
+        srt_file = f"{self.sub_dir}\{track_id}.srt"
+        pgs_file = f"{self.sub_dir}\{track_id}.sup"
 
         open(srt_file, "w").close() # create empty SRT file
 
@@ -148,7 +149,7 @@ class SubtitleConverter:
         srt = SubRipFile()
         
         if self.keep_imgs:
-            os.makedirs(f"{self.img_dir}/{track_id}", exist_ok=True)
+            os.makedirs(f"{self.img_dir}\{track_id}", exist_ok=True)
 
         # loading DisplaySets
         all_sets = [ds for ds in tqdm(pgs.iter_displaysets(), unit="ds")]
@@ -170,7 +171,7 @@ class SubtitleConverter:
                 # TODO add exit code check for ImageMaker
                 
                 if self.keep_imgs:
-                    img.save(f"{self.img_dir}/{track_id}/{sub_index}.jpg")
+                    img.save(f"{self.img_dir}\{track_id}\{sub_index}.jpg")
                 
                 sub_text = pytesseract.image_to_string(img, lang)
                 sub_start = ods.presentation_timestamp
@@ -189,7 +190,7 @@ class SubtitleConverter:
 
         print(f"Replacing subtitles in {self.file_name}...")
         for track_id in self.subtitle_ids:
-            sub_path = f"{self.sub_dir}/{track_id}.{str.lower(self.format)}"
+            sub_path = f"{self.sub_dir}\{track_id}.{str.lower(self.format)}"
 
             # if a subtitle was deleted during editing
             if not os.path.exists(sub_path):
@@ -209,7 +210,7 @@ class SubtitleConverter:
         file_size = os.path.getsize(self.file_path)
         new_size = file_size
         for track_id in self.subtitle_ids:
-            path = f"{self.sub_dir}/{track_id}" # path to subtitle file without extension
+            path = f"{self.sub_dir}\{track_id}" # path to subtitle file without extension
 
             new_size -= os.path.getsize(f"{path}.sup")
 
@@ -221,7 +222,7 @@ class SubtitleConverter:
     def mux_file(self):
         print("Muxing file...")
         new_file_dir = os.path.dirname(self.file_path)
-        new_file_path = f"{new_file_dir}/{self.file_name} (1).mkv"
+        new_file_path = f"{new_file_dir}\{self.file_name} (1).mkv"
         old_file_size = 0
 
         pbar = tqdm(total=self.calc_size(), unit='B', unit_scale=True, unit_divisor=1024)
@@ -246,7 +247,7 @@ class SubtitleConverter:
 
     def clean(self):
         new_file_dir = os.path.dirname(self.file_path)
-        new_file_path = f"{new_file_dir}/{self.file_name} (1).mkv"
+        new_file_path = f"{new_file_dir}\{self.file_name} (1).mkv"
 
         print("Cleaning up...\n")
 
@@ -254,12 +255,11 @@ class SubtitleConverter:
             shutil.rmtree(self.sub_dir)
         else:
             for track_id in self.subtitle_ids:
-                self.silent_remove(f"{self.sub_dir}/{track_id}.sup")
-                self.silent_remove(f"{self.sub_dir}/{track_id}.srt")
+                self.silent_remove(f"{self.sub_dir}\{track_id}.sup")
+                self.silent_remove(f"{self.sub_dir}\{track_id}.srt")
 
         if not self.keep_imgs and not self.keep_subs:
-            #os.rmdir(f"subtitles/{self.file_name}")
-            shutil.rmtree(f"subtitles/{self.file_name}")
+            shutil.rmtree(f"subtitles\{self.file_name}")
 
         if not self.keep_old_mkvs:
             os.remove(self.file_path)
@@ -273,8 +273,8 @@ class SubtitleConverter:
                 print(f"Processing {self.file_name}...")
 
                 self.mkv = pymkv.MKVFile(self.file_path)
-                self.img_dir = f"subtitles/{self.file_name}/img"
-                self.sub_dir = f"subtitles/{self.file_name}/subtitles"
+                self.img_dir = f"subtitles\{self.file_name}\img"
+                self.sub_dir = f"subtitles\{self.file_name}\subtitles"
 
                 self.extract_subtitles()
 
@@ -287,15 +287,16 @@ class SubtitleConverter:
 
                 if self.edit_flag:
                     print("You can now edit the new subtitle files. Press Enter when you are done.")
-                    print(f"They can be found at: {os.getcwd()}/{self.sub_dir}")
-                    os.system(f"explorer.exe {os.getcwd()}/{self.sub_dir}")
+                    print(f"They can be found at: {os.getcwd()}\{self.sub_dir}")
+                    if os.name == "nt":
+                        os.system(f"explorer.exe \"{os.getcwd()}\{self.sub_dir}\"")
                     input()
 
                 self.replace_subtitles()
 
                 # create empty .mkv file
                 new_file_dir = os.path.dirname(self.file_path)
-                new_file_name = f"{new_file_dir}/{self.file_name} (1).mkv"
+                new_file_name = f"{new_file_dir}\{self.file_name} (1).mkv"
 
                 open(new_file_name, "w").close()
                 

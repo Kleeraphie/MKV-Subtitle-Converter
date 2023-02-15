@@ -14,7 +14,10 @@ class SubtitleConverter:
 
     # TODO try to use pysubs2 in code
 
-    def __init__(self, files: list, edit_flag: bool = False, keep_imgs: bool = False, keep_old_mkvs: bool = False, keep_subs: bool = False, diff_langs: bool = False, sub_format: str = "SubRip Text (.srt)"):
+    def __init__(self, files: list = None, edit_flag: bool = False, keep_imgs: bool = False, keep_old_mkvs: bool = False, keep_subs: bool = False, diff_langs: bool = False, sub_format: str = "SubRip Text (.srt)"):
+        if files is None:
+            files = []
+        
         self.file_paths = files
         self.edit_flag = edit_flag
         self.keep_imgs = keep_imgs
@@ -43,7 +46,7 @@ class SubtitleConverter:
         if format not in self.sub_formats():
             return "srt"
 
-        return format[len(format) - 4:len(format) - 1]
+        return format[format.find('.') + 1:format.find(')')]
 
     def diff_langs_from_text(self, text) -> dict[str, str]:
         if text == "":

@@ -15,8 +15,12 @@ class ImageMaker:
             for y in range(img.height):
                 self.__sub_colors[img.getpixel((x, y))] = self.__sub_colors.get(img.getpixel((x, y)), 0) + 1
 
-        # get  second most common color in image save it as text color
-        self.__text_color = sorted(self.__sub_colors.items(), key=lambda x: x[1], reverse=True)[1][0]
+        if len(self.__sub_colors) > 1:
+            # get  second most common color in image save it as text color
+            self.__text_color = sorted(self.__sub_colors.items(), key=lambda x: x[1], reverse=True)[1][0]
+        else:
+            self.__text_color = self.__sub_colors[0][0]
+
 
     def read_rle_bytes(self, ods_bytes):
 

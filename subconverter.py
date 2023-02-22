@@ -181,16 +181,15 @@ class SubtitleConverter:
                 srt.append(SubRipItem(sub_index, start_time, end_time, sub_text))
                 sub_index += 1
 
-        # check and save SRT file
-        srt.save(srt_file)
-        srtchecker.check_srt(srt_file, True)
+        srt.save(srt_file) # save as SRT file
+        srtchecker.check_srt(srt_file, True) # check SRT file for common OCR mistakes
 
     def replace_subtitles(self):
         deleted_tracks = 0
 
         print(f"Replacing subtitles in {self.file_name}...")
         for track_id in self.subtitle_ids:
-            sub_path = f"{self.sub_dir}\{track_id}.{str.lower(self.format)}"
+            sub_path = f"{self.sub_dir}\{track_id}.{self.format}"
 
             # if a subtitle was deleted during editing
             if not os.path.exists(sub_path):
@@ -214,8 +213,8 @@ class SubtitleConverter:
 
             new_size -= os.path.getsize(f"{path}.sup")
 
-            if os.path.exists(f"{path}.{str.lower(self.format)}"):
-                new_size += os.path.getsize(f"{path}.{str.lower(self.format)}")
+            if os.path.exists(f"{path}.{self.format}"):
+                new_size += os.path.getsize(f"{path}.{self.format}")
 
         return new_size
 
@@ -256,7 +255,9 @@ class SubtitleConverter:
         else:
             for track_id in self.subtitle_ids:
                 self.silent_remove(f"{self.sub_dir}\{track_id}.sup")
-                self.silent_remove(f"{self.sub_dir}\{track_id}.srt")
+
+                if self.format != "srt":
+                    self.silent_remove(f"{self.sub_dir}\{track_id}.srt")
 
         if not self.keep_imgs and not self.keep_subs:
             shutil.rmtree(f"subtitles\{self.file_name}")

@@ -8,13 +8,43 @@ class ImageMaker:
     def __init__(self):
         self.__text_color = None
         self.__sub_colors = {}
+        self.__color_diff = 25
 
-    def get_sub_colors(self, img: Image):
+    def is_similar_color(self, color1, color2):
+        # check if two colors are similar to each other
+        # if they are similar return True else return False
+        # color1 and color2 are tuples of RGB values
+        # if the difference between any two color values is less than 10 return True
+        # else return False
+        if color1 is None or color2 is None:
+            return False
+        
+        return abs(color1[0] - color2[0]) < self.__color_diff and abs(color1[1] - color2[1]) < self.__color_diff and abs(color1[2] - color2[2]) < self.__color_diff
+
+    def count_sub_colors(self, img: Image):
         self.__sub_colors = {}
+        last_color = None
+
         for x in range(img.width):
             for y in range(img.height):
-                self.__sub_colors[img.getpixel((x, y))] = self.__sub_colors.get(img.getpixel((x, y)), 0) + 1
+                color = img.getpixel((x, y))
 
+                if color in self.__sub_colors:
+                    self.__sub_colors[color] += 1
+                    last_color = color
+                elif self.is_similar_color(color, last_color):
+                    self.__sub_colors[last_color] += 1
+                else:
+                    # TODO check if this needs optimization
+                    for key in self.__sub_colors:
+                        if self.is_similar_color(color, key):
+                            self.__sub_colors[key] += 1
+                            last_color = key
+                            break
+                    else:
+                        self.__sub_colors[color] = 1
+
+    def find_text_color(self):
         if len(self.__sub_colors) > 1:
             # get  second most common color in image save it as text color
             self.__text_color = sorted(self.__sub_colors.items(), key=lambda x: x[1], reverse=True)[1][0]
@@ -101,12 +131,13 @@ class ImageMaker:
         img = img.convert("RGB")
 
         if self.__text_color is None:
-            self.get_sub_colors(img)
+            self.count_sub_colors(img)
+            self.find_text_color()
 
         pixels = img.getdata()
         new_data = []
         for pixel in pixels:
-            if pixel == self.__text_color:
+            if self.is_similar_color(pixel, self.__text_color):
                 new_data.append((0, 0, 0))
             else:
                 new_data.append((255, 255, 255))

@@ -49,8 +49,7 @@ class ImageMaker:
             # get  second most common color in image save it as text color
             self.__text_color = sorted(self.__sub_colors.items(), key=lambda x: x[1], reverse=True)[1][0]
         else:
-            self.__text_color = self.__sub_colors[0][0]
-
+            self.__text_color = list(self.__sub_colors.keys())[0]
 
     def read_rle_bytes(self, ods_bytes):
 

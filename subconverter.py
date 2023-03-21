@@ -98,8 +98,33 @@ class SubtitleConverter:
         for thread in thread_pool:
             thread.join()
 
+    def ask_text_color(self) -> str:
+        track_id = self.subtitle_ids[0]
+        pgs_file = f"{self.sub_dir}\{track_id}.sup"
+
+        pgs = pgsreader.PGSReader(pgs_file)
+        
+        if self.keep_imgs:
+            os.makedirs(f"{self.img_dir}\{track_id}", exist_ok=True)
+
+        # loading DisplaySets
+        all_sets = [ds for ds in tqdm(pgs.iter_displaysets(), unit="ds")]
+
+        if pgsreader.exit_code != 0:
+            return
+
+        im = ImageMaker()
+        for ds in tqdm(all_sets, unit="ds"):
+            if ds.has_image:
+                pds = ds.pds[0] # get Palette Definition Segment
+                ods = ds.ods[0] # get Object Definition Segment
+                img = im.make_image(ods, pds)
+                break # TODO add exit code check for ImageMaker
+
     def convert_subtitles(self): # convert PGS subtitles to SRT subtitles
         thread_pool = []
+
+        text_color = self.ask_text_color()
 
         for id in self.subtitle_ids:
             track: pymkv.MKVTrack

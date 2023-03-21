@@ -85,6 +85,10 @@ class SubtitleConverter:
                 if track.track_codec != "HDMV PGS":
                     continue
 
+                if os.path.exists(f"{self.sub_dir}\{track_id}.sup"):
+                    self.subtitle_ids.append(track_id)
+                    continue
+
                 thread = threading.Thread(name=f"Extract subtitle #{track_id}", target=self.extract, args=([track_id]))
                 thread.start()
                 thread_pool.append(thread)

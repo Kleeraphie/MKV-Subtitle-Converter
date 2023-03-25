@@ -10,6 +10,7 @@ import threading
 import time
 import shutil
 import pysubs2
+import PySimpleGUI as sg
 
 class SubtitleConverter:
 
@@ -120,6 +121,24 @@ class SubtitleConverter:
                 ods = ds.ods[0] # get Object Definition Segment
                 img = im.make_image(ods, pds)
                 break # TODO add exit code check for ImageMaker
+
+        if img: # warum?
+            self.layout = [
+                [sg.Text("Please select the text color of the subtitle image:")],
+                [sg.Image(filename="current.png")],
+                [sg.HSeparator()],
+                [sg.Text("Selected color:", visible=False), sg.Text("", enable_events=True, key="-color-", visible=False)],
+                [sg.Button("Continue", enable_events=True, key="-continue-")] # TODO Center
+                #TODO Eine Vorschau zeigen, wie das Bild dann s/w aussieht
+            ]
+
+            self.window = sg.Window(f"Find text color for \"{self.file_name}\"", self.layout, keep_on_top=True)
+
+            while True: # Run the Event Loop
+                event, values = self.window.read()
+
+                if event == "-continue-":
+                    return None
 
     def convert_subtitles(self): # convert PGS subtitles to SRT subtitles
         thread_pool = []

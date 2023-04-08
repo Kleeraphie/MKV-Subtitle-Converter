@@ -11,6 +11,7 @@ import time
 import shutil
 import pysubs2
 import PySimpleGUI as sg
+from PIL import Image
 
 class SubtitleConverter:
 
@@ -99,7 +100,7 @@ class SubtitleConverter:
         for thread in thread_pool:
             thread.join()
 
-    def ask_text_color(self) -> str:
+    def ask_text_color(self) -> str | None:
         track_id = self.subtitle_ids[0]
         pgs_file = f"{self.sub_dir}\{track_id}.sup"
 
@@ -114,7 +115,7 @@ class SubtitleConverter:
         if pgsreader.exit_code != 0:
             return
 
-        im = ImageMaker()
+        im = ImageMaker(self.__text_color)
         for ds in tqdm(all_sets, unit="ds"):
             if ds.has_image:
                 pds = ds.pds[0] # get Palette Definition Segment
@@ -122,28 +123,52 @@ class SubtitleConverter:
                 img = im.make_image(ods, pds)
                 break # TODO add exit code check for ImageMaker
 
-        if img: # warum?
-            self.layout = [
-                [sg.Text("Please select the text color of the subtitle image:")],
-                [sg.Image(filename="current.png")],
-                [sg.HSeparator()],
-                [sg.Text("Selected color:", visible=False), sg.Text("", enable_events=True, key="-color-", visible=False)],
-                [sg.Button("Continue", enable_events=True, key="-continue-")] # TODO Center
-                #TODO Eine Vorschau zeigen, wie das Bild dann s/w aussieht
-            ]
+        if not img: # warum?, zu not ändern um wieder eins zurückzurücken
+            self.window.close()
+            return None
+            
+        img_file = Image.open("current.png")
 
-            self.window = sg.Window(f"Find text color for \"{self.file_name}\"", self.layout, keep_on_top=True)
+        self.layout = [
+            [sg.Text("Please select the text color of the subtitle image:")],
+            [sg.Graph(img_file.size, (0, img_file.height), (img_file.width, 0), key="-img_graph-", enable_events=True)],
+            [sg.HSeparator()],
+            [sg.Text("Selected color:", visible=True), sg.Text("", enable_events=True, key="-color-", visible=True)],
+            [sg.Button("Continue", enable_events=True, key="-continue-")] # TODO Center, Cancel hinzufügen
+            #TODO Eine Vorschau zeigen, wie das Bild dann s/w aussieht
+        ]
 
-            while True: # Run the Event Loop
-                event, values = self.window.read()
+        self.window = sg.Window(f"Find text color for \"{self.file_name}\"", self.layout, finalize=True)
 
-                if event == "-continue-":
-                    return None
+        self.window["-img_graph-"].draw_image("current.png", location=(0, 0))
+
+        while True: # Run the Event Loop
+            event, values = self.window.read()
+
+            if event == "-img_graph-":
+                # get coordinates of clicked pixel
+                coordinate = values["-img_graph-"]
+                print(coordinate)
+                # get color of clicked pixel in img_file
+                try:
+                    color = img_file.getpixel(coordinate)
+                    # update color text to show selected color in rgb
+                    self.window["-color-"].update(f"({color[0]}, {color[1]}, {color[2]})")
+                    self.window["-continue-"].update(disabled=False)
+                except IndexError:
+                    pass
+                
+
+            elif event == "-continue-":
+                self.window.close() # kann das self weg?
+                print(color)
+                return color
+            elif event == sg.WIN_CLOSED:
+                self.window.close()
+                return None
 
     def convert_subtitles(self): # convert PGS subtitles to SRT subtitles
         thread_pool = []
-
-        text_color = self.ask_text_color()
 
         for id in self.subtitle_ids:
             track: pymkv.MKVTrack
@@ -152,6 +177,10 @@ class SubtitleConverter:
             # get language to use in subtitle
             lang_code = track.language
             language = self.get_lang(lang_code)
+
+            # if text color is None, execute ask_text_color and wait for user input
+            if self.__text_color is None:
+                self.__text_color = self.ask_text_color()
 
             thread = threading.Thread(name=f"Convert subtitle #{id}", target=self.convert_to_srt, args=(language, id))
             thread.start()
@@ -324,6 +353,7 @@ class SubtitleConverter:
                 self.mkv = pymkv.MKVFile(self.file_path)
                 self.img_dir = f"subtitles\{self.file_name}\img"
                 self.sub_dir = f"subtitles\{self.file_name}\subtitles"
+                self.__text_color = None
 
                 self.extract_subtitles()
 

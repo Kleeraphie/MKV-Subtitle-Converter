@@ -133,11 +133,16 @@ class SubtitleConverter:
             [sg.Text("Please select the text color of the subtitle image:")],
             [sg.Graph(img_file.size, (0, img_file.height), (img_file.width, 0), key="-img_graph-", enable_events=True)],
             [sg.HSeparator()], # TODO make invisible if no color is selected
-            [sg.Text("Selected color:", visible=False, key="sel_color_text"), sg.Canvas(size=(15, 15), visible=False, key="-canvas-")],
+            [
+                sg.Text("Selected color:", visible=False, key="sel_color_text"),
+                sg.Canvas(size=(15, 15), visible=False, key="-canvas-")
+            ],
             [sg.Text("Preview:", visible=False, key="-preview_text-")],
             [sg.Graph(img_file.size, (0, img_file.height), (img_file.width, 0), visible=False, key="-sw_img_graph-", enable_events=True)],
-            [sg.Button("Continue", disabled=True, enable_events=True, key="-continue-")] # TODO Center, Cancel hinzufügen
-            #TODO Eine Vorschau zeigen, wie das Bild dann s/w aussieht
+            [
+                sg.Button("Continue", disabled=True, enable_events=True, key="-continue-"),
+                sg.Button("Cancel", enable_events=True, key="-cancel-")
+            ] # TODO Center buttons
         ]
 
         self.window = sg.Window(f"Find text color for \"{self.file_name}\"", self.layout, finalize=True)
@@ -175,7 +180,7 @@ class SubtitleConverter:
                 self.window.close() # kann das self weg?
                 print(rgb_color)
                 return rgb_color
-            elif event == sg.WIN_CLOSED:
+            elif event == sg.WIN_CLOSED or event == "-cancel-":
                 self.window.close()
                 return None
 

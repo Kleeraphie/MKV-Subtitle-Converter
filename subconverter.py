@@ -132,9 +132,11 @@ class SubtitleConverter:
         self.layout = [
             [sg.Text("Please select the text color of the subtitle image:")],
             [sg.Graph(img_file.size, (0, img_file.height), (img_file.width, 0), key="-img_graph-", enable_events=True)],
-            [sg.HSeparator()],
-            [sg.Text("Selected color:", visible=True), sg.Text("", enable_events=True, key="-color-", visible=True)],
-            [sg.Button("Continue", enable_events=True, key="-continue-")] # TODO Center, Cancel hinzufügen
+            [sg.HSeparator()], # TODO make invisible if no color is selected
+            [sg.Text("Selected color:", visible=False, key="sel_color_text"), sg.Canvas(size=(15, 15), visible=False, key="-canvas-")],
+            [sg.Text("Preview:", visible=False, key="-preview_text-")],
+            [sg.Graph(img_file.size, (0, img_file.height), (img_file.width, 0), visible=False, key="-sw_img_graph-", enable_events=True)],
+            [sg.Button("Continue", disabled=True, enable_events=True, key="-continue-")] # TODO Center, Cancel hinzufügen
             #TODO Eine Vorschau zeigen, wie das Bild dann s/w aussieht
         ]
 
@@ -146,23 +148,33 @@ class SubtitleConverter:
             event, values = self.window.read()
 
             if event == "-img_graph-":
-                # get coordinates of clicked pixel
-                coordinate = values["-img_graph-"]
-                print(coordinate)
-                # get color of clicked pixel in img_file
+                coordinate = values["-img_graph-"] # coordinates of clicked pixel
+                
                 try:
-                    color = img_file.getpixel(coordinate)
+                    # get color of clicked pixel in img_file
+                    rgb_color = img_file.getpixel(coordinate)
+                    hex_color = "#%02x%02x%02x" % rgb_color
+
+                    sw_img_file = im.filter_image("current.png", rgb_color)
+                    sw_img_file.save("current_sw.png")
+
                     # update color text to show selected color in rgb
-                    self.window["-color-"].update(f"({color[0]}, {color[1]}, {color[2]})")
+                    self.window["-canvas-"].TKCanvas.create_rectangle(0, 0, 50, 50, fill=hex_color)
+                    self.window["-sw_img_graph-"].draw_image("current_sw.png", location=(0, 0))
+
+                    self.window["sel_color_text"].update(visible=True)
+                    self.window["-canvas-"].update(visible=True)
+                    self.window["-preview_text-"].update(visible=True)
+                    self.window["-sw_img_graph-"].update(visible=True)
+
                     self.window["-continue-"].update(disabled=False)
                 except IndexError:
                     pass
                 
-
             elif event == "-continue-":
                 self.window.close() # kann das self weg?
-                print(color)
-                return color
+                print(rgb_color)
+                return rgb_color
             elif event == sg.WIN_CLOSED:
                 self.window.close()
                 return None

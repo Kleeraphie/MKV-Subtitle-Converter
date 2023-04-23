@@ -149,15 +149,7 @@ class ImageMaker:
             self.reduce_sub_colors()
             self.find_text_color()
 
-        pixels = img.getdata()
-        new_data = []
-        for pixel in pixels:
-            if self.is_similar_color(pixel, self.__text_color):
-                new_data.append((0, 0, 0))
-            else:
-                new_data.append((255, 255, 255))
-
-        img.putdata(new_data)
+        img = self.filter_image("current.png", self.__text_color)
 
         scale = 1
         padding = 25
@@ -174,3 +166,19 @@ class ImageMaker:
         img = new_img
 
         return img
+    
+    def filter_image(self, path_to_img, color):
+        img = Image.open(path_to_img)
+        pixels = img.getdata()
+        new_data = []
+        
+        for pixel in pixels:
+            if self.is_similar_color(pixel, color):
+                new_data.append((0, 0, 0))
+            else:
+                new_data.append((255, 255, 255))
+
+        img.putdata(new_data)
+
+        return img
+

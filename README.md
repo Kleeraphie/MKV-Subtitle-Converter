@@ -5,7 +5,7 @@ Using text based subtitles instead of PGS subtitles is useful because they can b
 
 ## Requirements
 
-- The program needs [Tesseract](https://github.com/tesseract-ocr/tesseract) to be installed to use OCR. If you use Windows, you also need to put the `tessdata` folder in your PATH.
+- The program needs [Tesseract](https://github.com/tesseract-ocr/tesseract) to be installed to use OCR. If you use Windows, you also need to put the `Tesseract-OCR` folder in your PATH.
 - To extract and replace the subtitles the program also needs [MKVToolNix](https://mkvtoolnix.download/).
 
 ## Tips

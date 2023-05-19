@@ -1,6 +1,4 @@
-img/
-*.srt
-*.sup
+subtitles/
 *.mkv
 __pycache__/
 build/
@@ -8,3 +6,4 @@ dist/
 *.spec
 *.iss
 Output/
+*.png

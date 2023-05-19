@@ -100,7 +100,7 @@ class SubtitleConverter:
         for thread in thread_pool:
             thread.join()
 
-    def ask_text_color(self) -> str | None:
+    def ask_text_color(self) -> tuple|None:
         track_id = self.subtitle_ids[0]
         pgs_file = f"{self.sub_dir}\{track_id}.sup"
 
@@ -115,7 +115,7 @@ class SubtitleConverter:
         if pgsreader.exit_code != 0:
             return
 
-        im = ImageMaker(self.__text_color)
+        im = ImageMaker(0, self.__text_color)
         for ds in tqdm(all_sets, unit="ds"):
             if ds.has_image:
                 pds = ds.pds[0] # get Palette Definition Segment
@@ -127,7 +127,7 @@ class SubtitleConverter:
             self.window.close()
             return None
             
-        img_file = Image.open("current.png")
+        img_file = Image.open("current 0.png")
 
         self.layout = [
             [sg.Text("Please select the text color of the subtitle image:")],
@@ -147,7 +147,7 @@ class SubtitleConverter:
 
         self.window = sg.Window(f"Find text color for \"{self.file_name}\"", self.layout, finalize=True)
 
-        self.window["-img_graph-"].draw_image("current.png", location=(0, 0))
+        self.window["-img_graph-"].draw_image("current 0.png", location=(0, 0))
 
         while True: # Run the Event Loop
             event, values = self.window.read()
@@ -160,12 +160,12 @@ class SubtitleConverter:
                     rgb_color = img_file.getpixel(coordinate)
                     hex_color = "#%02x%02x%02x" % rgb_color
 
-                    sw_img_file = im.filter_image("current.png", rgb_color)
-                    sw_img_file.save("current_sw.png")
+                    sw_img_file = im.filter_image("current 0.png", rgb_color)
+                    sw_img_file.save("current_sw 0.png")
 
                     # update color text to show selected color in rgb
                     self.window["-canvas-"].TKCanvas.create_rectangle(0, 0, 50, 50, fill=hex_color)
-                    self.window["-sw_img_graph-"].draw_image("current_sw.png", location=(0, 0))
+                    self.window["-sw_img_graph-"].draw_image("current_sw 0.png", location=(0, 0))
 
                     self.window["sel_color_text"].update(visible=True)
                     self.window["-canvas-"].update(visible=True)
@@ -178,7 +178,8 @@ class SubtitleConverter:
                 
             elif event == "-continue-":
                 self.window.close() # kann das self weg?
-                print(rgb_color)
+                os.remove("current 0.png")
+                os.remove("current_sw 0.png")
                 return rgb_color
             elif event == sg.WIN_CLOSED or event == "-cancel-":
                 self.window.close()
@@ -198,6 +199,10 @@ class SubtitleConverter:
             # if text color is None, execute ask_text_color and wait for user input
             if self.__text_color is None:
                 self.__text_color = self.ask_text_color()
+
+            if self.__text_color is None:
+                print("No text color selected. Trying to determine text color automatically...")
+                #raise Exception("No text color selected")
 
             thread = threading.Thread(name=f"Convert subtitle #{id}", target=self.convert_to_srt, args=(language, id))
             thread.start()
@@ -255,7 +260,7 @@ class SubtitleConverter:
         sub_text = ""
         sub_start = 0
         sub_index = 0
-        im = ImageMaker()
+        im = ImageMaker(track_id)
         for ds in tqdm(all_sets, unit="ds"):
             if ds.has_image:
                 pds = ds.pds[0] # get Palette Definition Segment

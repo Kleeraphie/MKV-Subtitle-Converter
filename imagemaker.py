@@ -5,7 +5,8 @@ from PIL import Image
 
 class ImageMaker:
 
-    def __init__(self, text_color=None):
+    def __init__(self, id: int, text_color: tuple|None = None):
+        self.__id = id
         self.__text_color = text_color
         self.__sub_colors = {}
 
@@ -141,15 +142,16 @@ class ImageMaker:
         img.putpalette(rgb)
         img.putalpha(alpha)
         img = img.convert("RGB")
+        img_path = f"current {self.__id}.png"
 
-        img.save("current.png")
+        img.save(img_path)
 
         if self.__text_color is None:
             self.count_sub_colors(img)
             self.reduce_sub_colors()
             self.find_text_color()
 
-        img = self.filter_image("current.png", self.__text_color)
+        img = self.filter_image(img_path, self.__text_color)
 
         scale = 1
         padding = 25

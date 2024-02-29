@@ -2,67 +2,12 @@
 
 import numpy as np
 from PIL import Image
+import cv2
 
 class ImageMaker:
 
-    def __init__(self, id: int, text_color: tuple|None = None):
+    def __init__(self, id: int):
         self.__id = id
-        self.__text_color = text_color
-        self.__sub_colors = {}
-
-    def is_similar_color(self, color1, color2, color_diff:int =25):
-        if color1 is None or color2 is None:
-            return False
-        
-        return abs(color1[0] - color2[0]) < color_diff and abs(color1[1] - color2[1]) < color_diff and abs(color1[2] - color2[2]) < color_diff
-    
-    def get_similiarity(self, color1, color2):
-        return abs(color1[0] - color2[0]) + abs(color1[1] - color2[1]) + abs(color1[2] - color2[2]) / 3
-    
-    def reduce_sub_colors(self):
-        temp_sub_colors = {}
-        for color in self.__sub_colors.copy():
-
-            if color not in self.__sub_colors:
-                continue
-
-            most_common_similiar_color = color
-            most_common_similiar_color_count = self.__sub_colors[color]
-            similar_colors = []
-            similar_colors_count = 0
-
-            for color2 in self.__sub_colors.copy():
-                if self.is_similar_color(color, color2):
-                    similar_colors.append(color2)
-                    similar_colors_count += self.__sub_colors[color2]
-
-                    if self.__sub_colors[color2] > most_common_similiar_color_count:
-                        most_common_similiar_color = color2
-                        most_common_similiar_color_count = self.__sub_colors[color2]
-
-            for color2 in similar_colors:
-                    self.__sub_colors.pop(color2)
-
-            temp_sub_colors[most_common_similiar_color] = similar_colors_count
-
-        self.__sub_colors = temp_sub_colors
-        #TODO remove temp_sub_colors, only use self.__sub_colors
-
-    def count_sub_colors(self, img: Image):
-        self.__sub_colors = {}
-
-        for x in range(img.width):
-            for y in range(img.height):
-                color = img.getpixel((x, y))
-                self.__sub_colors[color] = self.__sub_colors.get(color, 0) + 1
-
-    def find_text_color(self):
-        grey = (160, 160, 160)
-        similiarity = 256
-        for color in self.__sub_colors:
-            if self.get_similiarity(color, grey) < similiarity:
-                similiarity = self.get_similiarity(color, grey)
-                self.__text_color = color
 
 
     def read_rle_bytes(self, ods_bytes):
@@ -142,16 +87,24 @@ class ImageMaker:
         img.putpalette(rgb)
         img.putalpha(alpha)
         img = img.convert("RGB")
-        img_path = f"current {self.__id}.png"
 
-        img.save(img_path)
+        image = np.array(img)
 
-        if self.__text_color is None:
-            self.count_sub_colors(img)
-            self.reduce_sub_colors()
-            self.find_text_color()
+        # Convert image to HSV color space
+        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        v_channel = hsv_image[:,:,2]
+        max_v_value = np.max(v_channel)
 
-        img = self.filter_image(img_path, self.__text_color)
+        # Create a mask to only select the pixels with the highest V value
+        mask = cv2.inRange(v_channel, np.array(max_v_value - 25), np.array(max_v_value + 25))
+
+        # create empty black image
+        result = np.full((image.shape[0], image.shape[1], 3), 255, dtype=np.uint8)
+
+        # set pixels of mask to white
+        result[mask == 255] = [0, 0, 0]
+
+        img = Image.fromarray(result)
 
         scale = 1
         padding = 25
@@ -168,19 +121,3 @@ class ImageMaker:
         img = new_img
 
         return img
-    
-    def filter_image(self, path_to_img, color):
-        img = Image.open(path_to_img)
-        pixels = img.getdata()
-        new_data = []
-        
-        for pixel in pixels:
-            if self.is_similar_color(pixel, color):
-                new_data.append((0, 0, 0))
-            else:
-                new_data.append((255, 255, 255))
-
-        img.putdata(new_data)
-
-        return img
-

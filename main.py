@@ -9,8 +9,8 @@ if __name__ == '__main__':
 
     if exit_code == 0:
         diff_langs = values["-diff_langs-"] if values["-diff-"] else ""
-        sc = SubtitleConverter(gui.selected_paths, values["-edit-"], values["-save-"], values["-keep_old_mkvs-"], values["-keep_subs-"],
-                               sc.diff_langs_from_text(diff_langs), sc.sub_format_extension(values["-format-"]))
+        sc = SubtitleConverter(gui.selected_paths, values["-edit-"], values["-save-"], values["-keep_old_mkvs-"], values["-keep_old_subs-"],
+                               values["-keep_new_subs-"], sc.diff_langs_from_text(diff_langs), sc.sub_format_extension(values["-format-"]))
                 
         sc.convert()
     elif exit_code == 1:

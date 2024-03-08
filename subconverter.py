@@ -15,7 +15,7 @@ from PIL import Image
 
 class SubtitleConverter:
 
-    def __init__(self, files: list = None, edit_flag: bool = False, keep_imgs: bool = False, keep_old_mkvs: bool = False, keep_subs: bool = False, diff_langs: bool = False, sub_format: str = "SubRip Text (.srt)"):
+    def __init__(self, files: list = None, edit_flag: bool = False, keep_imgs: bool = False, keep_old_mkvs: bool = False, keep_old_subs: bool = False, keep_new_subs: bool = False, diff_langs: bool = False, sub_format: str = "SubRip Text (.srt)"):
         if files is None:
             files = []
         
@@ -23,7 +23,8 @@ class SubtitleConverter:
         self.edit_flag = edit_flag
         self.keep_imgs = keep_imgs
         self.keep_old_mkvs = keep_old_mkvs
-        self.keep_subs = keep_subs
+        self.keep_old_subs = keep_old_subs
+        self.keep_new_subs = keep_new_subs
         self.diff_langs = diff_langs
         self.format = sub_format
 
@@ -256,17 +257,17 @@ class SubtitleConverter:
 
         print("Cleaning up...\n")
 
-        if not self.keep_subs:
-            shutil.rmtree(self.sub_dir)
-        else:
+        if not (self.keep_old_subs or self.keep_new_subs):
+            if not self.keep_imgs:
+                shutil.rmtree(f"subtitles\{self.file_name}")
+            else:
+                shutil.rmtree(self.sub_dir)
+        elif not self.keep_old_subs:
             for track_id in self.subtitle_ids:
                 self.silent_remove(f"{self.sub_dir}\{track_id}.sup")
-
-                if self.format != "srt":
-                    self.silent_remove(f"{self.sub_dir}\{track_id}.srt")
-
-        if not self.keep_imgs and not self.keep_subs:
-            shutil.rmtree(f"subtitles\{self.file_name}")
+        elif not self.keep_new_subs:
+            for track_id in self.subtitle_ids:
+                self.silent_remove(f"{self.sub_dir}\{track_id}.srt")
 
         if not self.keep_old_mkvs:
             os.remove(self.file_path)

@@ -36,7 +36,8 @@ class GUI:
             [sg.Checkbox("Edit subtitles before muxing", key="-edit-")],
             [sg.Checkbox("Save images of PGS subtitles", key="-save-")],
             [sg.Checkbox("Keep original MKV files", key="-keep_old_mkvs-")],
-            [sg.Checkbox("Keep a copy of the new subtitle files", key="-keep_subs-")],
+            [sg.Checkbox("Keep a copy of the old subtitle files", key="-keep_old_subs-", default=True)],
+            [sg.Checkbox("Keep a copy of the new subtitle files", key="-keep_new_subs-")],
             [sg.Checkbox("Use different language for some subtitles", enable_events=True, key="-diff-")],
             [sg.Text(text="Usage: one change per line; old language code -> new language code, example: ger -> eng", visible=False, key="-diff_langs_text-")],
             [sg.Multiline(enable_events=True, size=(89, 20), key="-diff_langs-", visible=False)]

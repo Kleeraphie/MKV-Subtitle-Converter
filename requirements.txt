@@ -1,0 +1,10 @@
+PySimpleGUI
+numpy
+Pillow
+opencv-python
+pymkv
+pytesseract
+tqdm
+pysrt
+pysubs2
+# pyinstaller  # if you want to build the executable yourself

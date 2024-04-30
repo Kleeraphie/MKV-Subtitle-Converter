@@ -1,4 +1,4 @@
-PySimpleGUI
+PySimpleGUI==4.60.5
 numpy
 Pillow
 opencv-python
@@ -7,4 +7,5 @@ pytesseract
 tqdm
 pysrt
 pysubs2
+requests
 # pyinstaller  # if you want to build the executable yourself

@@ -10,8 +10,6 @@ import threading
 import time
 import shutil
 import pysubs2
-import PySimpleGUI as sg
-from PIL import Image
 
 class SubtitleConverter:
 

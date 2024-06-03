@@ -40,7 +40,10 @@ class GUI:
             [sg.Checkbox("Keep a copy of the new subtitle files", key="-keep_new_subs-")],
             [sg.Checkbox("Use different language for some subtitles", enable_events=True, key="-diff-")],
             [sg.Text(text="Usage: one change per line; old language code -> new language code, example: ger -> eng", visible=False, key="-diff_langs_text-")],
-            [sg.Multiline(enable_events=True, size=(89, 20), key="-diff_langs-", visible=False)]
+            [sg.Multiline(enable_events=True, size=(89, 20), key="-diff_langs-", visible=False)],
+            [
+                sg.Text(text="Allowed text color brightness deviation [%]"),
+                sg.Slider(range=(0, 100), default_value=10, orientation="horizontal", enable_events=True, key="-brightness_diff-")]
         ]
 
         self.layout = [

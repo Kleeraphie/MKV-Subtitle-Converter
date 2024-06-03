@@ -6,8 +6,8 @@ import cv2
 
 class ImageMaker:
 
-    def __init__(self, id: int):
-        self.__id = id
+    def __init__(self, brighness_diff: float):
+        self.brightness_diff = 255 * brighness_diff
 
 
     def read_rle_bytes(self, ods_bytes):
@@ -93,10 +93,10 @@ class ImageMaker:
         # Convert image to HSV color space
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
         v_channel = hsv_image[:,:,2]
-        max_v_value = np.max(v_channel)
+        max_v_value = np.max(v_channel)  # maximum brightness value, should be the text color
 
-        # Create a mask to only select the pixels with the highest V value
-        mask = cv2.inRange(v_channel, np.array(max_v_value - 25), np.array(max_v_value + 25))
+        # Create a mask to only select the pixels with the highest V value (+- 1% tolerance)
+        mask = cv2.inRange(v_channel, np.array(max_v_value - self.brightness_diff), np.array(max_v_value + self.brightness_diff))
 
         # create empty black image
         result = np.full((image.shape[0], image.shape[1], 3), 255, dtype=np.uint8)

@@ -13,7 +13,7 @@ import pysubs2
 
 class SubtitleConverter:
 
-    def __init__(self, files: list = None, edit_flag: bool = False, keep_imgs: bool = False, keep_old_mkvs: bool = False, keep_old_subs: bool = False, keep_new_subs: bool = False, diff_langs: bool = False, sub_format: str = "SubRip Text (.srt)"):
+    def __init__(self, files: list = None, edit_flag: bool = False, keep_imgs: bool = False, keep_old_mkvs: bool = False, keep_old_subs: bool = False, keep_new_subs: bool = False, diff_langs: bool = False, sub_format: str = "SubRip Text (.srt)", text_brightness_diff: float = 0.1):
         if files is None:
             files = []
         
@@ -25,6 +25,7 @@ class SubtitleConverter:
         self.keep_new_subs = keep_new_subs
         self.diff_langs = diff_langs
         self.format = sub_format
+        self.text_brightness_diff = text_brightness_diff
 
     def sub_formats(self) -> list[str]:
         subs = [
@@ -166,7 +167,7 @@ class SubtitleConverter:
         sub_text = ""
         sub_start = 0
         sub_index = 0
-        im = ImageMaker(track_id)
+        im = ImageMaker(self.text_brightness_diff)
         for ds in tqdm(all_sets, unit=" ds"):
             if ds.has_image:
                 pds = ds.pds[0] # get Palette Definition Segment

@@ -1,4 +1,4 @@
-import pymkv
+import ffmpeg
 import os
 import pytesseract
 import pgsreader
@@ -10,6 +10,7 @@ import threading
 import time
 import shutil
 import pysubs2
+from pprint import pprint
 
 class SubtitleConverter:
 
@@ -77,38 +78,35 @@ class SubtitleConverter:
     def extract_subtitles(self) -> list[int]:
         self.subtitle_ids = []
         thread_pool = []
+        probe = ffmpeg.probe(self.file_path)
+        subtitle_streams = [stream for stream in probe['streams'] if stream['codec_name'] == 'hdmv_pgs_subtitle']
 
-        for track in self.mkv.tracks:
-            if track.track_type == "subtitles":
+        for subtitle in subtitle_streams:
+            track_id = subtitle['index']
 
-                track: pymkv.MKVTrack
-                track_id = track.track_id
-
-                if track.track_codec != "HDMV PGS":
-                    continue
-
-                if os.path.exists(f"{self.sub_dir}\{track_id}.sup"):
-                    self.subtitle_ids.append(track_id)
-                    continue
-
-                thread = threading.Thread(name=f"Extract subtitle #{track_id}", target=self.extract, args=([track_id]))
-                thread.start()
-                thread_pool.append(thread)
-
+            if os.path.exists(f"{self.sub_dir}\{track_id}.sup"):
                 self.subtitle_ids.append(track_id)
+                continue
+
+            thread = threading.Thread(name=f"Extract subtitle #{track_id}", target=self.extract, args=([track_id]))
+            thread.start()
+            thread_pool.append(thread)
+
+            self.subtitle_ids.append(track_id)
 
         for thread in thread_pool:
             thread.join()
 
     def convert_subtitles(self): # convert PGS subtitles to SRT subtitles
         thread_pool = []
+        probe = ffmpeg.probe(self.file_path)
+        subtitle_streams = probe['streams']
 
         for id in self.subtitle_ids:
-            track: pymkv.MKVTrack
-            track = self.mkv.tracks[id]
+            subtitle = subtitle_streams[id]
 
             # get language to use in subtitle
-            lang_code = track.language
+            lang_code = subtitle['tags']['language']
             language = self.get_lang(lang_code)
 
             thread = threading.Thread(name=f"Convert subtitle #{id}", target=self.convert_to_srt, args=(language, id))
@@ -191,24 +189,74 @@ class SubtitleConverter:
         srtchecker.check_srt(srt_file, True) # check SRT file for common OCR mistakes
 
     def replace_subtitles(self):
-        deleted_tracks = 0
+        # TODO: after muxing, the player needs longer to load the video
+        new_file_dir = os.path.dirname(self.file_path)
+        new_file_path = f"{new_file_dir}\{self.file_name} (1).mkv"
 
         print(f"Replacing subtitles in {self.file_name}...")
+        # input_ffmpeg = ffmpeg.input(self.file_path)
+        # input_video = input_ffmpeg['v']
+        # input_audio = input_ffmpeg['a']
+
+        # # list of input streams
+        # streams = [input_video, input_audio]
+
+        # # Add subtitle streams to input streams list
+        # for track_id in self.subtitle_ids:
+        #     sub_path = os.path.join(self.sub_dir, f"{track_id}.{self.format}")
+        #     input_sub = ffmpeg.input(sub_path)
+        #     streams.append(input_sub['s'])
+
+        # # Output video with copied video and audio streams and new subtitle streams
+        # output_ffmpeg = ffmpeg.output(
+        #     *streams,
+        #     new_file_path,
+        #     vcodec='copy',
+        #     acodec='copy',
+        #     scodec='copy'
+        # )
+
+        probe = ffmpeg.probe(self.file_path)
+        # video_stream = [stream['index'] for stream in probe['streams'] if stream['codec_type'] == 'video']
+        # audio_stream = [stream['index'] for stream in probe['streams'] if stream['codec_type'] == 'audio']
+        # subtitle_streams = [stream['index'] for stream in probe['streams'] if stream['codec_type'] == 'subtitle']
+        # pprint(video_stream)
+        # pprint(audio_stream)
+        # pprint(subtitle_streams)
+
+        ffmpeg_cmd = f'ffmpeg -i \"{self.file_path}\"'
+
         for track_id in self.subtitle_ids:
-            sub_path = f"{self.sub_dir}\{track_id}.{self.format}"
+            sub_path = os.path.join(self.sub_dir, f"{track_id}.{self.format}")
+            ffmpeg_cmd += f' -i \"{sub_path}\"'
 
-            # if a subtitle was deleted during editing
-            if not os.path.exists(sub_path):
-                self.mkv.remove_track(track_id - deleted_tracks)
-                deleted_tracks += 1
-                continue
+        video_audio_streams = [stream['index'] for stream in probe['streams'] if stream['codec_type'] in ['video', 'audio']]
+        maps = [f"-map 0:{stream}" for stream in video_audio_streams]
 
-            track: pymkv.MKVTrack
-            track = self.mkv.tracks[track_id - deleted_tracks]
+        # ffmpeg_cmd += ' ' + ' '.join(maps)
 
-            # make new track from new .srt file and settings from old PGS subtitle
-            new_sub = pymkv.MKVTrack(sub_path, track_name=track.track_name, language=track.language, default_track=track.default_track, forced_track=track.forced_track)
-            self.mkv.replace_track(track_id - deleted_tracks, new_sub)
+        for i, track_id in enumerate(self.subtitle_ids):
+            maps.append(f" -map {i + 1}:0")
+
+        ffmpeg_cmd += ' ' + ' '.join(maps)
+
+        ffmpeg_cmd += f' -c:v copy -c:a copy -c:s copy'
+        ffmpeg_cmd += f' \"{new_file_path}\"'
+
+        # for track_id in self.subtitle_ids:
+        #     sub_path = os.path.join(self.sub_dir, f"{track_id}.{self.format}")
+        #     output_ffmpeg = ffmpeg.input(new_file_path)
+        #     output_ffmpeg = ffmpeg.input(sub_path)
+        #     output_ffmpeg = ffmpeg.output(output_ffmpeg, new_file_path, vcodec='copy', acodec='copy', scodec='copy')
+        #     print(' '.join(ffmpeg.compile(output_ffmpeg)))
+        #     ffmpeg.run(output_ffmpeg)
+
+        print(ffmpeg_cmd)
+        os.system(ffmpeg_cmd)        
+
+        # print(' '.join(ffmpeg.compile(output_ffmpeg)))
+        # ffmpeg.run(output_ffmpeg)
+        exit(0)
 
     # estimate new file size based on size of new subtitles
     def calc_size(self) -> int:
@@ -228,20 +276,21 @@ class SubtitleConverter:
         print("Muxing file...")
         new_file_dir = os.path.dirname(self.file_path)
         new_file_path = f"{new_file_dir}\{self.file_name} (1).mkv"
-        old_file_size = 0
+        self.video.output(new_file_path, vcodec='libx265', acodec='copy').run()
+        # old_file_size = 0
 
-        pbar = tqdm(total=self.calc_size(), unit='B', unit_scale=True, unit_divisor=1024)
+        # pbar = tqdm(total=self.calc_size(), unit='B', unit_scale=True, unit_divisor=1024)
 
-        thread = threading.Thread(name="Muxing", target=self.mkv.mux, args=(new_file_path, True))
-        thread.start()
+        # thread = threading.Thread(name="Muxing", target=self.video.output(new_file_path).run)
+        # thread.start()
 
-        while thread.is_alive():
-            new_file_size = os.path.getsize(new_file_path)
-            pbar.update(new_file_size - old_file_size)
-            old_file_size = new_file_size
-            time.sleep(0.1)
+        # while thread.is_alive():
+        #     new_file_size = os.path.getsize(new_file_path)
+        #     pbar.update(new_file_size - old_file_size)
+        #     old_file_size = new_file_size
+        #     time.sleep(0.1)
 
-        pbar.close()
+        # pbar.close()
 
     # remove file that may not exist anymore without throwing an error
     def silent_remove(self, file: str):
@@ -279,7 +328,6 @@ class SubtitleConverter:
             try:
                 print(f"Processing {self.file_name}...")
 
-                self.mkv = pymkv.MKVFile(self.file_path)
                 self.img_dir = f"subtitles\{self.file_name}\img"
                 self.sub_dir = f"subtitles\{self.file_name}\subtitles"
 

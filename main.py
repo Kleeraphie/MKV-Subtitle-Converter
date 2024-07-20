@@ -1,4 +1,4 @@
-__version__ = "v1.2.4"
+__version__ = "v1.2.5"
 
 from subconverter import SubtitleConverter
 from gui import GUI

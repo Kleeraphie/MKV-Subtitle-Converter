@@ -13,9 +13,7 @@ import pysubs2
 
 class SubtitleConverter:
 
-    def __init__(self, files: list = None, edit_flag: bool = False, keep_imgs: bool = False, keep_old_mkvs: bool = False, keep_old_subs: bool = False, keep_new_subs: bool = False, diff_langs: bool = False, sub_format: str = "SubRip Text (.srt)", text_brightness_diff: float = 0.1):
-        if files is None:
-            files = []
+    def __init__(self, files: list = [], edit_flag: bool = False, keep_imgs: bool = False, keep_old_mkvs: bool = False, keep_old_subs: bool = False, keep_new_subs: bool = False, diff_langs: bool = False, sub_format: str = "SubRip Text (.srt)", text_brightness_diff: float = 0.1):
         
         self.file_paths = files
         self.edit_flag = edit_flag
@@ -48,6 +46,34 @@ class SubtitleConverter:
             return "srt"
 
         return format[format.find('.') + 1:format.find(')')]
+    
+    def convert_language(self, lang: str) -> str:
+        '''
+        Convert the language code from ISO 639-2/B to ISO 639-2/T
+        which is used for OCR
+        '''
+        alt_lang_codes = {'alb': 'sqi',
+                          'arm': 'hye',
+                          'baq': 'eus',
+                          'bur': 'mya',
+                          'chi': 'zho',
+                          'cze': 'ces',
+                          'dut': 'nld',
+                          'fre': 'fra',
+                          'geo': 'kat',
+                          'ger': 'deu',
+                          'gre': 'ell',
+                          'ice': 'isl',
+                          'mac': 'mkd',
+                          'may': 'msa',
+                          'mao': 'mri',
+                          'per': 'fas',
+                          'rum': 'ron',
+                          'slo': 'slk',
+                          'tib': 'bod',
+                          'wel': 'cym'}
+
+        return alt_lang_codes.get(lang, lang)
 
     def diff_langs_from_text(self, text) -> dict[str, str]:
         if text == "":
@@ -65,6 +91,14 @@ class SubtitleConverter:
             old_lang, new_lang = line.split("->")
             old_lang = old_lang.strip()
             new_lang = new_lang.strip()
+            
+            if old_lang != self.convert_language(old_lang):
+                print(f'Changed "{old_lang}" to "{self.convert_language(old_lang)}"')
+                old_lang = self.convert_language(old_lang)
+
+            if new_lang != self.convert_language(new_lang):
+                print(f'Changed "{new_lang}" to "{self.convert_language(new_lang)}"')
+                new_lang = self.convert_language(new_lang)
 
             diff_langs[old_lang] = new_lang
 
@@ -134,6 +168,7 @@ class SubtitleConverter:
 
     def get_lang(self, lang_code: str) -> str | None:
 
+        lang_code = self.convert_language(lang_code)
         new_lang = self.diff_langs.get(lang_code) # check if user wants to use a different language
 
         if new_lang is  not None:

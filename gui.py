@@ -1,5 +1,7 @@
 from subconverter import SubtitleConverter
-import PySimpleGUI as sg
+import tkinter as tk
+from tkinter import ttk
+from tkinter import filedialog
 import os
 
 class GUI:
@@ -9,72 +11,157 @@ class GUI:
         self.__selected = [self.__nothing_selected] # names of the selected files
         self.__fnames = []
         self.selected_paths = [] # paths of the selected files
-
-        # list of not selected MKV files
-        self.unselected_list_column = [
-            [
-                sg.Text("Directory:"),
-                sg.In(size=(25, 1), enable_events=True, key="-FOLDER-"),
-                sg.FolderBrowse(),
-            ],
-            [sg.Listbox(values=[self.__fnames], enable_events=True, size=(40, 20), key="-unselected-")],
-            [sg.Button("Select all", enable_events=True, key="-select_all-")]
-        ]
-
-        # list of selected MKV files
-        self.selected_column = [
-            [sg.Text("Selected files:")],
-            [sg.Listbox(values=[self.__nothing_selected], enable_events=True, size=(40, 20), key="-selected-")],
-            [sg.Button("Unselect all", enable_events=True, key="-unselect_all-")]
-        ]
-
-        self.settings_column = [
-            [
-                sg.Text("Format of the new subtitles:"),
-                sg.DropDown(SubtitleConverter.sub_formats(None), default_value=SubtitleConverter.sub_formats(None)[0], key="-format-", readonly=True)
-            ],
-            [sg.Checkbox("Edit subtitles before muxing", key="-edit-")],
-            [sg.Checkbox("Save images of PGS subtitles", key="-save-")],
-            [sg.Checkbox("Keep original MKV files", key="-keep_old_mkvs-")],
-            [sg.Checkbox("Keep a copy of the old subtitle files", key="-keep_old_subs-", default=True)],
-            [sg.Checkbox("Keep a copy of the new subtitle files", key="-keep_new_subs-")],
-            [sg.Checkbox("Use different language for some subtitles", enable_events=True, key="-diff-")],
-            [sg.Text(text="Usage: one change per line; old language code -> new language code, example: ger -> eng", visible=False, key="-diff_langs_text-")],
-            [sg.Multiline(enable_events=True, size=(89, 20), key="-diff_langs-", visible=False)],
-            [
-                sg.Text(text="Allowed text color brightness deviation [%]"),
-                sg.Slider(range=(0, 100), default_value=10, orientation="horizontal", enable_events=True, key="-brightness_diff-")]
-        ]
-
-        self.layout = [
-            [
-                sg.Column(self.unselected_list_column),
-                sg.VSeperator(),
-                sg.Column(self.selected_column),   
-            ],
-            [sg.HSeparator()],
-            [sg.Column(self.settings_column)],
-            [sg.HSeparator()],
-            [sg.Button("Start", enable_events=True, key="-start-"), sg.Button("Exit")]
-        ]
-
-        self.window = sg.Window("MKV Subtitle Converter", self.layout)
         self.old_path = ""
 
-    def update_selections(self, selected):
-        self.window["-selected-"].update(selected)
-        self.window["-unselected-"].update(self.__fnames)
+        self.window = tk.Tk()
+        self.window.geometry(newGeometry="500x650+0+0")
+        self.window.title("MKV Subtitle Converter")
 
-    def select_folder(self, dir_path: str):
+        self.values = {}
+
+        self.window.eval("tk::PlaceWindow . center")
+        self.window.resizable(True, True)
+        ttk.Style().theme_use("default")
+
+        # =====Selection window===== #
+        selection_window = tk.Frame(master=self.window)
+        dir_label = tk.Label(master=selection_window, text="Directory:")
+        self.dir_entry = tk.Entry(master=selection_window)
+        self.dir_entry.config(state="readonly")
+        dir_button = tk.Button(master=selection_window, text="Browse", command=lambda: self.choose_dir())
+        unselected_files_label = tk.Label(master=selection_window, text="Unselected files:")
+        selected_files_label = tk.Label(master=selection_window, text="Selected files:")
+        self.unselected_files_listbox = tk.Listbox(master=selection_window)
+        self.selected_files_listbox = tk.Listbox(master=selection_window)
+        separator = ttk.Separator(master=selection_window, orient="vertical")
+        
+
+        # TODO: put these three widgets on the left side of the window
+        # and not over the whole width (like in the GUI up to v1.2.5)
+        dir_label.grid(row=0, column=0, sticky="we", padx=5, pady=5)
+        self.dir_entry.grid(row=0, column=1, sticky="we", columnspan=5, padx=5, pady=5)
+        dir_button.grid(row=0, column=6, sticky="we", padx=5, pady=5)
+
+        unselected_files_label.grid(row=1, column=0, sticky="w", columnspan=3)
+        selected_files_label.grid(row=1, column=4, sticky="w", columnspan=3)
+        self.unselected_files_listbox.grid(row=2, column=0, sticky="nsew", columnspan=3, padx=(5, 0))
+        separator.grid(row=2, column=3, sticky="ns", padx=5, pady=5)
+        self.selected_files_listbox.grid(row=2, column=4, sticky="nsew", columnspan=3, padx=(0, 5))
+
+        self.unselected_files_listbox.bind("<Double-Button-1>", lambda _: self.select_file(self.unselected_files_listbox.get(self.unselected_files_listbox.curselection())))
+        self.unselected_files_listbox.bind("<Return>", lambda _: self.select_file(self.unselected_files_listbox.get(self.unselected_files_listbox.curselection())))
+        self.selected_files_listbox.bind("<Double-Button-1>", lambda _: self.unselect_file(self.selected_files_listbox.get(self.selected_files_listbox.curselection())))
+        self.selected_files_listbox.bind("<Return>", lambda _: self.unselect_file(self.selected_files_listbox.get(self.selected_files_listbox.curselection())))
+
+        # Set up row and column configurations for responsive layout
+        selection_window.grid_rowconfigure(0, weight=0)
+        selection_window.grid_rowconfigure(1, weight=0)
+        selection_window.grid_rowconfigure(2, weight=1)
+
+        selection_window.grid_columnconfigure(0, weight=1)
+        selection_window.grid_columnconfigure(1, weight=2)
+        selection_window.grid_columnconfigure(2, weight=1)
+        selection_window.grid_columnconfigure(3, weight=0) # separator has no weight
+        selection_window.grid_columnconfigure(4, weight=1)
+        selection_window.grid_columnconfigure(5, weight=2)
+        selection_window.grid_columnconfigure(6, weight=1)
+
+        selection_window.pack(fill=tk.BOTH, expand=True)
+
+        settings_label = tk.Label(master=self.window, text="Settings", font=("Helvetica", 12, "bold"))
+        window_separator = ttk.Separator(master=self.window, orient="horizontal")
+        settings_label.pack(padx=5, pady=(15, 0), anchor="w")
+        window_separator.pack(fill=tk.X, padx=5, pady=5)
+
+        # =====Settings window===== #
+        # TODO: there is extra space between use_diff_langs and brightness_diff_label
+        settings_window = tk.Frame(master=self.window)
+        subtitle_format_label = tk.Label(master=settings_window, text="Format of the new subtitles:")
+        self.subtitle_format = ttk.Combobox(master=settings_window, values=SubtitleConverter.sub_formats(None), state="readonly")
+        edit_subtitles = tk.Checkbutton(master=settings_window, text="Edit subtitles before muxing", variable=self.add_variable('edit_subs'))
+        save_images = tk.Checkbutton(master=settings_window, text="Save images of PGS subtitles", variable=self.add_variable('save_images'))
+        keep_old_mkvs = tk.Checkbutton(master=settings_window, text="Keep original MKV files", variable=self.add_variable('keep_old_mkvs'))
+        keep_old_subs = tk.Checkbutton(master=settings_window, text="Keep a copy of the old subtitle files", variable=self.add_variable('keep_old_subs'))
+        keep_new_subs = tk.Checkbutton(master=settings_window, text="Keep a copy of the new subtitle files", variable=self.add_variable('keep_new_subs'))
+        use_diff_langs = tk.Checkbutton(master=settings_window, text="Use different languages for some subtitles", variable=self.add_variable('use_diff_langs'), command=lambda: self.change_visibility(self.diff_langs, self.values.get('use_diff_langs').get()))
+        self.diff_langs = tk.Text(master=settings_window, height=5, width=24)
+        brightness_diff_label = tk.Label(master=settings_window, text="Allowed text color brightness deviation:")
+        self.brightness_diff = tk.Scale(master=settings_window, from_=0, to=100, orient=tk.HORIZONTAL, showvalue=False, command=lambda _: brightness_value_label.config(text=f'{self.brightness_diff.get()}%'))
+        brightness_value_label = tk.Label(master=settings_window)
+
+        self.values.get('keep_old_subs').set(True)
+        self.subtitle_format.set(self.subtitle_format["values"][0])
+        self.brightness_diff.set(3)
+
+        subtitle_format_label.grid(row=0, column=0, sticky="w")
+        self.subtitle_format.grid(row=0, column=1, sticky="w", padx=5)
+        edit_subtitles.grid(row=1, column=0, sticky="w", columnspan=3)
+        save_images.grid(row=2, column=0, sticky="w", columnspan=3)
+        keep_old_mkvs.grid(row=3, column=0, sticky="w", columnspan=3)
+        keep_old_subs.grid(row=4, column=0, sticky="w", columnspan=3)
+        keep_new_subs.grid(row=5, column=0, sticky="w", columnspan=3)
+        use_diff_langs.grid(row=6, column=0, sticky="w", columnspan=3)
+        self.diff_langs.grid(row=7, column=0, sticky="w", padx=24, columnspan=3)
+        self.change_visibility(self.diff_langs, self.values.get('use_diff_langs').get())
+        brightness_diff_label.grid(row=8, column=0, sticky="w", columnspan=3)
+        self.brightness_diff.grid(row=8, column=1, sticky="w", padx=((len(brightness_diff_label.cget("text"))+24), 0))
+        brightness_value_label.grid(row=8, column=2, sticky="w")
+
+        settings_window.grid_rowconfigure(0, weight=1)
+        settings_window.grid_rowconfigure(1, weight=1)
+        settings_window.grid_rowconfigure(2, weight=1)
+        settings_window.grid_rowconfigure(3, weight=1)
+        settings_window.grid_rowconfigure(4, weight=1)
+        settings_window.grid_rowconfigure(5, weight=1)
+        settings_window.grid_rowconfigure(6, weight=1)
+        settings_window.grid_rowconfigure(7, weight=1)
+        settings_window.grid_rowconfigure(8, weight=1)
+        
+        settings_window.pack(fill=tk.BOTH, expand=True)
+
+        # =====Buttons window===== #
+        self.wait_var = tk.IntVar()
+        buttons_window = tk.Frame(master=self.window)
+        start_button = tk.Button(master=buttons_window, text="Start", command=lambda: self.wait_var.set(0), width=20, height=4)
+        exit_button = tk.Button(master=buttons_window, text="Exit", command=lambda: self.wait_var.set(1), width=20, height=4)
+        self.window.protocol('WM_DELETE_WINDOW', lambda: self.wait_var.set(1))
+
+        window_separator = ttk.Separator(master=buttons_window, orient="horizontal")
+        window_separator.pack(fill=tk.X, padx=5, pady=15)
+        start_button.pack(side=tk.LEFT, expand=True, padx=5, pady=5)
+        exit_button.pack(side=tk.LEFT, expand=True, padx=5, pady=5)
+
+        buttons_window.pack(fill=tk.BOTH, expand=True)
+
+    def add_variable(self, name):
+        self.values[name] = tk.BooleanVar()
+        return self.values[name]
+
+    def choose_dir(self):
+        dir_path = filedialog.askdirectory()
+        
+        if dir_path:
+            self.dir_entry.config(state="normal")
+            self.dir_entry.delete(0, tk.END)
+            self.dir_entry.insert(0, dir_path)
+            self.dir_entry.config(state="readonly")
 
         if not os.path.isdir(dir_path) or dir_path == self.old_path:
             return
 
-        file_list = os.listdir(dir_path) # get list of files in selected folder
+        self.old_path = dir_path
 
+        file_list = os.listdir(dir_path) # get list of files in selected folder
         # show only MKV files in the left list that are not already selected
         self.__fnames = [f for f in file_list if f.lower().endswith((".mkv")) and os.path.join(dir_path, f) not in self.selected_paths]
-        self.window["-unselected-"].update(self.__fnames)
+        self.update_selections(self.__selected)
+
+    def update_selections(self, selected):
+        self.selected_files_listbox.delete(0,tk.END)
+        self.selected_files_listbox.insert(tk.END, *selected)
+        
+        self.unselected_files_listbox.delete(0,tk.END)
+        self.unselected_files_listbox.insert(tk.END, *self.__fnames)
 
     def select_file(self, file_name: str):
         try:
@@ -110,39 +197,33 @@ class GUI:
         except ValueError:
             pass
 
-    def change_visibility(self, key: str, visibility: bool):
-        self.window[key].update(visible=visibility)
-        self.window.refresh()
+    def change_visibility(self, widget, visible: bool):
+        if visible:
+            widget.grid(row=7, column=0, sticky="w", padx=24, columnspan=3) # TODO: move padding to the widget
+        else:
+            widget.grid_forget()
+
+    def exit_gui(self):
+        self.wait_var.set(1)
 
     def run(self) -> tuple[int, dict]:
-        while True: # Run the Event Loop
-            event, values = self.window.read()
-            
-            if event == "Exit" or event == sg.WIN_CLOSED:
-                return 1, None
+        self.window.tkraise()
+        self.window.wait_variable(self.wait_var)
 
-            elif event == "-FOLDER-": # Folder name was filled in, make a list of files in the folder
-                self.select_folder(values["-FOLDER-"])
-                self.old_path = values["-FOLDER-"]
+        # convert booleanvars to bools
+        for key in self.values:
+            self.values[key] = self.values[key].get()
 
-            elif event == "-unselected-":  # A file was chosen from the left box
-                self.select_file(values["-unselected-"][0])
+        # add diff_langs to values if use_diff_langs is True
+        self.values['diff_langs'] = ''
+        if self.values.get('use_diff_langs'):
+            self.values['diff_langs'] = self.diff_langs.get('1.0', tk.END)
+            # self.values['diff_langs'] = self.values['diff_langs'].split('\n')
+            # self.values['diff_langs'] = [s for s in self.diff_langs if s.strip() != '']
 
-            elif event == "-selected-":  # A file was chosen from the right box
-                self.unselect_file(values["-selected-"][0])
-
-            elif event == "-diff-":  # checkbox for different languages was clicked
-                self.change_visibility("-diff_langs-", values["-diff-"])
-                self.change_visibility("-diff_langs_text-", values["-diff-"])
-
-            elif event == "-select_all-":  # select all button was clicked
-                for fname in self.__fnames.copy():
-                    self.select_file(fname)
-
-            elif event == "-unselect_all-":  # unselect all button was clicked
-                for fname in self.__selected.copy():
-                    self.unselect_file(fname)
-
-            elif event == "-start-":  # start button was clicked
-                # self.start(values)
-                return 0, values
+        self.values['selected_paths'] = self.selected_paths
+        self.values['brightness_diff'] = self.brightness_diff.get()
+        self.values['sub_format'] = self.subtitle_format.get()
+        
+        self.window.quit()
+        return self.wait_var.get(), self.values

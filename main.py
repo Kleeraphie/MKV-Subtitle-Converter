@@ -17,15 +17,14 @@ if __name__ == '__main__':
 
     # start the program
     gui = GUI()
-    sc = SubtitleConverter()
     exit_code, values = gui.run()
-    gui.window.close()
+    gui.window.destroy()
 
     if exit_code == 0:
-        diff_langs = values["-diff_langs-"] if values["-diff-"] else ""
-        sc = SubtitleConverter(gui.selected_paths, values["-edit-"], values["-save-"], values["-keep_old_mkvs-"], values["-keep_old_subs-"],
-                               values["-keep_new_subs-"], sc.diff_langs_from_text(diff_langs), sc.sub_format_extension(values["-format-"]),
-                               int(values["-brightness_diff-"]) / 100)
+        sc = SubtitleConverter()
+        sc = SubtitleConverter(values['selected_paths'], values['edit_subs'], values['save_images'], values['keep_old_mkvs'], values['keep_old_subs'],
+                               values['keep_new_subs'], sc.diff_langs_from_text(values['diff_langs']), sc.sub_format_extension(values['sub_format']),
+                               values['brightness_diff'] / 100)
                 
         sc.convert()
     elif exit_code == 1:

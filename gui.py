@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 import os
+import math
 
 class GUI:
     
@@ -18,6 +19,8 @@ class GUI:
         self.window.title("MKV Subtitle Converter")
 
         self.values = {}
+
+        self.job_settings_help_window_row = 1
 
         self.window.eval("tk::PlaceWindow . center")
         self.window.resizable(True, True)
@@ -68,26 +71,30 @@ class GUI:
 
         selection_window.pack(fill=tk.BOTH, expand=True)
 
-        settings_label = tk.Label(master=self.window, text="Settings", font=("Helvetica", 12, "bold"))
+        settings_seperator_window = tk.Frame(master=self.window)
+        settings_label = tk.Label(master=settings_seperator_window, text="Settings", font=("Helvetica", 12, "bold"))
+        settings_help_button = tk.Button(master=settings_seperator_window, text="?", command=lambda: self.show_job_settings_help_window())
         window_separator = ttk.Separator(master=self.window, orient="horizontal")
-        settings_label.pack(padx=5, pady=(15, 0), anchor="w")
-        window_separator.pack(fill=tk.X, padx=5, pady=5)
+        settings_label.grid(row=0, column=0, sticky="w", padx=5, pady=(15, 0))
+        settings_help_button.grid(row=0, column=1, sticky="e", padx=5, pady=(15, 0))
+        settings_seperator_window.pack(fill=tk.X, padx=5, pady=5)
+        window_separator.pack(fill=tk.X, padx=5, pady=5)  # TODO: put this in the settings_seperator_window
 
         # =====Settings window===== #
         # TODO: there is extra space between use_diff_langs and brightness_diff_label
-        settings_window = tk.Frame(master=self.window)
-        subtitle_format_label = tk.Label(master=settings_window, text="Format of the new subtitles:")
-        self.subtitle_format = ttk.Combobox(master=settings_window, values=SubtitleConverter.sub_formats(None), state="readonly")
-        edit_subtitles = tk.Checkbutton(master=settings_window, text="Edit subtitles before muxing", variable=self.add_variable('edit_subs'))
-        save_images = tk.Checkbutton(master=settings_window, text="Save images of PGS subtitles", variable=self.add_variable('save_images'))
-        keep_old_mkvs = tk.Checkbutton(master=settings_window, text="Keep original MKV files", variable=self.add_variable('keep_old_mkvs'))
-        keep_old_subs = tk.Checkbutton(master=settings_window, text="Keep a copy of the old subtitle files", variable=self.add_variable('keep_old_subs'))
-        keep_new_subs = tk.Checkbutton(master=settings_window, text="Keep a copy of the new subtitle files", variable=self.add_variable('keep_new_subs'))
-        use_diff_langs = tk.Checkbutton(master=settings_window, text="Use different languages for some subtitles", variable=self.add_variable('use_diff_langs'), command=lambda: self.change_visibility(self.diff_langs, self.values.get('use_diff_langs').get()))
-        self.diff_langs = tk.Text(master=settings_window, height=5, width=24)
-        brightness_diff_label = tk.Label(master=settings_window, text="Allowed text color brightness deviation:")
-        self.brightness_diff = tk.Scale(master=settings_window, from_=0, to=100, orient=tk.HORIZONTAL, showvalue=False, command=lambda _: brightness_value_label.config(text=f'{self.brightness_diff.get()}%'))
-        brightness_value_label = tk.Label(master=settings_window)
+        job_settings_window = tk.Frame(master=self.window)
+        subtitle_format_label = tk.Label(master=job_settings_window, text="Format of the new subtitles:")
+        self.subtitle_format = ttk.Combobox(master=job_settings_window, values=SubtitleConverter.sub_formats(None), state="readonly")
+        edit_subtitles = tk.Checkbutton(master=job_settings_window, text="Edit subtitles before muxing", variable=self.add_variable('edit_subs'))
+        save_images = tk.Checkbutton(master=job_settings_window, text="Save images of PGS subtitles", variable=self.add_variable('save_images'))
+        keep_old_mkvs = tk.Checkbutton(master=job_settings_window, text="Keep original MKV files", variable=self.add_variable('keep_old_mkvs'))
+        keep_old_subs = tk.Checkbutton(master=job_settings_window, text="Keep a copy of the old subtitle files", variable=self.add_variable('keep_old_subs'))
+        keep_new_subs = tk.Checkbutton(master=job_settings_window, text="Keep a copy of the new subtitle files", variable=self.add_variable('keep_new_subs'))
+        use_diff_langs = tk.Checkbutton(master=job_settings_window, text="Use different languages for some subtitles", variable=self.add_variable('use_diff_langs'), command=lambda: self.change_visibility(self.diff_langs, self.values.get('use_diff_langs').get()))
+        self.diff_langs = tk.Text(master=job_settings_window, height=5, width=24)
+        brightness_diff_label = tk.Label(master=job_settings_window, text="Allowed text color brightness deviation:")
+        self.brightness_diff = tk.Scale(master=job_settings_window, from_=0, to=100, orient=tk.HORIZONTAL, showvalue=False, command=lambda _: brightness_value_label.config(text=f'{self.brightness_diff.get()}%'))
+        brightness_value_label = tk.Label(master=job_settings_window)
 
         self.values.get('keep_old_subs').set(True)
         self.subtitle_format.set(self.subtitle_format["values"][0])
@@ -107,17 +114,17 @@ class GUI:
         self.brightness_diff.grid(row=8, column=1, sticky="w", padx=((len(brightness_diff_label.cget("text"))+24), 0))
         brightness_value_label.grid(row=8, column=2, sticky="w")
 
-        settings_window.grid_rowconfigure(0, weight=1)
-        settings_window.grid_rowconfigure(1, weight=1)
-        settings_window.grid_rowconfigure(2, weight=1)
-        settings_window.grid_rowconfigure(3, weight=1)
-        settings_window.grid_rowconfigure(4, weight=1)
-        settings_window.grid_rowconfigure(5, weight=1)
-        settings_window.grid_rowconfigure(6, weight=1)
-        settings_window.grid_rowconfigure(7, weight=1)
-        settings_window.grid_rowconfigure(8, weight=1)
+        job_settings_window.grid_rowconfigure(0, weight=1)
+        job_settings_window.grid_rowconfigure(1, weight=1)
+        job_settings_window.grid_rowconfigure(2, weight=1)
+        job_settings_window.grid_rowconfigure(3, weight=1)
+        job_settings_window.grid_rowconfigure(4, weight=1)
+        job_settings_window.grid_rowconfigure(5, weight=1)
+        job_settings_window.grid_rowconfigure(6, weight=1)
+        job_settings_window.grid_rowconfigure(7, weight=1)
+        job_settings_window.grid_rowconfigure(8, weight=1)
         
-        settings_window.pack(fill=tk.BOTH, expand=True)
+        job_settings_window.pack(fill=tk.BOTH, expand=True)
 
         # =====Buttons window===== #
         self.wait_var = tk.IntVar()
@@ -227,3 +234,54 @@ class GUI:
         
         self.window.quit()
         return self.wait_var.get(), self.values
+
+    def show_job_settings_help_window(self):
+        help_window = tk.Toplevel(self.window)
+        help_window.title("Help")
+        help_window.geometry("500x500")
+        help_window.transient(self.window)
+        help_window.resizable(False, False)
+
+
+        help_text = tk.Label(help_window, text='Help for choosing the right settings', font=("Helvetica", 12))
+        help_text.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+
+        self.job_settings_help_window_add_text('Format of the new subtitles: ', 'The format of your new subtitles. SRT is the most common format and is supported by most video players.', help_window)
+        self.job_settings_help_window_add_text('Edit subtitles before muxing: ', 'Before exchanging the subtitles with the new ones, the program will pause so that you can edit them. The program continues after pressing <Enter> in the console.', help_window)
+        self.job_settings_help_window_add_text('Save images of PGS subtitles: ', 'You can save the images that make up the old subtitles. This can be useful if you want to compare the old and new subtitles. They are stored in a directory where this program is installed.', help_window)
+        self.job_settings_help_window_add_text('Keep original MKV files: ', 'You can keep the original video files. This way you can test different settings.', help_window)
+        self.job_settings_help_window_add_text('Keep a copy of the old subtitle files: ', 'You can save the original subtitle files. This way the program does not need to extract them again if you run the program again.', help_window)
+        self.job_settings_help_window_add_text('Keep a copy of the new subtitle files: ', 'You can save the new subtitle files. This way you can easily edit them later.', help_window)
+        self.job_settings_help_window_add_text('Use different languages for some subtitles: ', 
+                                                ('Here you can tell the program to use a different language for some languages.'
+                                                'This can be useful if the English subtitles contain letters like ä, ö or ü. Then you could use'
+                                                'the German language because it contains all letters of the English language + these special letters.'), help_window)
+        self.job_settings_help_window_add_text('Allowed text color brightness deviation: ',
+                                                    ('You can change the maximum allowed difference in brightness in the text color.'
+                                                    'This can be useful because some subtitle images are more noisy than others.'
+                                                    'The value should be as low as possible but the text in the images should not be too thin.'), help_window)
+
+        # Ensure the grid expands correctly
+        help_window.grid_rowconfigure(0, weight=1)
+        help_window.grid_rowconfigure(1, weight=1)
+        help_window.grid_rowconfigure(2, weight=1)
+        help_window.grid_rowconfigure(3, weight=1)
+        help_window.grid_rowconfigure(4, weight=1)
+        help_window.grid_rowconfigure(5, weight=1)
+        help_window.grid_rowconfigure(6, weight=1)
+        help_window.grid_rowconfigure(7, weight=1)
+        help_window.grid_rowconfigure(8, weight=1)
+        help_window.grid_columnconfigure(0, weight=1)
+
+    def job_settings_help_window_add_text(self, name: str, description: str, parent: tk.Toplevel):
+        h = math.ceil((len(name) + len(description)) / 85) + 1
+        subtitle_format_help = tk.Text(parent, wrap=tk.WORD, font=("Arial", 10), height=h, width=50)
+        subtitle_format_help.insert(tk.END, name)
+        subtitle_format_help.insert(tk.END, description)
+        subtitle_format_help.tag_add('setting_name', '1.0', f'1.{len(name)}')
+        subtitle_format_help.tag_config('setting_name', font='Arial 10 bold')
+        subtitle_format_help.tag_add('setting_description', f'1.{len(description)}', '1.end')
+        subtitle_format_help.tag_config('setting_description', font='Arial 10 normal')
+        subtitle_format_help.config(state="disabled")
+        subtitle_format_help.grid(row=self.job_settings_help_window_row, column=0, sticky="we")
+        self.job_settings_help_window_row += 1

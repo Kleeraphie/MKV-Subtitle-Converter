@@ -13,18 +13,27 @@ class Config:
     def __new__(cls, *args, **kwargs):
         if not cls.config:
             cls.config = super(Config, cls).__new__(cls, *args, **kwargs)
-            cls.config._initialize()
+            cls.config._initialize_config()
         return cls.config
 
-    def _initialize(self):
-        self.config = configparser.ConfigParser()
-        self.config.read('config.ini')
+    def _initialize_config(self):
+        self.create_default_config()
+        self._new_config.read('config.ini')
+        self.save_config()
+        
+    def create_default_config(self):
+        settings = {}
+        settings[self.Settings.CHECK_FOR_UPDATES] = True
+        settings[self.Settings.FIRST_START] = True
+
+        self.save_settings(settings)
+
 
     def check_for_updates(self):        
-        if self.config.get('Misc', 'bFirstStart') == '1':
+        if self.get_value(self.Settings.FIRST_START):
             return False
         
-        return self.config.get('General', 'bUpdates') == '1'
+        return self.get_value(self.Settings.CHECK_FOR_UPDATES)
 
     def save_settings(self, settings: dict[Settings]):
         # Make changes to the config without saving the file
@@ -56,10 +65,6 @@ class Config:
         match setting.value[0]:
             case 'b':
                 return '1' if value else '0'
-            case 's':
-                return str(value)
-            case 'i':
-                return str(int(value))
             
     def _get_section(self, setting: Settings):
         config = {
@@ -72,4 +77,8 @@ class Config:
                 return section
             
     def get_value(self, setting: Settings):
-        return self.config.get(self._get_section(setting), setting.value)
+        value = self.config.get(self._get_section(setting), setting.value)
+
+        match setting.value[0]:
+            case 'b':
+                return value == '1'

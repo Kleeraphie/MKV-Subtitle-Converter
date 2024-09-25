@@ -5,6 +5,10 @@ from tkinter import filedialog
 import os
 from gui.settings import SettingsWindow
 import math
+import requests
+from packaging.version import Version
+from config import Config
+import webbrowser
 
 class GUI:
     
@@ -14,6 +18,7 @@ class GUI:
         self.__fnames = []
         self.selected_paths = [] # paths of the selected files
         self.old_path = ""
+        self.config = Config()
 
         self.window = tk.Tk()
         self.window.geometry(newGeometry="500x650+0+0")
@@ -285,3 +290,16 @@ class GUI:
         subtitle_format_help.grid(row=self.run_settings_help_window_row, column=0, sticky="we")
         parent.grid_rowconfigure(self.run_settings_help_window_row, weight=1)
         self.run_settings_help_window_row += 1
+
+    def check_for_updates(self):
+        try:
+            response = requests.get("https://api.github.com/repos/Kleeraphie/MKV-Subtitle-Converter/releases/latest")
+            latest_version = response.json()["tag_name"]
+
+            if Version(latest_version) > Version(self.config.get_version()):
+                update = tk.messagebox.askyesno("Update available", f"Version {latest_version} is available. Do you want to download it?")
+                if update:
+                    webbrowser.open('https://github.com/Kleeraphie/MKV-Subtitle-Converter/releases/latest')
+
+        except: # if there is no internet connection or the request fails
+            print("Failed to check for updates.")

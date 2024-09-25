@@ -1,3 +1,5 @@
+__version__ = "v1.2.5"
+
 import configparser
 from enum import Enum
 
@@ -82,3 +84,6 @@ class Config:
         match setting.value[0]:
             case 'b':
                 return value == '1'
+    
+    def get_version(self):
+        return __version__

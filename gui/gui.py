@@ -4,6 +4,7 @@ from tkinter import ttk
 from tkinter import filedialog
 import os
 from gui.settings import SettingsWindow
+from gui.about import AboutWindow
 import math
 import requests
 from packaging.version import Version
@@ -245,6 +246,10 @@ class GUI:
         self.menu = tk.Menu(self.window)
         self.menu.add_command(label="Settings", command=lambda: SettingsWindow())
 
+        help_menu = tk.Menu(self.menu, tearoff=0)
+        help_menu.add_command(label="About...", command=lambda: AboutWindow(self))
+        self.menu.add_cascade(label="Help", menu=help_menu)
+
         self.window.config(menu=self.menu)
 
     def show_run_settings_help_window(self):
@@ -291,15 +296,19 @@ class GUI:
         parent.grid_rowconfigure(self.run_settings_help_window_row, weight=1)
         self.run_settings_help_window_row += 1
 
-    def check_for_updates(self):
+    def update_available(self):
         try:
             response = requests.get("https://api.github.com/repos/Kleeraphie/MKV-Subtitle-Converter/releases/latest")
             latest_version = response.json()["tag_name"]
 
-            if Version(latest_version) > Version(self.config.get_version()):
-                update = tk.messagebox.askyesno("Update available", f"Version {latest_version} is available. Do you want to download it?")
-                if update:
-                    webbrowser.open('https://github.com/Kleeraphie/MKV-Subtitle-Converter/releases/latest')
-
+            return (Version(latest_version) >= Version(self.config.get_version()), latest_version)
         except: # if there is no internet connection or the request fails
-            print("Failed to check for updates.")
+            return (False, self.config.get_version())
+
+    def check_for_updates(self):
+        update_available, latest_version = self.update_available()
+
+        if update_available:
+            update = tk.messagebox.askyesno("Update available", f"Version {latest_version} is available. Do you want to download it?")
+            if update:
+                webbrowser.open('https://github.com/Kleeraphie/MKV-Subtitle-Converter/releases/latest')

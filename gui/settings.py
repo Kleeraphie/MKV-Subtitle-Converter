@@ -6,7 +6,10 @@ class SettingsWindow(tk.Toplevel):
     
     def __init__(self):
         super().__init__()
-        self.title("Settings")
+        self.config = Config()
+        self.translate = self.config.translate
+
+        self.title(self.translate("Settings"))
         self.geometry("500x500")
         self.resizable(True, True)
 
@@ -14,7 +17,7 @@ class SettingsWindow(tk.Toplevel):
         self.sidebar = tk.Frame(self)
         self.sidebar.place(relx=0, rely=0, relwidth=0.3, relheight=1)
 
-        general_settings = SidebarOption(self.sidebar, "General", lambda: self.show_frame(GeneralSettings))
+        general_settings = SidebarOption(self.sidebar, self.translate("General"), lambda: self.show_frame(GeneralSettings))
         general_settings.grid(row=0, column=0, padx=5, pady=(5, 0), sticky="w")
 
         # --------------------  MULTI PAGE SETTINGS ----------------------------
@@ -25,7 +28,7 @@ class SettingsWindow(tk.Toplevel):
 
         self.frames = {}
 
-        for F in [GeneralSettings]:
+        for F in {GeneralSettings}:
             frame = F(settings_frames_container)
             self.frames[F] = frame
             frame.place(relx=0, rely=0, relwidth=1, relheight=1)
@@ -33,9 +36,9 @@ class SettingsWindow(tk.Toplevel):
 
         # -----------------  FOOTER ----------------------------
         footer = tk.Frame(self)
-        save_button = tk.Button(footer, text="Save", command=self.save_settings)
+        save_button = tk.Button(footer, text=self.translate("Save"), command=self.save_settings)
         save_button.place(relx=0.3, rely=0.25, relwidth=0.1, relheight=0.5)
-        exit_button = tk.Button(footer, text="Exit", command=self.destroy)
+        exit_button = tk.Button(footer, text=self.translate("Exit"), command=self.destroy)
         exit_button.place(relx=0.6, rely=0.25, relwidth=0.1, relheight=0.5)
         footer.place(relx=0.3, rely=0.9, relwidth=0.7, relheight=0.1)
 
@@ -61,13 +64,13 @@ class SettingsWindow(tk.Toplevel):
         self.destroy()
 
 
-
 # ------------------------ MULTIPAGE FRAMES ------------------------------------
 
 class SettingsFrame(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
         self.config = Config()
+        self.translate = self.config.translate
 
     # TODO: define as abstract method
     def save_settings(self):
@@ -84,7 +87,7 @@ class GeneralSettings(SettingsFrame):
         self.check_for_updates.set(self.config.get_value(Config.Settings.CHECK_FOR_UPDATES))
 
         # gui
-        check_for_updates = ttk.Checkbutton(self, text="Check for updates", variable=self.check_for_updates)
+        check_for_updates = ttk.Checkbutton(self, text=self.translate("Check for updates"), variable=self.check_for_updates)
         check_for_updates.grid(row=1, column=0, padx=5, pady=(5, 0), sticky="w", columnspan=2)
 
     def save_settings(self):

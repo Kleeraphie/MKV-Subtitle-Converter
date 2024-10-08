@@ -14,12 +14,14 @@ import webbrowser
 class GUI:
     
     def __init__(self):
-        self.__nothing_selected = "Select a file from the left list"
+        self.config = Config()
+        self.translate = self.config.translate
+
+        self.__nothing_selected = self.translate("Select a file from the left list")
         self.__selected = [self.__nothing_selected] # names of the selected files
         self.__fnames = []
         self.selected_paths = [] # paths of the selected files
         self.old_path = ""
-        self.config = Config()
 
         self.window = tk.Tk()
         self.window.geometry(newGeometry="500x650+0+0")
@@ -35,12 +37,12 @@ class GUI:
 
         # =====Selection window===== #
         selection_window = tk.Frame(master=self.window)
-        dir_label = tk.Label(master=selection_window, text="Directory:")
+        dir_label = tk.Label(master=selection_window, text=self.translate("Directory:"))
         self.dir_entry = tk.Entry(master=selection_window)
         self.dir_entry.config(state="readonly")
-        dir_button = tk.Button(master=selection_window, text="Browse", command=lambda: self.choose_dir())
-        unselected_files_label = tk.Label(master=selection_window, text="Unselected files:")
-        selected_files_label = tk.Label(master=selection_window, text="Selected files:")
+        dir_button = tk.Button(master=selection_window, text=self.translate("Browse"), command=lambda: self.choose_dir())
+        unselected_files_label = tk.Label(master=selection_window, text=self.translate("Unselected files:"))
+        selected_files_label = tk.Label(master=selection_window, text=self.translate("Selected files:"))
         self.unselected_files_listbox = tk.Listbox(master=selection_window)
         self.selected_files_listbox = tk.Listbox(master=selection_window)
         separator = ttk.Separator(master=selection_window, orient="vertical")
@@ -79,7 +81,7 @@ class GUI:
         selection_window.pack(fill=tk.BOTH, expand=True)
 
         settings_seperator_window = tk.Frame(master=self.window)
-        settings_label = tk.Label(master=settings_seperator_window, text="Settings", font=("Helvetica", 12, "bold"))
+        settings_label = tk.Label(master=settings_seperator_window, text=self.translate("Settings"), font=("Helvetica", 12, "bold"))
         settings_help_button = tk.Button(master=settings_seperator_window, text="?", command=lambda: self.show_run_settings_help_window())
         window_separator = ttk.Separator(master=self.window, orient="horizontal")
         settings_label.grid(row=0, column=0, sticky="w", padx=5, pady=(15, 0))
@@ -90,16 +92,16 @@ class GUI:
         # =====Settings window===== #
         # TODO: there is extra space between use_diff_langs and brightness_diff_label
         job_settings_window = tk.Frame(master=self.window)
-        subtitle_format_label = tk.Label(master=job_settings_window, text="Format of the new subtitles:")
+        subtitle_format_label = tk.Label(master=job_settings_window, text=self.translate("Format of the new subtitles:"))
         self.subtitle_format = ttk.Combobox(master=job_settings_window, values=SubtitleConverter.sub_formats(None), state="readonly")
-        edit_subtitles = tk.Checkbutton(master=job_settings_window, text="Edit subtitles before muxing", variable=self.add_variable('edit_subs'))
-        save_images = tk.Checkbutton(master=job_settings_window, text="Save images of PGS subtitles", variable=self.add_variable('save_images'))
-        keep_old_mkvs = tk.Checkbutton(master=job_settings_window, text="Keep original MKV files", variable=self.add_variable('keep_old_mkvs'))
-        keep_old_subs = tk.Checkbutton(master=job_settings_window, text="Keep a copy of the old subtitle files", variable=self.add_variable('keep_old_subs'))
-        keep_new_subs = tk.Checkbutton(master=job_settings_window, text="Keep a copy of the new subtitle files", variable=self.add_variable('keep_new_subs'))
-        use_diff_langs = tk.Checkbutton(master=job_settings_window, text="Use different languages for some subtitles", variable=self.add_variable('use_diff_langs'), command=lambda: self.change_visibility(self.diff_langs, self.values.get('use_diff_langs').get()))
+        edit_subtitles = tk.Checkbutton(master=job_settings_window, text=self.translate("Edit subtitles before muxing"), variable=self.add_variable('edit_subs'))
+        save_images = tk.Checkbutton(master=job_settings_window, text=self.translate("Save images of PGS subtitles"), variable=self.add_variable('save_images'))
+        keep_old_mkvs = tk.Checkbutton(master=job_settings_window, text=self.translate("Keep original MKV files"), variable=self.add_variable('keep_old_mkvs'))
+        keep_old_subs = tk.Checkbutton(master=job_settings_window, text=self.translate("Keep a copy of the old subtitle files"), variable=self.add_variable('keep_old_subs'))
+        keep_new_subs = tk.Checkbutton(master=job_settings_window, text=self.translate("Keep a copy of the new subtitle files"), variable=self.add_variable('keep_new_subs'))
+        use_diff_langs = tk.Checkbutton(master=job_settings_window, text=self.translate("Use different languages for some subtitles"), variable=self.add_variable('use_diff_langs'), command=lambda: self.change_visibility(self.diff_langs, self.values.get('use_diff_langs').get()))
         self.diff_langs = tk.Text(master=job_settings_window, height=5, width=24)
-        brightness_diff_label = tk.Label(master=job_settings_window, text="Allowed text color brightness deviation:")
+        brightness_diff_label = tk.Label(master=job_settings_window, text=self.translate("Allowed text color brightness deviation:"))
         self.brightness_diff = tk.Scale(master=job_settings_window, from_=0, to=100, orient=tk.HORIZONTAL, showvalue=False, command=lambda _: brightness_value_label.config(text=f'{self.brightness_diff.get()}%'))
         brightness_value_label = tk.Label(master=job_settings_window)
 
@@ -136,8 +138,8 @@ class GUI:
         # =====Buttons window===== #
         self.wait_var = tk.IntVar()
         buttons_window = tk.Frame(master=self.window)
-        start_button = tk.Button(master=buttons_window, text="Start", command=lambda: self.wait_var.set(0), width=20, height=4)
-        exit_button = tk.Button(master=buttons_window, text="Exit", command=lambda: self.wait_var.set(1), width=20, height=4)
+        start_button = tk.Button(master=buttons_window, text=self.translate("Start"), command=lambda: self.wait_var.set(0), width=20, height=4)
+        exit_button = tk.Button(master=buttons_window, text=self.translate("Exit"), command=lambda: self.wait_var.set(1), width=20, height=4)
         self.window.protocol('WM_DELETE_WINDOW', lambda: self.wait_var.set(1))
 
         window_separator = ttk.Separator(master=buttons_window, orient="horizontal")
@@ -244,41 +246,41 @@ class GUI:
     
     def create_menu(self):
         self.menu = tk.Menu(self.window)
-        self.menu.add_command(label="Settings", command=lambda: SettingsWindow())
+        self.menu.add_command(label=self.translate("Settings"), command=lambda: SettingsWindow())
 
         help_menu = tk.Menu(self.menu, tearoff=0)
-        help_menu.add_command(label="About...", command=lambda: AboutWindow(self))
-        self.menu.add_cascade(label="Help", menu=help_menu)
+        help_menu.add_command(label=self.translate("About..."), command=lambda: AboutWindow(self))
+        self.menu.add_cascade(label=self.translate("Help"), menu=help_menu)
 
         self.window.config(menu=self.menu)
 
     def show_run_settings_help_window(self):
         help_window = tk.Toplevel(self.window)
-        help_window.title("Help")
+        help_window.title(self.translate("Help"))
         help_window.geometry("500x500")
         help_window.transient(self.window)
         help_window.resizable(False, False)
 
 
-        help_text = tk.Label(help_window, text='Help for choosing the right settings', font=("Helvetica", 12))
+        help_text = tk.Label(help_window, text=self.translate('Help for choosing the right settings'), font=("Helvetica", 12))
         help_text.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
-        self.run_settings_help_window_add_text('Format of the new subtitles: ', 'The format of your new subtitles. SRT is the most common format and is supported by most video players.', help_window)
-        self.run_settings_help_window_add_text('Edit subtitles before muxing: ', 'Before exchanging the subtitles with the new ones, the program will pause so that you can edit them. The program continues after pressing <Enter> in the console.', help_window)
-        self.run_settings_help_window_add_text('Save images of PGS subtitles: ', 'You can save the images that make up the old subtitles. This can be useful if you want to compare the old and new subtitles. They are stored in a directory where this program is installed.', help_window)
-        self.run_settings_help_window_add_text('Keep original MKV files: ', 'You can keep the original video files. This way you can test different settings.', help_window)
-        self.run_settings_help_window_add_text('Keep a copy of the old subtitle files: ', 'You can save the original subtitle files. This way the program does not need to extract them again if you run the program again.', help_window)
-        self.run_settings_help_window_add_text('Keep a copy of the new subtitle files: ', 'You can save the new subtitle files. This way you can easily edit them later.', help_window)
-        self.run_settings_help_window_add_text('Use different languages for some subtitles: ', 
-                                                ('Here you can tell the program to use a different language for some languages.'
+        self.run_settings_help_window_add_text(self.translate('Format of the new subtitles: '), self.translate('The format of your new subtitles. SRT is the most common format and is supported by most video players.'), help_window)
+        self.run_settings_help_window_add_text(self.translate('Edit subtitles before muxing: '), self.translate('Before exchanging the subtitles with the new ones, the program will pause so that you can edit them. The program continues after pressing <Enter> in the console.'), help_window)
+        self.run_settings_help_window_add_text(self.translate('Save images of PGS subtitles: '), self.translate('You can save the images that make up the old subtitles. This can be useful if you want to compare the old and new subtitles. They are stored in a directory where this program is installed.'), help_window)
+        self.run_settings_help_window_add_text(self.translate('Keep original MKV files: '), self.translate('You can keep the original video files. This way you can test different settings.'), help_window)
+        self.run_settings_help_window_add_text(self.translate('Keep a copy of the old subtitle files: '), self.translate('You can save the original subtitle files. This way the program does not need to extract them again if you run the program again.'), help_window)
+        self.run_settings_help_window_add_text(self.translate('Keep a copy of the new subtitle files: '), self.translate('You can save the new subtitle files. This way you can easily edit them later.'), help_window)
+        self.run_settings_help_window_add_text(self.translate('Use different languages for some subtitles: '), 
+                                                self.translate(('Here you can tell the program to use a different language for some languages.'
                                                 'This can be useful if the English subtitles contain letters like ä, ö or ü. Then you could use'
                                                 'the German language because it contains all letters of the English language + these special letters.'
                                                 'Changes are seperated by a new line and follow this format: "old language" -> "new language"'
-                                                ' (e.g. eng -> ger).'), help_window)
-        self.run_settings_help_window_add_text('Allowed text color brightness deviation: ',
-                                                    ('You can change the maximum allowed difference in brightness in the text color.'
+                                                ' (e.g. eng -> ger).')), help_window)
+        self.run_settings_help_window_add_text(self.translate('Allowed text color brightness deviation: '),
+                                                    self.translate(('You can change the maximum allowed difference in brightness in the text color.'
                                                     'This can be useful because some subtitle images are more noisy than others.'
-                                                    'The value should be as low as possible but the text in the images should not be too thin.'), help_window)
+                                                    'The value should be as low as possible but the text in the images should not be too thin.')), help_window)
 
         help_window.grid_columnconfigure(0, weight=1)
 
@@ -301,7 +303,7 @@ class GUI:
             response = requests.get("https://api.github.com/repos/Kleeraphie/MKV-Subtitle-Converter/releases/latest")
             latest_version = response.json()["tag_name"]
 
-            return (Version(latest_version) >= Version(self.config.get_version()), latest_version)
+            return (Version(latest_version) > Version(self.config.get_version()), latest_version)
         except: # if there is no internet connection or the request fails
             return (False, self.config.get_version())
 
@@ -309,6 +311,6 @@ class GUI:
         update_available, latest_version = self.update_available()
 
         if update_available:
-            update = tk.messagebox.askyesno("Update available", f"Version {latest_version} is available. Do you want to download it?")
+            update = tk.messagebox.askyesno(self.translate("Update available"), self.translate("Version {latest_version} is available. Do you want to download it?").format(latest_version))
             if update:
                 webbrowser.open('https://github.com/Kleeraphie/MKV-Subtitle-Converter/releases/latest')

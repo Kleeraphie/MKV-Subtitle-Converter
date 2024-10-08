@@ -10,6 +10,7 @@ import threading
 import time
 import shutil
 import pysubs2
+from config import Config
 
 class SubtitleConverter:
 
@@ -24,6 +25,9 @@ class SubtitleConverter:
         self.diff_langs = diff_langs
         self.format = sub_format
         self.text_brightness_diff = text_brightness_diff
+
+        self.config = Config()
+        self.translate = self.config.translate
 
     def sub_formats(self) -> list[str]:
         subs = [
@@ -86,18 +90,18 @@ class SubtitleConverter:
                 continue
 
             if "->" not in line:
-                print(f"Invalid input: {line}")
+                print(self.translate("Invalid input: {line}").format(line))
 
             old_lang, new_lang = line.split("->")
             old_lang = old_lang.strip()
             new_lang = new_lang.strip()
             
             if old_lang != self.convert_language(old_lang):
-                print(f'Changed "{old_lang}" to "{self.convert_language(old_lang)}"')
+                print(self.translate('Changed "{old_lang}" to "{new_lang}"').format(old_lang=old_lang, new_lang=self.convert_language(old_lang)))
                 old_lang = self.convert_language(old_lang)
 
             if new_lang != self.convert_language(new_lang):
-                print(f'Changed "{new_lang}" to "{self.convert_language(new_lang)}"')
+                print(self.translate('Changed "{old_lang}" to "{new_lang}"').format(old_lang=new_lang, new_lang=self.convert_language(new_lang)))
                 new_lang = self.convert_language(new_lang)
 
             diff_langs[old_lang] = new_lang
@@ -156,7 +160,7 @@ class SubtitleConverter:
             thread.join()
 
         if pgsreader.exit_code != 0:
-            raise Exception(f"Error while converting subtitle #{id}. See console for more info.")
+            raise Exception(self.translate("Error while converting subtitle #{id}. See console for more info.").format(id))
             # TODO Print error message by exit code, therefore check which warnings trigger exceptions
 
         # no multithreading here because it's already fast enough
@@ -175,12 +179,12 @@ class SubtitleConverter:
             if new_lang in pytesseract.get_languages():
                 return new_lang
             else:
-                print(f"Language {new_lang} is not installed, using {lang_code} instead")
+                print(self.translate('Language "{new_lang}" is not installed, using "{lang_code}" instead').format(new_lang, lang_code))
 
         if lang_code in pytesseract.get_languages(): # when user doesn't want to change language or changed language is not installed
             return lang_code
         else:
-            print(f"Language \"{lang_code}\" is not installed, using English instead")
+            print(self.translate('Language "{lang_code}" is not installed, using English instead').format(lang_code))
             return None
 
     def convert_to_srt(self, lang:str, track_id: int):
@@ -232,7 +236,7 @@ class SubtitleConverter:
     def replace_subtitles(self):
         deleted_tracks = 0
 
-        print(f"Replacing subtitles in {self.file_name}...")
+        print(self.translate("Replacing subtitles in {file_name}...").format(self.file_name))
         for track_id in self.subtitle_ids:
             sub_path = os.path.join(self.sub_dir, f'{track_id}.{self.format}')
 
@@ -264,7 +268,7 @@ class SubtitleConverter:
         return new_size
 
     def mux_file(self):
-        print("Muxing file...")
+        print(self.translate("Muxing file..."))
         new_file_dir = os.path.dirname(self.file_path)
         new_file_path = os.path.join(new_file_dir, f"{self.file_name} (1).mkv")
         old_file_size = 0
@@ -293,7 +297,7 @@ class SubtitleConverter:
         new_file_dir = os.path.dirname(self.file_path)
         new_file_path = os.path.join(new_file_dir, f"{self.file_name} (1).mkv")
 
-        print("Cleaning up...\n")
+        print(self.translate("Cleaning up...") + "\n")
 
         if not (self.keep_old_subs or self.keep_new_subs):
             if not self.keep_imgs:
@@ -317,7 +321,7 @@ class SubtitleConverter:
             self.file_name = os.path.splitext(os.path.basename(self.file_path))[0]
             
             try:
-                print(f"Processing {self.file_name}...")
+                print(self.translate("Processing {file_name}...").format(self.file_name))
 
                 self.mkv = pymkv.MKVFile(self.file_path)
                 main_dir_path = os.path.join('subtitles', self.file_name)
@@ -328,14 +332,14 @@ class SubtitleConverter:
 
                 # skip title if no PGS subtitles were found
                 if len(self.subtitle_ids) == 0:
-                    print("No subtitles found.\n")
+                    print(self.translate("No subtitles found.") + "\n")
                     continue
 
                 self.convert_subtitles()
 
                 if self.edit_flag:
-                    print("You can now edit the new subtitle files. Press Enter when you are done.")
-                    print(f"They can be found at: {os.path.join(os.getcwd(), self.sub_dir)}")
+                    print(self.translate("You can now edit the new subtitle files. Press Enter when you are done."))
+                    print(self.translate("They can be found at: {directory}").format(os.path.join(os.getcwd(), self.sub_dir)))
                     if os.name == "nt":
                         os.system(f"explorer.exe \"{os.path.join(os.getcwd(), self.sub_dir)}\"")
                     input()
@@ -351,9 +355,9 @@ class SubtitleConverter:
                 self.mux_file()
                 self.clean()
 
-                print(f"Finished {self.file_name}")
+                print(self.translate("Finished {file}").format(self.file_name)) 
             except Exception as e:
-                print(f"Error while processing {self.file_name}: {e}")
-                input("Press Enter to continue with the next file...")
+                print(self.translate("Error while processing {file}: {exception}").format(self.file_name, e))
+                input(self.translate("Press Enter to continue with the next file..."))
                 self.clean()
                 print()

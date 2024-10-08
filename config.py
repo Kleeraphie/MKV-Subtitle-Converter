@@ -2,10 +2,12 @@ __version__ = "v1.2.5"
 
 import configparser
 from enum import Enum
+import gettext
 
 class Config:
     class Settings(Enum):
         CHECK_FOR_UPDATES = 'bUpdates'
+        LANGUAGE = 'sLanguage'
         FIRST_START = 'bFirstStart'
 
     
@@ -19,13 +21,20 @@ class Config:
         return cls.config
 
     def _initialize_config(self):
+        self.config = configparser.ConfigParser()
+        self.config.read('config.ini')
         self.create_default_config()
         self._new_config.read('config.ini')
         self.save_config()
+
+        language: str = self.get_value(self.Settings.LANGUAGE) # get the language set in the config
+        self.translation = gettext.translation('messages', 'languages', [language, 'en_US'], fallback=True)
+        self.translation.install()
         
     def create_default_config(self):
         settings = {}
         settings[self.Settings.CHECK_FOR_UPDATES] = True
+        settings[self.Settings.LANGUAGE] = 'en_US'
         settings[self.Settings.FIRST_START] = True
 
         self.save_settings(settings)
@@ -38,22 +47,28 @@ class Config:
         return self.get_value(self.Settings.CHECK_FOR_UPDATES)
 
     def save_settings(self, settings: dict[Settings]):
+
         # Make changes to the config without saving the file
         if self._new_config is None:
             self._new_config = configparser.ConfigParser()
             self._new_config.optionxform = str
             self._new_config.read('config.ini')
 
+        # check if there are any changes
+        if all(self.get_value(setting) == settings[setting] for setting in settings):
+            return
+        
         for setting in settings:
             section = self._get_section(setting)
             value = self._convert_value_to_config_value(setting, settings[setting])
             self._new_config.set(section, setting.value, value)
 
     def save_config(self):
-        # Save the config file with all the new changes
+        # Return if there are no changes
         if self._new_config is None:
             return
         
+        # Save the config file with all the new changes
         with open('config.ini', 'w') as configfile:
             self._new_config.write(configfile, False)
 
@@ -67,10 +82,14 @@ class Config:
         match setting.value[0]:
             case 'b':
                 return '1' if value else '0'
+            case 's':
+                return str(value)
+            case 'i':
+                return str(int(value))
             
     def _get_section(self, setting: Settings):
         config = {
-            'General': ['bUpdates'],
+            'General': ['bUpdates', 'sLanguage'],
             'Misc': ['bFirstStart']
         }
 
@@ -84,6 +103,21 @@ class Config:
         match setting.value[0]:
             case 'b':
                 return value == '1'
+            case 's':
+                return value
+            case 'i':
+                return int(value)
+
+    def convert_language_to_code(self, language: str) -> str:
+        languages = {
+            'English': 'eng',
+            'Deutsch': 'de_DE'
+        }
+
+        return languages.get(language, 'eng')
     
     def get_version(self):
         return __version__
+    
+    def translate(self, text: str):
+        return self.translation.gettext(text)

@@ -83,15 +83,24 @@ class GeneralSettings(SettingsFrame):
 
         # variables
         self.check_for_updates = tk.BooleanVar()
+        self.language = tk.StringVar()
 
         self.check_for_updates.set(self.config.get_value(Config.Settings.CHECK_FOR_UPDATES))
+        self.language.set(self.config.get_language())
 
         # gui
+        language_label = ttk.Label(self, text=self.translate("Language:"))
+        language_label.grid(row=0, column=0, padx=5, pady=(5, 0), sticky="w")
+
+        language_list = ttk.Combobox(self, values=self.config.get_languages(), textvariable=self.language, state="readonly")
+        language_list.grid(row=0, column=1, padx=5, pady=(5, 0), sticky="w")
+
         check_for_updates = ttk.Checkbutton(self, text=self.translate("Check for updates"), variable=self.check_for_updates)
         check_for_updates.grid(row=1, column=0, padx=5, pady=(5, 0), sticky="w", columnspan=2)
 
     def save_settings(self):
         settings = {
+            Config.Settings.LANGUAGE: self.config.convert_language_to_code(self.language.get()),
             Config.Settings.CHECK_FOR_UPDATES: self.check_for_updates.get()
         }
 

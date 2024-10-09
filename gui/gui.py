@@ -272,15 +272,9 @@ class GUI:
         self.run_settings_help_window_add_text(self.translate('Keep a copy of the old subtitle files: '), self.translate('You can save the original subtitle files. This way the program does not need to extract them again if you run the program again.'), help_window)
         self.run_settings_help_window_add_text(self.translate('Keep a copy of the new subtitle files: '), self.translate('You can save the new subtitle files. This way you can easily edit them later.'), help_window)
         self.run_settings_help_window_add_text(self.translate('Use different languages for some subtitles: '), 
-                                                self.translate(('Here you can tell the program to use a different language for some languages.'
-                                                'This can be useful if the English subtitles contain letters like ä, ö or ü. Then you could use'
-                                                'the German language because it contains all letters of the English language + these special letters.'
-                                                'Changes are seperated by a new line and follow this format: "old language" -> "new language"'
-                                                ' (e.g. eng -> ger).')), help_window)
+                                                    self.translate('help.language'), help_window)
         self.run_settings_help_window_add_text(self.translate('Allowed text color brightness deviation: '),
-                                                    self.translate(('You can change the maximum allowed difference in brightness in the text color.'
-                                                    'This can be useful because some subtitle images are more noisy than others.'
-                                                    'The value should be as low as possible but the text in the images should not be too thin.')), help_window)
+                                                    self.translate('help.brightness'), help_window)
 
         help_window.grid_columnconfigure(0, weight=1)
 

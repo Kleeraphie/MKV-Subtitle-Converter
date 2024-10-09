@@ -3,6 +3,8 @@ __version__ = "v1.2.5"
 import configparser
 from enum import Enum
 import gettext
+import os
+from babel import Locale
 
 class Config:
     class Settings(Enum):
@@ -84,8 +86,6 @@ class Config:
                 return '1' if value else '0'
             case 's':
                 return str(value)
-            case 'i':
-                return str(int(value))
             
     def _get_section(self, setting: Settings):
         config = {
@@ -105,19 +105,27 @@ class Config:
                 return value == '1'
             case 's':
                 return value
-            case 'i':
-                return int(value)
 
-    def convert_language_to_code(self, language: str) -> str:
-        languages = {
-            'English': 'eng',
-            'Deutsch': 'de_DE'
-        }
-
-        return languages.get(language, 'eng')
-    
     def get_version(self):
         return __version__
     
     def translate(self, text: str):
         return self.translation.gettext(text)
+    
+    def get_language(self):
+        lang_code = self.get_value(self.Settings.LANGUAGE)
+        return Locale.parse(lang_code).get_display_name()
+    
+    def get_languages(self):
+        lang_codes = [code.name for code in os.scandir('languages') if code.is_dir()]
+        languages = [Locale.parse(code).get_display_name() for code in lang_codes]
+
+        return languages
+
+    def convert_language_to_code(self, language: str):
+        if language.strip() == '':
+            return 'en_US'
+        
+        lang_codes = [code.name for code in os.scandir('languages') if code.is_dir()]
+        languages = [Locale.parse(code).get_display_name() for code in lang_codes]
+        return lang_codes[languages.index(language)]

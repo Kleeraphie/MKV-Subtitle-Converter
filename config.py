@@ -75,8 +75,13 @@ class Config:
             self._new_config.write(configfile, False)
 
         # read the new config
+        # TODO: just do _initialize_config() but there is currently a bug
         self.config = configparser.ConfigParser()
         self.config.read('config.ini')
+
+        language: str = self.get_value(self.Settings.LANGUAGE) # get the language set in the config
+        self.translation = gettext.translation('messages', 'languages', [language, 'en_US'], fallback=True)
+        self.translation.install()
 
         self._new_config = None
 

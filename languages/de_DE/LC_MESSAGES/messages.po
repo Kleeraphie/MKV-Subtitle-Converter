@@ -212,9 +212,9 @@ msgid ""
 "useful if you want to compare the old and new subtitles. They are stored "
 "in a directory where this program is installed."
 msgstr ""
-"Du kannst die Bilder der alten Untertitel speichern. Das kann nützlich "
-"sein um die neuen Untertitel mit den alten zu vergleichen. Sie werden in "
-"dem Ordner gespeichert, in dem das Programm installiert ist."
+"Du kannst die Bilder der alten Untertitel speichern. Das kann beim "
+"Vergleichen der alten Untertitel mit den neuen helfen. Sie werden in dem "
+"Ordner gespeichert, in dem das Programm installiert ist."
 
 #: gui/gui.py:281
 msgid "Keep original MKV files: "

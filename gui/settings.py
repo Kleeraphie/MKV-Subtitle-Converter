@@ -4,10 +4,11 @@ from config import Config
 
 class SettingsWindow(tk.Toplevel):
     
-    def __init__(self):
+    def __init__(self, parent):
         super().__init__()
         self.config = Config()
         self.translate = self.config.translate
+        self.parent = parent
 
         self.title(self.translate("Settings"))
         self.geometry("500x500")
@@ -37,9 +38,9 @@ class SettingsWindow(tk.Toplevel):
         # -----------------  FOOTER ----------------------------
         footer = tk.Frame(self)
         save_button = tk.Button(footer, text=self.translate("Save"), command=self.save_settings)
-        save_button.place(relx=0.3, rely=0.25, relwidth=0.1, relheight=0.5)
+        save_button.place(relx=0.3, rely=0.25, relwidth=0.2, relheight=0.5)
         exit_button = tk.Button(footer, text=self.translate("Exit"), command=self.destroy)
-        exit_button.place(relx=0.6, rely=0.25, relwidth=0.1, relheight=0.5)
+        exit_button.place(relx=0.6, rely=0.25, relwidth=0.2, relheight=0.5)
         footer.place(relx=0.3, rely=0.9, relwidth=0.7, relheight=0.1)
 
 
@@ -59,10 +60,13 @@ class SettingsWindow(tk.Toplevel):
 
         # save changes to config file
         config = Config()
+        language_changed = config.get_language() != self.frames[GeneralSettings].language.get()
         config.save_config()
         
         self.destroy()
 
+        if language_changed:
+            self.parent.reload()
 
 # ------------------------ MULTIPAGE FRAMES ------------------------------------
 

@@ -22,6 +22,7 @@ class GUI:
         self.__fnames = []
         self.selected_paths = [] # paths of the selected files
         self.old_path = ""
+        self.reloaded = False
 
         self.window = tk.Tk()
         self.window.geometry(newGeometry="500x650+0+0")
@@ -60,10 +61,10 @@ class GUI:
         separator.grid(row=2, column=3, sticky="ns", padx=5, pady=5)
         self.selected_files_listbox.grid(row=2, column=4, sticky="nsew", columnspan=3, padx=(0, 5))
 
-        self.unselected_files_listbox.bind("<Double-Button-1>", lambda _: self.select_file(self.unselected_files_listbox.get(self.unselected_files_listbox.curselection())))
-        self.unselected_files_listbox.bind("<Return>", lambda _: self.select_file(self.unselected_files_listbox.get(self.unselected_files_listbox.curselection())))
-        self.selected_files_listbox.bind("<Double-Button-1>", lambda _: self.unselect_file(self.selected_files_listbox.get(self.selected_files_listbox.curselection())))
-        self.selected_files_listbox.bind("<Return>", lambda _: self.unselect_file(self.selected_files_listbox.get(self.selected_files_listbox.curselection())))
+        self.unselected_files_listbox.bind("<Double-Button-1>", lambda _: self.select_file())
+        self.unselected_files_listbox.bind("<Return>", lambda _: self.select_file())
+        self.selected_files_listbox.bind("<Double-Button-1>", lambda _: self.unselect_file())
+        self.selected_files_listbox.bind("<Return>", lambda _: self.unselect_file())
 
         # Set up row and column configurations for responsive layout
         selection_window.grid_rowconfigure(0, weight=0)
@@ -108,6 +109,7 @@ class GUI:
         self.values.get('keep_old_subs').set(True)
         self.subtitle_format.set(self.subtitle_format["values"][0])
         self.brightness_diff.set(3)
+        self.update_selections()
 
         subtitle_format_label.grid(row=0, column=0, sticky="w")
         self.subtitle_format.grid(row=0, column=1, sticky="w", padx=5)
@@ -120,7 +122,7 @@ class GUI:
         self.diff_langs.grid(row=7, column=0, sticky="w", padx=24, columnspan=3)
         self.change_visibility(self.diff_langs, self.values.get('use_diff_langs').get())
         brightness_diff_label.grid(row=8, column=0, sticky="w", columnspan=3)
-        self.brightness_diff.grid(row=8, column=1, sticky="w", padx=((len(brightness_diff_label.cget("text"))+24), 0))
+        self.brightness_diff.grid(row=8, column=1, sticky="w")
         brightness_value_label.grid(row=8, column=2, sticky="w")
 
         job_settings_window.grid_rowconfigure(0, weight=1)
@@ -134,6 +136,18 @@ class GUI:
         job_settings_window.grid_rowconfigure(8, weight=1)
         
         job_settings_window.pack(fill=tk.BOTH, expand=True)
+
+        # calculate padx for brightness_diff
+        # 1. get the width of the brightness diff label text
+        brightness_diff_label.update_idletasks()
+        brightness_diff_label_length = brightness_diff_label.winfo_width()
+        # 2. get the longest label text
+        longest_label_length = subtitle_format_label.winfo_width()
+        # 3. calculate the padx for brightness_diff
+        brightness_diff_padx = (brightness_diff_label_length - longest_label_length, 0)
+        # 4. set padx for brightness_diff
+        self.brightness_diff.grid_configure(padx=brightness_diff_padx)
+        
 
         # =====Buttons window===== #
         self.wait_var = tk.IntVar()
@@ -170,17 +184,20 @@ class GUI:
         file_list = os.listdir(dir_path) # get list of files in selected folder
         # show only MKV files in the left list that are not already selected
         self.__fnames = [f for f in file_list if f.lower().endswith((".mkv")) and os.path.join(dir_path, f) not in self.selected_paths]
-        self.update_selections(self.__selected)
+        self.update_selections()
 
-    def update_selections(self, selected):
+    def update_selections(self):
         self.selected_files_listbox.delete(0,tk.END)
-        self.selected_files_listbox.insert(tk.END, *selected)
+        self.selected_files_listbox.insert(tk.END, *self.__selected)
         
         self.unselected_files_listbox.delete(0,tk.END)
         self.unselected_files_listbox.insert(tk.END, *self.__fnames)
 
-    def select_file(self, file_name: str):
+    def select_file(self):
+        
         try:
+            file_name = self.unselected_files_listbox.get(self.unselected_files_listbox.curselection())
+            
             self.__fnames.remove(file_name)
             if self.__nothing_selected in self.__selected:
                 self.__selected.remove(self.__nothing_selected)
@@ -188,12 +205,16 @@ class GUI:
             self.__selected.append(file_name)
             self.selected_paths.append(os.path.join(self.old_path, file_name))
 
-            self.update_selections(self.__selected)
+            self.update_selections()
         except ValueError:
             pass
+        except tk.TclError: # i.e. because of double-clicking on empty space in the listbox
+            pass
 
-    def unselect_file(self, file_name: str):
+    def unselect_file(self):
         try:
+            file_name = self.selected_files_listbox.get(self.selected_files_listbox.curselection())
+
             if file_name == self.__nothing_selected:
                 return
 
@@ -209,8 +230,10 @@ class GUI:
             if len(self.__selected) == 0:
                 self.__selected.append(self.__nothing_selected)
 
-            self.update_selections(self.__selected)
+            self.update_selections()
         except ValueError:
+            pass
+        except tk.TclError: # i.e. because of double-clicking on empty space in the listbox
             pass
 
     def change_visibility(self, widget, visible: bool):
@@ -225,6 +248,9 @@ class GUI:
     def run(self) -> tuple[int, dict]:
         self.window.tkraise()
         self.window.wait_variable(self.wait_var)
+
+        if self.reloaded: # values are already converted from another GUI instance (e.g. after changing the language)
+            return self.wait_var.get(), self.values
 
         # convert booleanvars to bools
         for key in self.values:
@@ -246,7 +272,7 @@ class GUI:
     
     def create_menu(self):
         self.menu = tk.Menu(self.window)
-        self.menu.add_command(label=self.translate("Settings"), command=lambda: SettingsWindow())
+        self.menu.add_command(label=self.translate("Settings"), command=lambda: SettingsWindow(self))
 
         help_menu = tk.Menu(self.menu, tearoff=0)
         help_menu.add_command(label=self.translate("About..."), command=lambda: AboutWindow(self))
@@ -308,3 +334,11 @@ class GUI:
             update = tk.messagebox.askyesno(self.translate("Update available"), self.translate("Version {latest_version} is available. Do you want to download it?").format(latest_version))
             if update:
                 webbrowser.open('https://github.com/Kleeraphie/MKV-Subtitle-Converter/releases/latest')
+
+    def reload(self):
+        self.reloaded = True
+        self.window.destroy()
+        new_gui = GUI()  # Create a new instance of the GUI class
+        wait_var, values = new_gui.run()
+        self.values = values
+        self.wait_var.set(wait_var)

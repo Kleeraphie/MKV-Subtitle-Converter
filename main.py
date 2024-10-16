@@ -11,7 +11,6 @@ if __name__ == '__main__':
     if config.check_for_updates():
         gui.check_for_updates()
     exit_code, values = gui.run()
-    gui.window.destroy()
 
     if exit_code == 0:
         sc = SubtitleConverter()

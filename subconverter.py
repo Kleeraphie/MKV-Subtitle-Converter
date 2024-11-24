@@ -231,12 +231,23 @@ class SubtitleConverter:
                 sub_index += 1
 
         srt.save(srt_file) # save as SRT file
+
+        # remove \f and new double empty lines from file
+        # with open(srt_file, "r") as file:
+        #     content = file.read()
+
+        # content = content.replace("\f", "\n")
+        # content = re.sub(r'\n\s*\n', '\n\n', content)
+
+        # with open(srt_file, "w") as file:
+        #     file.write(content)
+
         srtchecker.check_srt(srt_file, True) # check SRT file for common OCR mistakes
 
     def replace_subtitles(self):
         deleted_tracks = 0
 
-        print(self.translate("Replacing subtitles in {file_name}...").format(self.file_name))
+        print(self.translate("Replacing subtitles in {file_name}...").format(file_name=self.file_name))
         for track_id in self.subtitle_ids:
             sub_path = os.path.join(self.sub_dir, f'{track_id}.{self.format}')
 
@@ -321,7 +332,7 @@ class SubtitleConverter:
             self.file_name = os.path.splitext(os.path.basename(self.file_path))[0]
             
             try:
-                print(self.translate("Processing {file_name}...").format(self.file_name))
+                print(self.translate("Processing {file_name}...").format(file_name=self.file_name))
 
                 self.mkv = pymkv.MKVFile(self.file_path)
                 main_dir_path = os.path.join('subtitles', self.file_name)
@@ -339,7 +350,7 @@ class SubtitleConverter:
 
                 if self.edit_flag:
                     print(self.translate("You can now edit the new subtitle files. Press Enter when you are done."))
-                    print(self.translate("They can be found at: {directory}").format(os.path.join(os.getcwd(), self.sub_dir)))
+                    print(self.translate("They can be found at: {directory}").format(directory=os.path.join(os.getcwd(), self.sub_dir)))
                     if os.name == "nt":
                         os.system(f"explorer.exe \"{os.path.join(os.getcwd(), self.sub_dir)}\"")
                     input()
@@ -355,9 +366,9 @@ class SubtitleConverter:
                 self.mux_file()
                 self.clean()
 
-                print(self.translate("Finished {file}").format(self.file_name)) 
+                print(self.translate("Finished {file}").format(file=self.file_name)) 
             except Exception as e:
-                print(self.translate("Error while processing {file}: {exception}").format(self.file_name, e))
+                print(self.translate("Error while processing {file}: {exception}").format(file=self.file_name, exception=e))
                 input(self.translate("Press Enter to continue with the next file..."))
                 self.clean()
                 print()

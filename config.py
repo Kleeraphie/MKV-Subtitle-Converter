@@ -54,11 +54,18 @@ class Config:
         if self._new_config is None:
             self._new_config = configparser.ConfigParser()
             self._new_config.optionxform = str
-            self._new_config.read('config.ini')
+            self._new_config.read(self.config_path)
 
-        # check if there are any changes
-        if all(self.get_value(setting) == settings[setting] for setting in settings):
-            return
+        if not os.path.exists(self.config_path):
+            for setting in self.Settings:
+                section = self._get_section(setting)
+                if not self._new_config.has_section(section):
+                    self._new_config.add_section(section)
+                self._new_config.set(section, setting.value, self._convert_value_to_config_value(setting, settings[setting]))
+        else:
+            # check if there are any changes
+            if all(self.get_value(setting) == settings[setting] for setting in settings):
+                return
         
         for setting in settings:
             section = self._get_section(setting)

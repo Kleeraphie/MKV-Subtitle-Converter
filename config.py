@@ -6,7 +6,9 @@ import gettext
 import os
 from babel import Locale
 import sys
-import pathlib
+from pathlib import Path
+import logging
+from datetime import datetime
 
 class Config:
     class Settings(Enum):
@@ -31,6 +33,8 @@ class Config:
         self.create_default_config()
         self._new_config.read(self.config_path)
         self.save_config()
+
+        self.logger = self.create_logger()
 
         language: str = self.get_value(self.Settings.LANGUAGE) # get the language set in the config
         self.translation = gettext.translation('messages', 'languages', [language, 'en_US'], fallback=True)
@@ -145,7 +149,7 @@ class Config:
         languages = [Locale.parse(code).get_display_name() for code in lang_codes]
         return lang_codes[languages.index(language)]
     
-    def get_datadir(self) -> pathlib.Path:
+    def get_datadir(self) -> Path:
         """
         Returns a parent directory path
         where persistent application data can be stored.
@@ -156,14 +160,27 @@ class Config:
         """
 
         if sys.platform.startswith("win"):
-            path = pathlib.Path(os.getenv("LOCALAPPDATA"))
+            path = Path(os.getenv("LOCALAPPDATA"))
         elif sys.platform.startswith("darwin"):
-            path = pathlib.Path("~/Library/Application Support")
+            path = Path("~/Library/Application Support")
         else:
             # linux
-            path = pathlib.Path(os.getenv("XDG_DATA_HOME", "~/.local/share"))
+            path = Path(os.getenv("XDG_DATA_HOME", "~/.local/share"))
 
         path = path / "MKV Subtitle Converter"
         path.mkdir(parents=True, exist_ok=True)
 
         return path
+    
+    def create_logger(self):
+        self.logger = logging.getLogger(__name__)
+        date = datetime.now().strftime('%Y-%m-%d %H.%M.%S')
+        # logs_dir = Path(self.get_datadir() / 'logs')
+        logs_dir = Path('logs')
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        logging.basicConfig(filename=str(logs_dir / f'{date}.log'), level=logging.DEBUG, format='[%(levelname)s] %(asctime)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        # logging.getLogger().addHandler(logging.StreamHandler())  # print logs to console
+        self.logger.debug(f'Program started at {date}.')
+        logging.warning('This is a warning message.')
+
+        return self.logger

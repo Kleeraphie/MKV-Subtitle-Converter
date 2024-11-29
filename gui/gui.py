@@ -10,6 +10,7 @@ import requests
 from packaging.version import Version
 from config import Config
 import webbrowser
+import logging
 
 class GUI:
     
@@ -319,6 +320,8 @@ class GUI:
         self.run_settings_help_window_row += 1
 
     def update_available(self):
+        logging.info("Checking for updates.")
+
         try:
             response = requests.get("https://api.github.com/repos/Kleeraphie/MKV-Subtitle-Converter/releases/latest")
             latest_version = response.json()["tag_name"]

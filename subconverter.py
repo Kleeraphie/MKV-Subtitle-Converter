@@ -93,6 +93,7 @@ class SubtitleConverter:
 
             if "->" not in line:
                 print(self.translate("Invalid input: {line}").format(line))
+                self.config.logger.error(f"Invalid input: {line}.")
 
             old_lang, new_lang = line.split("->")
             old_lang = old_lang.strip()
@@ -100,10 +101,12 @@ class SubtitleConverter:
             
             if old_lang != self.convert_language(old_lang):
                 print(self.translate('Changed "{old_lang}" to "{new_lang}"').format(old_lang=old_lang, new_lang=self.convert_language(old_lang)))
+                self.config.logger.info(f'Changed "{old_lang}" to "{self.convert_language(old_lang)}".')
                 old_lang = self.convert_language(old_lang)
 
             if new_lang != self.convert_language(new_lang):
                 print(self.translate('Changed "{old_lang}" to "{new_lang}"').format(old_lang=new_lang, new_lang=self.convert_language(new_lang)))
+                self.config.logger.info(f'Changed "{new_lang}" to "{self.convert_language(new_lang)}".')
                 new_lang = self.convert_language(new_lang)
 
             diff_langs[old_lang] = new_lang
@@ -162,6 +165,7 @@ class SubtitleConverter:
             thread.join()
 
         if pgsreader.exit_code != 0:
+            self.config.logger.error('Error while converting subtitle #{id}. See messages before for more information.')
             raise Exception(self.translate("Error while converting subtitle #{id}. See console for more info.").format(id))
             # TODO Print error message by exit code, therefore check which warnings trigger exceptions
 
@@ -182,11 +186,13 @@ class SubtitleConverter:
                 return new_lang
             else:
                 print(self.translate('Language "{new_lang}" is not installed, using "{lang_code}" instead').format(new_lang, lang_code))
+                self.config.logger.warning(f'Language "{new_lang}" is not installed, using "{lang_code}" instead.')
 
         if lang_code in pytesseract.get_languages(): # when user doesn't want to change language or changed language is not installed
             return lang_code
         else:
             print(self.translate('Language "{lang_code}" is not installed, using English instead').format(lang_code))
+            self.config.logger.warning(f'Language "{lang_code}" is not installed, using English instead.')
             return None
 
     def convert_to_srt(self, lang:str, track_id: int):
@@ -213,7 +219,8 @@ class SubtitleConverter:
         sub_start = 0
         sub_index = 0
         im = ImageMaker(self.text_brightness_diff)
-        for ds in tqdm(all_sets, unit=" ds"):
+        progress_bar = tqdm(all_sets, unit=" ds")
+        for ds in progress_bar:
             if ds.has_image:
                 pds = ds.pds[0] # get Palette Definition Segment
                 ods = ds.ods[0] # get Object Definition Segment
@@ -232,6 +239,7 @@ class SubtitleConverter:
                 srt.append(SubRipItem(sub_index, start_time, end_time, sub_text))
                 sub_index += 1
 
+        self.config.logger.debug(f'Finished converting subtitle #{track_id} in {int(progress_bar.format_dict["elapsed"])}s.')
         srt.save(srt_file) # save as SRT file
 
         # remove \f and new double empty lines from file
@@ -250,6 +258,7 @@ class SubtitleConverter:
         deleted_tracks = 0
 
         print(self.translate("Replacing subtitles in {file_name}...").format(file_name=self.file_name))
+        self.config.logger.info(f'Replacing subtitles in {self.file_name}.')
         for track_id in self.subtitle_ids:
             sub_path = os.path.join(self.sub_dir, f'{track_id}.{self.format}')
 
@@ -282,6 +291,7 @@ class SubtitleConverter:
 
     def mux_file(self):
         print(self.translate("Muxing file..."))
+        self.config.logger.info(f'Muxing file {self.file_name}.')
         new_file_dir = os.path.dirname(self.file_path)
         new_file_path = os.path.join(new_file_dir, f"{self.file_name} (1).mkv")
         old_file_size = 0
@@ -311,6 +321,7 @@ class SubtitleConverter:
         new_file_path = os.path.join(new_file_dir, f"{self.file_name} (1).mkv")
 
         print(self.translate("Cleaning up...") + "\n")
+        self.config.logger.info("Cleaning up.")
 
         if not (self.keep_old_subs or self.keep_new_subs):
             if not self.keep_imgs:
@@ -335,27 +346,35 @@ class SubtitleConverter:
             
             try:
                 print(self.translate("Processing {file_name}...").format(file_name=self.file_name))
+                self.config.logger.info(f'Processing {self.file_name}.')
 
                 self.mkv = pymkv.MKVFile(self.file_path)
                 main_dir_path = self.get_datadir() / 'subtitles' / self.file_name
                 self.img_dir = main_dir_path / 'images'
                 self.sub_dir = main_dir_path / 'subtitles'
 
+                self.config.logger.debug(f'Starting to extract subtitles.')
                 self.extract_subtitles()
+                self.config.logger.debug(f'Finished extracting subtitles.')
 
                 # skip title if no PGS subtitles were found
                 if len(self.subtitle_ids) == 0:
                     print(self.translate("No subtitles found.") + "\n")
+                    self.config.logger.info("No subtitles found.")
                     continue
 
+                self.config.logger.debug(f'Starting to convert subtitles.')
                 self.convert_subtitles()
+                self.config.logger.debug(f'Finished converting subtitles.')
 
                 if self.edit_flag:
                     print(self.translate("You can now edit the new subtitle files. Press Enter when you are done."))
                     print(self.translate("They can be found at: {directory}").format(directory=str(self.sub_dir)))
+                    self.config.logger.debug(f'Pause for editing subtitles in {self.sub_dir}.')
                     if os.name == "nt":
                         os.system(f"explorer.exe \"{os.path.join(os.getcwd(), self.sub_dir)}\"")
                     input()
+                    self.config.logger.debug(f'Continue after pausing for subtitle editing.')
 
                 self.replace_subtitles()
 
@@ -369,9 +388,12 @@ class SubtitleConverter:
                 self.clean()
 
                 print(self.translate("Finished {file}").format(file=self.file_name)) 
+                self.config.logger.info(f'Finished {self.file_name}.')
             except Exception as e:
                 print(self.translate("Error while processing {file}: {exception}").format(file=self.file_name, exception=e))
+                self.config.logger.error(f'Error while processing {self.file_name}: {e}')
                 input(self.translate("Press Enter to continue with the next file..."))
+                self.config.logger.debug("Continuing with the next file.")
                 self.clean()
                 print()
 
@@ -394,7 +416,6 @@ class SubtitleConverter:
             path = pathlib.Path(os.getenv("XDG_DATA_HOME", "~/.local/share"))
 
         path = path / "MKV Subtitle Converter"
-        print(path)
         path.mkdir(parents=True, exist_ok=True)
 
         return path

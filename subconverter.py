@@ -11,6 +11,8 @@ import time
 import shutil
 import pysubs2
 from config import Config
+import sys
+import pathlib
 
 class SubtitleConverter:
 
@@ -110,7 +112,7 @@ class SubtitleConverter:
 
     # helper function for threading
     def extract(self, track_id: int):        
-        os.system(f"mkvextract \"{self.file_path}\" tracks {track_id}:\"{os.path.join(self.sub_dir, f'{track_id}.sup')}\"")
+        os.system(f"mkvextract \"{self.file_path}\" tracks {track_id}:\"{str(self.sub_dir / f'{track_id}.sup')}\"")
 
     def extract_subtitles(self) -> list[int]:
         self.subtitle_ids = []
@@ -126,9 +128,9 @@ class SubtitleConverter:
                     continue
 
                 if not os.path.exists(self.sub_dir):
-                    os.makedirs(self.sub_dir)
+                    self.sub_dir.mkdir(parents=True, exist_ok=True)
 
-                if os.path.exists(os.path.join(self.sub_dir, f'{track_id}.sup')):
+                if os.path.exists(str(self.sub_dir / f'{track_id}.sup')):
                     self.subtitle_ids.append(track_id)
                     continue
 
@@ -197,8 +199,8 @@ class SubtitleConverter:
         srt = SubRipFile()
         
         if self.keep_imgs:
-            track_img_dir = os.path.join(self.img_dir, str(track_id))
-            os.makedirs(track_img_dir, exist_ok=True)
+            track_img_dir = self.img_dir / str(track_id)
+            track_img_dir.mkdir(parents=True, exist_ok=True)
 
         # loading DisplaySets
         all_sets = [ds for ds in tqdm(pgs.iter_displaysets(), unit=" ds")]
@@ -335,9 +337,9 @@ class SubtitleConverter:
                 print(self.translate("Processing {file_name}...").format(file_name=self.file_name))
 
                 self.mkv = pymkv.MKVFile(self.file_path)
-                main_dir_path = os.path.join('subtitles', self.file_name)
-                self.img_dir = os.path.join(main_dir_path, 'images')
-                self.sub_dir = os.path.join(main_dir_path, 'subtitles')
+                main_dir_path = self.get_datadir() / 'subtitles' / self.file_name
+                self.img_dir = main_dir_path / 'images'
+                self.sub_dir = main_dir_path / 'subtitles'
 
                 self.extract_subtitles()
 
@@ -350,7 +352,7 @@ class SubtitleConverter:
 
                 if self.edit_flag:
                     print(self.translate("You can now edit the new subtitle files. Press Enter when you are done."))
-                    print(self.translate("They can be found at: {directory}").format(directory=os.path.join(os.getcwd(), self.sub_dir)))
+                    print(self.translate("They can be found at: {directory}").format(directory=str(self.sub_dir)))
                     if os.name == "nt":
                         os.system(f"explorer.exe \"{os.path.join(os.getcwd(), self.sub_dir)}\"")
                     input()
@@ -372,3 +374,27 @@ class SubtitleConverter:
                 input(self.translate("Press Enter to continue with the next file..."))
                 self.clean()
                 print()
+
+    def get_datadir(self) -> pathlib.Path:
+        """
+        Returns a parent directory path
+        where persistent application data can be stored.
+
+        # Linux: ~/.local/share/MKV Subtitle Converter
+        # macOS: ~/Library/Application Support/MKV Subtitle Converter
+        # Windows: C:/Users/<USER>/AppData/Roaming/MKV Subtitle Converter
+        """
+
+        if sys.platform.startswith("win"):
+            path = pathlib.Path(os.getenv("LOCALAPPDATA"))
+        elif sys.platform.startswith("darwin"):
+            path = pathlib.Path("~/Library/Application Support")
+        else:
+            # linux
+            path = pathlib.Path(os.getenv("XDG_DATA_HOME", "~/.local/share"))
+
+        path = path / "MKV Subtitle Converter"
+        print(path)
+        path.mkdir(parents=True, exist_ok=True)
+
+        return path

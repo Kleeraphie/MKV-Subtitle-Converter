@@ -1,10 +1,12 @@
-__version__ = "v1.2.5"
+__version__ = "v1.3.0"
 
 import configparser
 from enum import Enum
 import gettext
 import os
 from babel import Locale
+import sys
+import pathlib
 
 class Config:
     class Settings(Enum):
@@ -23,10 +25,11 @@ class Config:
         return cls.config
 
     def _initialize_config(self):
+        self.config_path = str(self.get_datadir() / 'config.ini')
         self.config = configparser.ConfigParser()
-        self.config.read('config.ini')
+        self.config.read(self.config_path)
         self.create_default_config()
-        self._new_config.read('config.ini')
+        self._new_config.read(self.config_path)
         self.save_config()
 
         language: str = self.get_value(self.Settings.LANGUAGE) # get the language set in the config
@@ -78,13 +81,13 @@ class Config:
             return
         
         # Save the config file with all the new changes
-        with open('config.ini', 'w') as configfile:
+        with open(self.config_path, 'w') as configfile:
             self._new_config.write(configfile, False)
 
         # read the new config
         # TODO: just do _initialize_config() but there is currently a bug
         self.config = configparser.ConfigParser()
-        self.config.read('config.ini')
+        self.config.read(self.config_path)
 
         language: str = self.get_value(self.Settings.LANGUAGE) # get the language set in the config
         self.translation = gettext.translation('messages', 'languages', [language, 'en_US'], fallback=True)
@@ -141,3 +144,26 @@ class Config:
         lang_codes = [code.name for code in os.scandir('languages') if code.is_dir()]
         languages = [Locale.parse(code).get_display_name() for code in lang_codes]
         return lang_codes[languages.index(language)]
+    
+    def get_datadir(self) -> pathlib.Path:
+        """
+        Returns a parent directory path
+        where persistent application data can be stored.
+
+        # Linux: ~/.local/share/MKV Subtitle Converter
+        # macOS: ~/Library/Application Support/MKV Subtitle Converter
+        # Windows: C:/Users/<USER>/AppData/Roaming/MKV Subtitle Converter
+        """
+
+        if sys.platform.startswith("win"):
+            path = pathlib.Path(os.getenv("LOCALAPPDATA"))
+        elif sys.platform.startswith("darwin"):
+            path = pathlib.Path("~/Library/Application Support")
+        else:
+            # linux
+            path = pathlib.Path(os.getenv("XDG_DATA_HOME", "~/.local/share"))
+
+        path = path / "MKV Subtitle Converter"
+        path.mkdir(parents=True, exist_ok=True)
+
+        return path

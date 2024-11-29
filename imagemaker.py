@@ -3,6 +3,7 @@
 import numpy as np
 from PIL import Image
 import cv2
+import logging
 
 class ImageMaker:
 
@@ -49,7 +50,8 @@ class ImageMaker:
             i += incr
 
         if line_builder:
-            raise Exception("RLE data ended before end of line was reached")
+            logging.error("RLE data ended before end of line was reached.")
+            raise Exception("RLE data ended before end of line was reached.")
 
         return pixels
                             

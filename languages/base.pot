@@ -1,0 +1,270 @@
+# Translations template for MKV Subtitle Converter.
+# Copyright (C) 2024 ORGANIZATION
+# This file is distributed under the same license as the MKV Subtitle
+# Converter project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: MKV Subtitle Converter 1.2.5\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2024-10-09 16:38+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+
+#: subconverter.py:93
+msgid "Invalid input: {line}"
+msgstr ""
+
+#: subconverter.py:100 subconverter.py:104
+msgid "Changed \"{old_lang}\" to \"{new_lang}\""
+msgstr ""
+
+#: subconverter.py:163
+msgid "Error while converting subtitle #{id}. See console for more info."
+msgstr ""
+
+#: subconverter.py:182
+msgid "Language \"{new_lang}\" is not installed, using \"{lang_code}\" instead"
+msgstr ""
+
+#: subconverter.py:187
+msgid "Language \"{lang_code}\" is not installed, using English instead"
+msgstr ""
+
+#: subconverter.py:250
+msgid "Replacing subtitles in {file_name}..."
+msgstr ""
+
+#: subconverter.py:282
+msgid "Muxing file..."
+msgstr ""
+
+#: subconverter.py:311
+msgid "Cleaning up..."
+msgstr ""
+
+#: subconverter.py:335
+msgid "Processing {file_name}..."
+msgstr ""
+
+#: subconverter.py:346
+msgid "No subtitles found."
+msgstr ""
+
+#: subconverter.py:352
+msgid "You can now edit the new subtitle files. Press Enter when you are done."
+msgstr ""
+
+#: subconverter.py:353
+msgid "They can be found at: {directory}"
+msgstr ""
+
+#: subconverter.py:369
+msgid "Finished {file}"
+msgstr ""
+
+#: subconverter.py:371
+msgid "Error while processing {file}: {exception}"
+msgstr ""
+
+#: subconverter.py:372
+msgid "Press Enter to continue with the next file..."
+msgstr ""
+
+#: gui/about.py:10
+msgid "About"
+msgstr ""
+
+#: gui/about.py:19 gui/settings.py:100
+msgid "Check for updates"
+msgstr ""
+
+#: gui/about.py:31
+msgid "You are already up to date."
+msgstr ""
+
+#: gui/gui.py:20
+msgid "Select a file from the left list"
+msgstr ""
+
+#: gui/gui.py:50
+msgid "Directory:"
+msgstr ""
+
+#: gui/gui.py:53
+msgid "Browse"
+msgstr ""
+
+#: gui/gui.py:54
+msgid "Unselected files:"
+msgstr ""
+
+#: gui/gui.py:55
+msgid "Selected files:"
+msgstr ""
+
+#: gui/gui.py:94 gui/gui.py:259 gui/settings.py:12
+msgid "Settings"
+msgstr ""
+
+#: gui/gui.py:105
+msgid "Format of the new subtitles:"
+msgstr ""
+
+#: gui/gui.py:107
+msgid "Edit subtitles before muxing"
+msgstr ""
+
+#: gui/gui.py:108
+msgid "Save images of PGS subtitles"
+msgstr ""
+
+#: gui/gui.py:109
+msgid "Keep original MKV files"
+msgstr ""
+
+#: gui/gui.py:110
+msgid "Keep a copy of the old subtitle files"
+msgstr ""
+
+#: gui/gui.py:111
+msgid "Keep a copy of the new subtitle files"
+msgstr ""
+
+#: gui/gui.py:112
+msgid "Use different languages for some subtitles"
+msgstr ""
+
+#: gui/gui.py:114
+msgid "Allowed text color brightness deviation:"
+msgstr ""
+
+#: gui/gui.py:151
+msgid "Start"
+msgstr ""
+
+#: gui/gui.py:152 gui/settings.py:44
+msgid "Exit"
+msgstr ""
+
+#: gui/gui.py:262
+msgid "About..."
+msgstr ""
+
+#: gui/gui.py:263 gui/gui.py:269
+msgid "Help"
+msgstr ""
+
+#: gui/gui.py:275
+msgid "Help for choosing the right settings"
+msgstr ""
+
+#: gui/gui.py:278
+msgid "Format of the new subtitles: "
+msgstr ""
+
+#: gui/gui.py:278
+msgid ""
+"The format of your new subtitles. SRT is the most common format and is "
+"supported by most video players."
+msgstr ""
+
+#: gui/gui.py:279
+msgid "Edit subtitles before muxing: "
+msgstr ""
+
+#: gui/gui.py:279
+msgid ""
+"Before exchanging the subtitles with the new ones, the program will pause"
+" so that you can edit them. The program continues after pressing <Enter> "
+"in the console."
+msgstr ""
+
+#: gui/gui.py:280
+msgid "Save images of PGS subtitles: "
+msgstr ""
+
+#: gui/gui.py:280
+msgid ""
+"You can save the images that make up the old subtitles. This can be "
+"useful if you want to compare the old and new subtitles. They are stored "
+"in a directory where this program is installed."
+msgstr ""
+
+#: gui/gui.py:281
+msgid "Keep original MKV files: "
+msgstr ""
+
+#: gui/gui.py:281
+msgid ""
+"You can keep the original video files. This way you can test different "
+"settings."
+msgstr ""
+
+#: gui/gui.py:282
+msgid "Keep a copy of the old subtitle files: "
+msgstr ""
+
+#: gui/gui.py:282
+msgid ""
+"You can save the original subtitle files. This way the program does not "
+"need to extract them again if you run the program again."
+msgstr ""
+
+#: gui/gui.py:283
+msgid "Keep a copy of the new subtitle files: "
+msgstr ""
+
+#: gui/gui.py:283
+msgid ""
+"You can save the new subtitle files. This way you can easily edit them "
+"later."
+msgstr ""
+
+#: gui/gui.py:284
+msgid "Use different languages for some subtitles: "
+msgstr ""
+
+#: gui/gui.py:285
+msgid "help.language"
+msgstr ""
+
+#: gui/gui.py:286
+msgid "Allowed text color brightness deviation: "
+msgstr ""
+
+#: gui/gui.py:287
+msgid "help.brightness"
+msgstr ""
+
+#: gui/gui.py:318
+msgid "Update available"
+msgstr ""
+
+#: gui/gui.py:318
+msgid "Version {latest_version} is available. Do you want to download it?"
+msgstr ""
+
+#: gui/settings.py:20
+msgid "General"
+msgstr ""
+
+#: gui/settings.py:22
+msgid "Graphics"
+msgstr ""
+
+#: gui/settings.py:42
+msgid "Save"
+msgstr ""
+
+#: gui/settings.py:94
+msgid "Language:"
+msgstr ""
+

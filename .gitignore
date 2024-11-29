@@ -7,3 +7,4 @@ dist/
 *.iss
 Output/
 *.png
+logs/

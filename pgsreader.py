@@ -3,6 +3,7 @@
 #!/usr/bin/env python3
 from os.path import split as pathsplit
 from collections import namedtuple
+import logging
 
 # Segments
 PDS = int('0x14', base=16) # Palette Definition Segment, 0x14
@@ -75,6 +76,7 @@ class BaseSegment:
     def __init__(self, bytes_):
         self.bytes = bytes_
         if bytes_[:2] != b'PG': # magic number (0x5047)
+            logging.error('Invalid segment magic number.')
             raise InvalidSegmentError
         self.pts = int(bytes_[2:6].hex(), base=16)/90 # presentation timestamp (90kHz clock)
         self.dts = int(bytes_[6:10].hex(), base=16)/90 # decoding timestamp (90kHz clock) # can be ignored because it should always be 0.
@@ -84,6 +86,7 @@ class BaseSegment:
 
         if self.dts != 0:
             print('Warning: Decoding timestamp (DTS) not 0')
+            logging.warning('Decoding timestamp (DTS) not 0.')
 
     def __len__(self):
         return self.size
@@ -152,6 +155,7 @@ class PresentationCompositionSegment(BaseSegment):
 
             if len(self._composition_objects) != self._num_comps:
                 print('Warning: Number of composition objects is not equal to the number of composition objects in this segment.')
+                logging.warning('Number of composition objects is not equal to the number of composition objects in this segment.')
 
         return self._composition_objects
 
@@ -216,6 +220,8 @@ class ObjectDefinitionSegment(BaseSegment):
         if len(self.img_data) != self.data_len - 4:
             print("Image data length asserted does not match the "
                   "length found.")
+            logging.error("Image data length asserted does not match the "
+                          "length found.")
             exit_code = 1
 
 

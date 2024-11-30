@@ -245,78 +245,6 @@ class SubtitleConverter:
 
         srtchecker.check_srt(srt_file, True) # check SRT file for common OCR mistakes
 
-    def replace_subtitles(self):
-        # TODO: after muxing, the player needs longer to load the video
-        new_file_dir = os.path.dirname(self.file_path)
-        new_file_path = f"{new_file_dir}\{self.file_name} (1).mkv"
-
-        print(self.translate("Replacing subtitles in {file_name}...").format(file_name=self.file_name))
-        self.config.logger.info(f'Replacing subtitles in {self.file_name}.')
-        # input_ffmpeg = ffmpeg.input(self.file_path)
-        # input_video = input_ffmpeg['v']
-        # input_audio = input_ffmpeg['a']
-
-        # # list of input streams
-        # streams = [input_video, input_audio]
-
-        # # Add subtitle streams to input streams list
-        # for track_id in self.subtitle_ids:
-        #     sub_path = os.path.join(self.sub_dir, f"{track_id}.{self.format}")
-        #     input_sub = ffmpeg.input(sub_path)
-        #     streams.append(input_sub['s'])
-
-        # # Output video with copied video and audio streams and new subtitle streams
-        # output_ffmpeg = ffmpeg.output(
-        #     *streams,
-        #     new_file_path,
-        #     vcodec='copy',
-        #     acodec='copy',
-        #     scodec='copy'
-        # )
-
-        probe = ffmpeg.probe(self.file_path)
-        # video_stream = [stream['index'] for stream in probe['streams'] if stream['codec_type'] == 'video']
-        # audio_stream = [stream['index'] for stream in probe['streams'] if stream['codec_type'] == 'audio']
-        # subtitle_streams = [stream['index'] for stream in probe['streams'] if stream['codec_type'] == 'subtitle']
-        # pprint(video_stream)
-        # pprint(audio_stream)
-        # pprint(subtitle_streams)
-
-        ffmpeg_cmd = f'ffmpeg -i \"{self.file_path}\"'
-
-        for track_id in self.subtitle_ids:
-            sub_path = os.path.join(self.sub_dir, f'{track_id}.{self.format}')
-            ffmpeg_cmd += f' -i \"{sub_path}\"'
-
-        video_audio_streams = [stream['index'] for stream in probe['streams'] if stream['codec_type'] in ['video', 'audio']]
-        maps = [f"-map 0:{stream}" for stream in video_audio_streams]
-
-        # ffmpeg_cmd += ' ' + ' '.join(maps)
-
-        for i, track_id in enumerate(self.subtitle_ids):
-            maps.append(f" -map {i + 1}:0")
-
-        ffmpeg_cmd += ' ' + ' '.join(maps)
-
-        ffmpeg_cmd += f' -c:v copy -c:a copy -c:s copy'
-        ffmpeg_cmd += f' \"{new_file_path}\"'
-
-        # for track_id in self.subtitle_ids:
-        #     sub_path = os.path.join(self.sub_dir, f"{track_id}.{self.format}")
-        #     output_ffmpeg = ffmpeg.input(new_file_path)
-        #     output_ffmpeg = ffmpeg.input(sub_path)
-        #     output_ffmpeg = ffmpeg.output(output_ffmpeg, new_file_path, vcodec='copy', acodec='copy', scodec='copy')
-        #     print(' '.join(ffmpeg.compile(output_ffmpeg)))
-        #     ffmpeg.run(output_ffmpeg)
-
-        print(ffmpeg_cmd)
-        os.system(ffmpeg_cmd)        
-
-        # print(' '.join(ffmpeg.compile(output_ffmpeg)))
-        # ffmpeg.run(output_ffmpeg)
-        exit(0)
-
-    # estimate new file size based on size of new subtitles
     def calc_size(self) -> int:
         file_size = os.path.getsize(self.file_path)
         new_size = file_size
@@ -335,21 +263,23 @@ class SubtitleConverter:
         self.config.logger.info(f'Muxing file {self.file_name}.')
         new_file_dir = os.path.dirname(self.file_path)
         new_file_path = f"{new_file_dir}\{self.file_name} (1).mkv"
-        self.video.output(new_file_path, vcodec='libx265', acodec='copy').run()
-        # old_file_size = 0
 
-        # pbar = tqdm(total=self.calc_size(), unit='B', unit_scale=True, unit_divisor=1024)
+        ffmpeg_cmd = f'ffmpeg -i \"{self.file_path}\" -y'
 
-        # thread = threading.Thread(name="Muxing", target=self.video.output(new_file_path).run)
-        # thread.start()
+        for track_id in self.subtitle_ids:
+            sub_path = os.path.join(self.sub_dir, f'{track_id}.{self.format}')
+            ffmpeg_cmd += f' -i \"{sub_path}\"'
 
-        # while thread.is_alive():
-        #     new_file_size = os.path.getsize(new_file_path)
-        #     pbar.update(new_file_size - old_file_size)
-        #     old_file_size = new_file_size
-        #     time.sleep(0.1)
+        ffmpeg_cmd += ' -map 0:v -map 0:a'
 
-        # pbar.close()
+        for i, track_id in enumerate(self.subtitle_ids):
+            ffmpeg_cmd += f" -map {i + 1}:0"
+
+        ffmpeg_cmd += f' -c copy'
+        ffmpeg_cmd += f' \"{new_file_path}\"'
+
+        print(ffmpeg_cmd)
+        os.system(ffmpeg_cmd)
 
     # remove file that may not exist anymore without throwing an error
     def silent_remove(self, file: str):
@@ -417,14 +347,6 @@ class SubtitleConverter:
                         os.system(f"explorer.exe \"{os.path.join(os.getcwd(), self.sub_dir)}\"")
                     input()
                     self.config.logger.debug(f'Continue after pausing for subtitle editing.')
-
-                self.replace_subtitles()
-
-                # create empty .mkv file
-                new_file_dir = os.path.dirname(self.file_path)
-                new_file_name = os.path.join(new_file_dir, f"{self.file_name} (1).mkv")
-
-                open(new_file_name, "w").close()
                 
                 self.mux_file()
                 self.clean()

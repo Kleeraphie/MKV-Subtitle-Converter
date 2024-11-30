@@ -7,12 +7,12 @@ from tqdm import tqdm
 from pysrt import SubRipFile, SubRipItem, SubRipTime
 import srtchecker
 import threading
-import time
+import pymkv
 import shutil
 import pysubs2
 from config import Config
 import sys
-import pathlib
+from pathlib import Path
 
 class SubtitleConverter:
 
@@ -113,34 +113,28 @@ class SubtitleConverter:
 
         return diff_langs
 
-    # helper function for threading
-    def extract(self, track_id: int):        
-        os.system(f"mkvextract \"{self.file_path}\" tracks {track_id}:\"{str(self.sub_dir / f'{track_id}.sup')}\"")
-
     def extract_subtitles(self) -> list[int]:
         self.subtitle_ids = []
-        thread_pool = []
         probe = ffmpeg.probe(self.file_path)
         subtitle_streams = [stream for stream in probe['streams'] if stream['codec_name'] == 'hdmv_pgs_subtitle']
+        command = f'ffmpeg -i \"{self.file_path}\" -y'
 
-        for subtitle in subtitle_streams:
+        if not os.path.exists(self.sub_dir):
+            self.sub_dir.mkdir(parents=True, exist_ok=True)
+
+        for i, subtitle in enumerate(subtitle_streams):
             track_id = subtitle['index']
 
-                if not os.path.exists(self.sub_dir):
-                    self.sub_dir.mkdir(parents=True, exist_ok=True)
+            if os.path.exists(str(self.sub_dir / f'{track_id}.sup')):
+                self.subtitle_ids.append(track_id)
+                continue
 
-                if os.path.exists(str(self.sub_dir / f'{track_id}.sup')):
-                    self.subtitle_ids.append(track_id)
-                    continue
-
-            thread = threading.Thread(name=f"Extract subtitle #{track_id}", target=self.extract, args=([track_id]))
-            thread.start()
-            thread_pool.append(thread)
-
+            sub_file_path = Path(self.sub_dir, f"{track_id}.sup")
+            command += f' -map 0:s:{i} -c copy \"{sub_file_path}\"'
+            
             self.subtitle_ids.append(track_id)
-
-        for thread in thread_pool:
-            thread.join()
+        
+        os.system(command)
 
     def convert_subtitles(self): # convert PGS subtitles to SRT subtitles
         thread_pool = []
@@ -445,7 +439,7 @@ class SubtitleConverter:
                 self.clean()
                 print()
 
-    def get_datadir(self) -> pathlib.Path:
+    def get_datadir(self) -> Path:
         """
         Returns a parent directory path
         where persistent application data can be stored.
@@ -456,12 +450,12 @@ class SubtitleConverter:
         """
 
         if sys.platform.startswith("win"):
-            path = pathlib.Path(os.getenv("LOCALAPPDATA"))
+            path = Path(os.getenv("LOCALAPPDATA"))
         elif sys.platform.startswith("darwin"):
-            path = pathlib.Path("~/Library/Application Support")
+            path = Path("~/Library/Application Support")
         else:
             # linux
-            path = pathlib.Path(os.getenv("XDG_DATA_HOME", "~/.local/share"))
+            path = Path(os.getenv("XDG_DATA_HOME", "~/.local/share"))
 
         path = path / "MKV Subtitle Converter"
         path.mkdir(parents=True, exist_ok=True)

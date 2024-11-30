@@ -8,3 +8,4 @@ dist/
 Output/
 *.png
 logs/
+.idea/

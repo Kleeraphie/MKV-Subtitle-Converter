@@ -1,4 +1,3 @@
-import ffmpeg
 import os
 import pytesseract
 import pgsreader
@@ -15,6 +14,7 @@ import sys
 from pathlib import Path
 import subprocess
 import bitmath
+import json
 
 class SubtitleConverter:
 
@@ -140,7 +140,8 @@ class SubtitleConverter:
     def extract_subtitles(self) -> list[int]:
         self.subtitle_ids = []
         thread_pool = []
-        probe = ffmpeg.probe(self.file_path)
+        probe = os.popen(f"ffprobe \"{self.file_path}\" -of json -show_entries format:stream").read()
+        probe = json.loads(probe)
         subtitle_streams = [stream for stream in probe['streams'] if stream['codec_name'] == 'hdmv_pgs_subtitle']
         current_size, total_size_B = 0, 0
         current_sizes = []
@@ -186,7 +187,8 @@ class SubtitleConverter:
 
     def convert_subtitles(self): # convert PGS subtitles to SRT subtitles
         thread_pool = []
-        probe = ffmpeg.probe(self.file_path)
+        probe = os.popen(f"ffprobe \"{self.file_path}\" -of json -show_entries format:stream").read()
+        probe = json.loads(probe)
         subtitle_streams = probe['streams']
 
         for id in self.subtitle_ids:
@@ -376,32 +378,32 @@ class SubtitleConverter:
 
                 self.config.logger.debug(f'Starting to extract subtitles.')
                 self.extract_subtitles()
-            #     self.config.logger.debug(f'Finished extracting subtitles.')
+                self.config.logger.debug(f'Finished extracting subtitles.')
 
-            #     # skip title if no PGS subtitles were found
-            #     if len(self.subtitle_ids) == 0:
-            #         print(self.translate("No subtitles found.") + "\n")
-            #         self.config.logger.info("No subtitles found.")
-            #         continue
+                # skip title if no PGS subtitles were found
+                if len(self.subtitle_ids) == 0:
+                    print(self.translate("No subtitles found.") + "\n")
+                    self.config.logger.info("No subtitles found.")
+                    continue
 
-            #     self.config.logger.debug(f'Starting to convert subtitles.')
-            #     self.convert_subtitles()
-            #     self.config.logger.debug(f'Finished converting subtitles.')
+                self.config.logger.debug(f'Starting to convert subtitles.')
+                self.convert_subtitles()
+                self.config.logger.debug(f'Finished converting subtitles.')
 
-            #     if self.edit_flag:
-            #         print(self.translate("You can now edit the new subtitle files. Press Enter when you are done."))
-            #         print(self.translate("They can be found at: {directory}").format(directory=str(self.sub_dir)))
-            #         self.config.logger.debug(f'Pause for editing subtitles in {self.sub_dir}.')
-            #         if os.name == "nt":
-            #             os.system(f"explorer.exe \"{os.path.join(os.getcwd(), self.sub_dir)}\"")
-            #         input()
-            #         self.config.logger.debug(f'Continue after pausing for subtitle editing.')
+                if self.edit_flag:
+                    print(self.translate("You can now edit the new subtitle files. Press Enter when you are done."))
+                    print(self.translate("They can be found at: {directory}").format(directory=str(self.sub_dir)))
+                    self.config.logger.debug(f'Pause for editing subtitles in {self.sub_dir}.')
+                    if os.name == "nt":
+                        os.system(f"explorer.exe \"{os.path.join(os.getcwd(), self.sub_dir)}\"")
+                    input()
+                    self.config.logger.debug(f'Continue after pausing for subtitle editing.')
                 
-            #     self.mux_file()
-            #     self.clean()
+                self.mux_file()
+                self.clean()
 
-            #     print(self.translate("Finished {file}").format(file=self.file_name)) 
-            #     self.config.logger.info(f'Finished {self.file_name}.')
+                print(self.translate("Finished {file}").format(file=self.file_name)) 
+                self.config.logger.info(f'Finished {self.file_name}.')
             except Exception as e:
                 print(self.translate("Error while processing {file}: {exception}").format(file=self.file_name, exception=e))
                 self.config.logger.error(f'Error while processing {self.file_name}: {e}')

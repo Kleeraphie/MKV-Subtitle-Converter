@@ -13,6 +13,8 @@ import pysubs2
 from config import Config
 import sys
 from pathlib import Path
+import subprocess
+import bitmath
 
 class SubtitleConverter:
 
@@ -113,28 +115,74 @@ class SubtitleConverter:
 
         return diff_langs
 
+    # helper function for threading
+    def extract(self, track_id: int, sizes: list[int], finished: list[bool]):
+        sub_file_path = Path(self.sub_dir, f"{track_id}.sup")
+        command = "ffmpeg -y -i \"{0}\" -map 0:s:{1} -c copy \"{2}\"".format(self.file_path, track_id, str(sub_file_path))
+        print(f'Start {track_id}')
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        for line in iter(process.stderr.readline, ''):
+            latest_output = line.strip()
+            if "size=" in latest_output:
+                latest_output = latest_output.split("size=")[1]
+                latest_output = latest_output.split("time=")[0]
+                latest_output = latest_output.strip()
+                subtitle_size = bitmath.parse_string(latest_output)
+                subtitle_size.to_Byte()
+                sizes[track_id] = subtitle_size
+
+        process.wait()
+        finished[track_id] = True
+        print(f'Finished {track_id}')
+
+
     def extract_subtitles(self) -> list[int]:
         self.subtitle_ids = []
+        thread_pool = []
         probe = ffmpeg.probe(self.file_path)
         subtitle_streams = [stream for stream in probe['streams'] if stream['codec_name'] == 'hdmv_pgs_subtitle']
-        command = f'ffmpeg -i \"{self.file_path}\" -y'
+        current_size, total_size_B = 0, 0
+        current_sizes = []
+        finished = []
 
         if not os.path.exists(self.sub_dir):
             self.sub_dir.mkdir(parents=True, exist_ok=True)
-
+            
         for i, subtitle in enumerate(subtitle_streams):
             track_id = subtitle['index']
 
-            if os.path.exists(str(self.sub_dir / f'{track_id}.sup')):
-                self.subtitle_ids.append(track_id)
-                continue
+            # calculate total size of subtitles
+            track_id = subtitle['index']
+            subtitle_size = int(subtitle['tags']['NUMBER_OF_BYTES-eng'])
+            total_size_B += subtitle_size
 
-            sub_file_path = Path(self.sub_dir, f"{track_id}.sup")
-            command += f' -map 0:s:{i} -c copy \"{sub_file_path}\"'
+            # skip if subtitle already exists
+            # if os.path.exists(str(self.sub_dir / f'{track_id}.sup')):
+            #     self.subtitle_ids.append(track_id)
+            #     continue
             
+            current_sizes.append(0)
+            thread = threading.Thread(name=f"Extract subtitle #{track_id}", target=self.extract, args=(i, current_sizes, finished))  # args=([track_id])
+            finished.append(False)
+            thread_pool.append(thread)
+
             self.subtitle_ids.append(track_id)
-        
-        os.system(command)
+
+        for thread in thread_pool:
+            thread.start()
+
+
+        while not all(finished):
+            current_size = sum(current_sizes)
+            print("Progress: " + str(int(current_size / total_size_B * 1024 * 100)) + "%", end="\r")
+            
+        print("Progress: " + str(int(current_size / total_size_B * 1024 * 100)) + "%")
+        # print("Progress: 100%")
+        # TODO: add i18n
+
+        for thread in thread_pool:
+            thread.join()
 
     def convert_subtitles(self): # convert PGS subtitles to SRT subtitles
         thread_pool = []
@@ -245,6 +293,7 @@ class SubtitleConverter:
 
         srtchecker.check_srt(srt_file, True) # check SRT file for common OCR mistakes
 
+    # estimate new file size based on size of new subtitles
     def calc_size(self) -> int:
         file_size = os.path.getsize(self.file_path)
         new_size = file_size
@@ -327,32 +376,32 @@ class SubtitleConverter:
 
                 self.config.logger.debug(f'Starting to extract subtitles.')
                 self.extract_subtitles()
-                self.config.logger.debug(f'Finished extracting subtitles.')
+            #     self.config.logger.debug(f'Finished extracting subtitles.')
 
-                # skip title if no PGS subtitles were found
-                if len(self.subtitle_ids) == 0:
-                    print(self.translate("No subtitles found.") + "\n")
-                    self.config.logger.info("No subtitles found.")
-                    continue
+            #     # skip title if no PGS subtitles were found
+            #     if len(self.subtitle_ids) == 0:
+            #         print(self.translate("No subtitles found.") + "\n")
+            #         self.config.logger.info("No subtitles found.")
+            #         continue
 
-                self.config.logger.debug(f'Starting to convert subtitles.')
-                self.convert_subtitles()
-                self.config.logger.debug(f'Finished converting subtitles.')
+            #     self.config.logger.debug(f'Starting to convert subtitles.')
+            #     self.convert_subtitles()
+            #     self.config.logger.debug(f'Finished converting subtitles.')
 
-                if self.edit_flag:
-                    print(self.translate("You can now edit the new subtitle files. Press Enter when you are done."))
-                    print(self.translate("They can be found at: {directory}").format(directory=str(self.sub_dir)))
-                    self.config.logger.debug(f'Pause for editing subtitles in {self.sub_dir}.')
-                    if os.name == "nt":
-                        os.system(f"explorer.exe \"{os.path.join(os.getcwd(), self.sub_dir)}\"")
-                    input()
-                    self.config.logger.debug(f'Continue after pausing for subtitle editing.')
+            #     if self.edit_flag:
+            #         print(self.translate("You can now edit the new subtitle files. Press Enter when you are done."))
+            #         print(self.translate("They can be found at: {directory}").format(directory=str(self.sub_dir)))
+            #         self.config.logger.debug(f'Pause for editing subtitles in {self.sub_dir}.')
+            #         if os.name == "nt":
+            #             os.system(f"explorer.exe \"{os.path.join(os.getcwd(), self.sub_dir)}\"")
+            #         input()
+            #         self.config.logger.debug(f'Continue after pausing for subtitle editing.')
                 
-                self.mux_file()
-                self.clean()
+            #     self.mux_file()
+            #     self.clean()
 
-                print(self.translate("Finished {file}").format(file=self.file_name)) 
-                self.config.logger.info(f'Finished {self.file_name}.')
+            #     print(self.translate("Finished {file}").format(file=self.file_name)) 
+            #     self.config.logger.info(f'Finished {self.file_name}.')
             except Exception as e:
                 print(self.translate("Error while processing {file}: {exception}").format(file=self.file_name, exception=e))
                 self.config.logger.error(f'Error while processing {self.file_name}: {e}')
@@ -372,7 +421,8 @@ class SubtitleConverter:
         """
 
         if sys.platform.startswith("win"):
-            path = Path(os.getenv("LOCALAPPDATA"))
+            # path = Path(os.getenv("LOCALAPPDATA"))
+            path = Path('.')
         elif sys.platform.startswith("darwin"):
             path = Path("~/Library/Application Support")
         else:

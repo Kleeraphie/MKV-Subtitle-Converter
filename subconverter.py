@@ -114,6 +114,22 @@ class SubtitleConverter:
             diff_langs[old_lang] = new_lang
 
         return diff_langs
+    
+    def extract_metadata(self, file_path: str):
+        self.probe = os.popen(f"ffprobe \"{self.file_path}\" -of json -show_entries format:stream").read()
+        self.probe = json.loads(self.probe)
+
+        self.subtitle_languages = []
+        metadata_file = str(Path(self.get_datadir(), "metadata.txt"))
+
+        # TODO: can be stopped earlier (probably when time starts to change)
+        os.system(f"ffmpeg -i \"{self.file_path}\" -map 0:s -c copy -f ffmetadata \"{metadata_file}\"")
+        with open(metadata_file, "r") as file:
+            metadata = file.read()
+            metadata = metadata.splitlines()
+            languages = [line for line in metadata if "language" in line]
+            self.subtitle_languages= [line.split("=")[1] for line in languages]
+        os.remove(metadata_file)
 
     # helper function for threading
     def extract(self, track_id: int, sizes: list[int], finished: list[bool]):
@@ -138,11 +154,9 @@ class SubtitleConverter:
 
 
     def extract_subtitles(self) -> list[int]:
-        self.subtitle_ids = []
+        self.subtitle_counter = 0
         thread_pool = []
-        probe = os.popen(f"ffprobe \"{self.file_path}\" -of json -show_entries format:stream").read()
-        probe = json.loads(probe)
-        subtitle_streams = [stream for stream in probe['streams'] if stream['codec_name'] == 'hdmv_pgs_subtitle']
+        subtitle_streams = [stream for stream in self.probe['streams'] if stream['codec_name'] == 'hdmv_pgs_subtitle']
         current_size, total_size_B = 0, 0
         current_sizes = []
         finished = []
@@ -151,28 +165,24 @@ class SubtitleConverter:
             self.sub_dir.mkdir(parents=True, exist_ok=True)
             
         for i, subtitle in enumerate(subtitle_streams):
-            track_id = subtitle['index']
 
             # calculate total size of subtitles
-            track_id = subtitle['index']
             subtitle_size = int(subtitle['tags']['NUMBER_OF_BYTES-eng'])
             total_size_B += subtitle_size
 
+            self.subtitle_counter += 1
+
             # skip if subtitle already exists
-            # if os.path.exists(str(self.sub_dir / f'{track_id}.sup')):
-            #     self.subtitle_ids.append(track_id)
-            #     continue
+            if os.path.exists(str(self.sub_dir / f'{self.subtitle_counter - 1}.sup')):
+                continue
             
             current_sizes.append(0)
-            thread = threading.Thread(name=f"Extract subtitle #{track_id}", target=self.extract, args=(i, current_sizes, finished))  # args=([track_id])
+            thread = threading.Thread(name=f"Extract subtitle #{i}", target=self.extract, args=(i, current_sizes, finished))
             finished.append(False)
             thread_pool.append(thread)
 
-            self.subtitle_ids.append(track_id)
-
         for thread in thread_pool:
             thread.start()
-
 
         while not all(finished):
             current_size = sum(current_sizes)
@@ -187,15 +197,11 @@ class SubtitleConverter:
 
     def convert_subtitles(self): # convert PGS subtitles to SRT subtitles
         thread_pool = []
-        probe = os.popen(f"ffprobe \"{self.file_path}\" -of json -show_entries format:stream").read()
-        probe = json.loads(probe)
-        subtitle_streams = probe['streams']
 
-        for id in self.subtitle_ids:
-            subtitle = subtitle_streams[id]
+        for id in range(self.subtitle_counter):
 
             # get language to use in subtitle
-            lang_code = subtitle['tags']['language']
+            lang_code = self.subtitle_languages[id]
             language = self.get_lang(lang_code)
 
             thread = threading.Thread(name=f"Convert subtitle #{id}", target=self.convert_to_srt, args=(language, id))
@@ -212,7 +218,7 @@ class SubtitleConverter:
 
         # no multithreading here because it's already fast enough
         if self.format != "srt":
-            for id in self.subtitle_ids:
+            for id in range(self.subtitle_counter):
                 subs = pysubs2.load(os.path.join(self.sub_dir, f'{id}.srt'))
                 open(os.path.join(self.sub_dir, f'{id}.{self.format}'), 'w').close()
                 subs.save(os.path.join(self.sub_dir, f'{id}.{self.format}'))
@@ -299,7 +305,7 @@ class SubtitleConverter:
     def calc_size(self) -> int:
         file_size = os.path.getsize(self.file_path)
         new_size = file_size
-        for track_id in self.subtitle_ids:
+        for track_id in range(self.subtitle_counter):
             path = os.path.join(self.sub_dir, str(track_id)) # path to subtitle file without extension
 
             new_size -= os.path.getsize(f"{path}.sup")
@@ -317,15 +323,24 @@ class SubtitleConverter:
 
         ffmpeg_cmd = f'ffmpeg -i \"{self.file_path}\" -y'
 
-        for track_id in self.subtitle_ids:
+        # add new subtitles as inputs
+        for track_id in range(self.subtitle_counter):
             sub_path = os.path.join(self.sub_dir, f'{track_id}.{self.format}')
             ffmpeg_cmd += f' -i \"{sub_path}\"'
 
+        # add video and audio streams to new file
         ffmpeg_cmd += ' -map 0:v -map 0:a'
 
-        for i, track_id in enumerate(self.subtitle_ids):
+        # add new subtitles to the new file
+        for i in range(self.subtitle_counter):
             ffmpeg_cmd += f" -map {i + 1}:0"
 
+        # add metadata for new subtitles
+        for i in range(self.subtitle_counter):
+            lang = self.subtitle_languages[i]
+            ffmpeg_cmd += f' -metadata:s:s:{i} language={lang}'
+
+        # copy the codecs of video, audio and subtitle streams
         ffmpeg_cmd += f' -c copy'
         ffmpeg_cmd += f' \"{new_file_path}\"'
 
@@ -352,10 +367,10 @@ class SubtitleConverter:
             else:
                 shutil.rmtree(self.sub_dir)
         elif not self.keep_old_subs:
-            for track_id in self.subtitle_ids:
+            for track_id in range(self.subtitle_counter):
                 self.silent_remove(os.path.join(self.sub_dir, f'{track_id}.sup'))
         elif not self.keep_new_subs:
-            for track_id in self.subtitle_ids:
+            for track_id in self.subtitle_counter:
                 self.silent_remove(os.path.join(self.sub_dir, f'{track_id}.srt'))
                 self.silent_remove(os.path.join(self.sub_dir, f'{track_id}.{self.format}'))
 
@@ -376,12 +391,14 @@ class SubtitleConverter:
                 self.img_dir = main_dir_path / 'images'
                 self.sub_dir = main_dir_path / 'subtitles'
 
+                self.extract_metadata(self.file_path)
+
                 self.config.logger.debug(f'Starting to extract subtitles.')
                 self.extract_subtitles()
                 self.config.logger.debug(f'Finished extracting subtitles.')
 
                 # skip title if no PGS subtitles were found
-                if len(self.subtitle_ids) == 0:
+                if self.subtitle_counter == 0:
                     print(self.translate("No subtitles found.") + "\n")
                     self.config.logger.info("No subtitles found.")
                     continue

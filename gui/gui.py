@@ -288,6 +288,10 @@ class GUI:
         help_window.transient(self.window)
         help_window.resizable(False, False)
 
+        help_window.wait_visibility()
+        x = self.window.winfo_x() + self.window.winfo_width()//2 - help_window.winfo_width()//2
+        y = self.window.winfo_y() + self.window.winfo_height()//2 - help_window.winfo_height()//2
+        help_window.geometry(f"+{x}+{y}")
 
         help_text = tk.Label(help_window, text=self.translate('Help for choosing the right settings'), font=("Helvetica", 12))
         help_text.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")

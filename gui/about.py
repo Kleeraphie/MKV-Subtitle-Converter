@@ -11,6 +11,11 @@ class AboutWindow(tk.Toplevel):
         self.geometry("250x250")
         self.resizable(False, False)
 
+        self.wait_visibility()
+        x = parent.window.winfo_x() + parent.window.winfo_width()//2 - self.winfo_width()//2
+        y = parent.window.winfo_y() + parent.window.winfo_height()//2 - self.winfo_height()//2
+        self.geometry(f"+{x}+{y}")
+        
         self.config = Config()
         self.parent = parent
         

@@ -14,6 +14,11 @@ class SettingsWindow(tk.Toplevel):
         self.geometry("500x500")
         self.resizable(True, True)
 
+        self.wait_visibility()
+        x = parent.window.winfo_x() + parent.window.winfo_width()//2 - self.winfo_width()//2
+        y = parent.window.winfo_y() + parent.window.winfo_height()//2 - self.winfo_height()//2
+        self.geometry(f"+{x}+{y}")
+
         # ---------------- SIDEBAR -----------------------
         self.sidebar = tk.Frame(self)
         self.sidebar.place(relx=0, rely=0, relwidth=0.3, relheight=1)

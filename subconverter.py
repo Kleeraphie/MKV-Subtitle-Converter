@@ -13,6 +13,7 @@ import pysubs2
 from config import Config
 import sys
 import pathlib
+from controller.jobs import Jobs
 
 class SubtitleConverter:
 
@@ -30,6 +31,11 @@ class SubtitleConverter:
 
         self.config = Config()
         self.translate = self.config.translate
+
+        self.file_counter = 0 # number of mkv files
+        self.finished_files_counter = 0
+        self.files_with_error_counter = 0
+        self.current_job = Jobs.IDLE
 
     def sub_formats(self) -> list[str]:
         subs = [
@@ -121,6 +127,8 @@ class SubtitleConverter:
         self.subtitle_ids = []
         thread_pool = []
 
+        self.current_job = Jobs.EXTRACT
+
         for track in self.mkv.tracks:
             if track.track_type == "subtitles":
 
@@ -148,6 +156,8 @@ class SubtitleConverter:
 
     def convert_subtitles(self): # convert PGS subtitles to SRT subtitles
         thread_pool = []
+
+        self.current_job = Jobs.CONVERT
 
         for id in self.subtitle_ids:
             track: pymkv.MKVTrack
@@ -296,6 +306,8 @@ class SubtitleConverter:
         new_file_path = os.path.join(new_file_dir, f"{self.file_name} (1).mkv")
         old_file_size = 0
 
+        self.current_job = Jobs.MUXING
+
         pbar = tqdm(total=self.calc_size(), unit='B', unit_scale=True, unit_divisor=1024)
 
         thread = threading.Thread(name="Muxing", target=self.mkv.mux, args=(new_file_path, True))
@@ -389,9 +401,11 @@ class SubtitleConverter:
 
                 print(self.translate("Finished {file}").format(file=self.file_name)) 
                 self.config.logger.info(f'Finished {self.file_name}.')
+                self.finished_files_counter += 1
             except Exception as e:
                 print(self.translate("Error while processing {file}: {exception}").format(file=self.file_name, exception=e))
                 self.config.logger.error(f'Error while processing {self.file_name}: {e}')
+                self.files_with_error_counter += 1
                 input(self.translate("Press Enter to continue with the next file..."))
                 self.config.logger.debug("Continuing with the next file.")
                 self.clean()
@@ -419,3 +433,16 @@ class SubtitleConverter:
         path.mkdir(parents=True, exist_ok=True)
 
         return path
+    
+# ----------------FOR THE CONTROLLER----------------
+    def get_file_counter(self) -> int:
+        return self.file_counter
+    
+    def get_finished_files_counter(self) -> int:
+        return self.finished_files_counter
+    
+    def get_files_with_error_counter(self) -> int:
+        return self.files_with_error_counter
+    
+    def get_current_job(self) -> str:
+        return self.current_job

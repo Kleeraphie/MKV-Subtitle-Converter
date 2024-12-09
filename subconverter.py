@@ -401,9 +401,11 @@ class SubtitleConverter:
 
                 print(self.translate("Finished {file}").format(file=self.file_name)) 
                 self.config.logger.info(f'Finished {self.file_name}.')
+                self.finished_files_counter += 1
             except Exception as e:
                 print(self.translate("Error while processing {file}: {exception}").format(file=self.file_name, exception=e))
                 self.config.logger.error(f'Error while processing {self.file_name}: {e}')
+                self.files_with_error_counter += 1
                 input(self.translate("Press Enter to continue with the next file..."))
                 self.config.logger.debug("Continuing with the next file.")
                 self.clean()
@@ -420,7 +422,7 @@ class SubtitleConverter:
         """
 
         if sys.platform.startswith("win"):
-            path = pathlib.Path('.')
+            path = pathlib.Path(os.getenv("LOCALAPPDATA"))
         elif sys.platform.startswith("darwin"):
             path = pathlib.Path("~/Library/Application Support")
         else:

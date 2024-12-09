@@ -22,6 +22,7 @@ class Controller:
         self.files_with_error_counter = 0
         self.job = Jobs.IDLE
         self.config = Config()
+        self.exit_code = -1
 
     def register_gui(self, gui: GUI):
         self.gui = gui
@@ -35,7 +36,9 @@ class Controller:
         self.register_gui(gui)
         if self.config.check_for_updates():
             gui.check_for_updates()
-        self.run_program()
+
+        while self.exit_code != 1:
+            self.run_program()
 
     def run_program(self):
         exit_code, values = self.gui.run()
@@ -71,15 +74,11 @@ class Controller:
                                    self.sc_values['brightness_diff'] / 100)
             
             self.register_subconverter(sc)
-                    
-            # sc.convert()
-            t = Thread(target=sc.convert)
-            t.start()
+            
+            thread = Thread(target=sc.convert)
+            thread.start()
 
-            # while (self.finished_files_counter + self.files_with_error_counter) < self.file_counter:
-            while t.is_alive():
-                time.sleep(1)
-                # self.add_finished_file()
+            while thread.is_alive():
                 self.finished_files_counter = sc.get_finished_files_counter()
                 self.files_with_error_counter = sc.get_files_with_error_counter()
                 self.job = sc.get_current_job()
@@ -87,9 +86,5 @@ class Controller:
                 self.notify_gui()
                 time.sleep(1)
 
-
-        elif self.exit_code == 1:
-            # exit(0)
-            pass
-
-        self.run_program()
+            self.job = sc.get_current_job()
+            self.notify_gui()

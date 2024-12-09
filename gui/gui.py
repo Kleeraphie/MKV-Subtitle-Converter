@@ -12,6 +12,7 @@ from config import Config
 import webbrowser
 import logging
 from controller.jobs import Jobs
+import time
 
 class GUI:
     
@@ -251,15 +252,21 @@ class GUI:
         self.wait_var.set(1)
 
     def run(self) -> tuple[int, dict]:
+        self.wait_var = tk.IntVar()
         self.window.wait_variable(self.wait_var)
 
-        if self.reloaded: # values are already converted from another GUI instance (e.g. after changing the language)
-            return self.wait_var.get(), self.values
-            # self.controller.gui_send_values(self.wait_var.get(), self.values)
+        # if self.reloaded: # values are already converted from another GUI instance (e.g. after changing the language)
+        #     return self.wait_var.get(), self.values
+        #     # self.controller.gui_send_values(self.wait_var.get(), self.values)
 
         # convert booleanvars to bools
         for key in self.values:
-            self.values[key] = self.values[key].get()
+            try:
+                self.values[key] = self.values[key].get()
+            except AttributeError: # already converted because this is not the first click on the start button
+                pass
+
+        print(self.values)
 
         # add diff_langs to values if use_diff_langs is True
         self.values['diff_langs'] = ''
@@ -362,19 +369,6 @@ class GUI:
         self.finished_files_counter = finished_files_counter
         self.files_with_error_counter = files_with_error_counter
         self.job = job
-
-        match job:
-            case Jobs.IDLE:
-                self.job_progress = 20
-            case Jobs.EXTRACT:
-                self.job_progress = 40
-            case Jobs.CONVERT:
-                self.job_progress = 60
-            case Jobs.MUXING:
-                self.job_progress = 80
-            case Jobs.FINISHED:
-                self.job_progress = 100
-
         self.window.update()
 
     def show_progress(self):
@@ -396,18 +390,25 @@ class GUI:
 
             self.job_progress_bar = ttk.Progressbar(self.progress_window, length=200, mode='determinate')
             self.job_progress_label = tk.Label(self.progress_window, text=self.translate(f"Job: {self.job}"))
-            self.job_progress_bar["value"] = self.job_progress
+            self.job_progress_bar["value"] = Jobs.get_percentage(self.job)
 
-            self.video_progress_label.grid(row=0, column=0, padx=10, pady=10)
-            self.video_progress_bar.grid(row=1, column=0, padx=10, pady=10)
-            self.job_progress_label.grid(row=2, column=0, padx=10, pady=10)
-            self.job_progress_bar.grid(row=3, column=0, padx=10, pady=10)
+            self.video_progress_label.grid(row=0, column=0, padx=10, pady=(5, 3), sticky="w")
+            self.video_progress_bar.grid(row=1, column=0, padx=10, pady=(0, 5), sticky="w")
+            self.job_progress_label.grid(row=2, column=0, padx=10, pady=(5, 3), sticky="w")
+            self.job_progress_bar.grid(row=3, column=0, padx=10, pady=(0, 5), sticky="w")
 
             self.progress_window.tkraise()
 
         current_video_counter = self.finished_files_counter + self.files_with_error_counter + 1
-        self.video_progress_label["text"] = "Video {}/{}".format(current_video_counter, self.file_counter)
-        self.video_progress_bar["value"] = current_video_counter / self.file_counter * 100
-        self.job_progress_label["text"] = self.translate(f"Job: {self.job}")
-        self.job_progress_bar["value"] = self.job_progress
+        self.video_progress_label["text"] = "Video #{current_video_counter}/{total_video_counter}".format(current_video_counter=current_video_counter, total_video_counter=self.file_counter)
+        # video_progress_bar value is the number of finished videos plus the percentage of the current video based on the current job
+        self.video_progress_bar["value"] = (current_video_counter - 1) / self.file_counter * 100 + (Jobs.get_percentage(self.job) * (1 / self.file_counter))
+        # print(self.video_progress_bar["value"], (Jobs.get_percentage(self.job) * (1 / self.file_counter)))
+        self.job_progress_label["text"] = self.translate("Current job: {job}").format(job=self.job.value)
+        self.job_progress_bar["value"] = Jobs.get_percentage(self.job)
         self.progress_window.after(100, self.show_progress)
+
+        # if self.job == Jobs.FINISHED:
+        #     time.sleep(5)
+        #     self.progress_window.destroy()
+        #     self.progress_window = None

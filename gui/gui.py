@@ -26,6 +26,7 @@ class GUI:
         self.selected_paths = [] # paths of the selected files
         self.old_path = ""
         self.reloaded = False
+        self.continue_flag = None
 
         self.window = tk.Tk()
         self.window.geometry(newGeometry="500x650+0+0")
@@ -363,12 +364,16 @@ class GUI:
         self.wait_var.set(wait_var)
 
 
-    def update(self, file_counter, finished_files_counter, files_with_error_counter, job):
+    def update(self, file_counter, finished_files_counter, files_with_error_counter, job, sc_error_code, sc_error_msg):
         """Update the GUI while the subconverter is running"""
         self.file_counter = file_counter
         self.finished_files_counter = finished_files_counter
         self.files_with_error_counter = files_with_error_counter
         self.job = job
+
+        if sc_error_code != 0:
+            self.continue_flag = tk.messagebox.askyesno(self.translate("Error"), self.translate("Error #{error_code}: {error}\nDo you want to continue with the next file?").format(error_code=sc_error_code, error=sc_error_msg))
+
         self.window.update()
 
     def show_progress(self):

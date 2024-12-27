@@ -23,6 +23,8 @@ class Controller:
         self.job = Jobs.IDLE
         self.config = Config()
         self.exit_code = -1
+        self.sc_error_code = 0
+        self.sc_error_msg = ""
 
     def register_gui(self, gui: GUI):
         self.gui = gui
@@ -57,7 +59,7 @@ class Controller:
         self.job = job
 
     def notify_gui(self):
-        self.gui.update(self.file_counter, self.finished_files_counter, self.files_with_error_counter, self.job)
+        self.gui.update(self.file_counter, self.finished_files_counter, self.files_with_error_counter, self.job, self.sc_error_code, self.sc_error_msg)
 
     def start_subconverter(self):
         if self.exit_code == 0:
@@ -82,8 +84,15 @@ class Controller:
                 self.finished_files_counter = sc.get_finished_files_counter()
                 self.files_with_error_counter = sc.get_files_with_error_counter()
                 self.job = sc.get_current_job()
+                self.sc_error_code = sc.get_error_code()
+                self.sc_error_msg = sc.get_error_message()
 
                 self.notify_gui()
+
+                if self.gui.continue_flag is not None:
+                    sc.set_continue_flag(self.gui.continue_flag)
+                    self.gui.continue_flag = None
+
                 time.sleep(1)
 
             self.job = sc.get_current_job()

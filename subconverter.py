@@ -14,6 +14,7 @@ from config import Config
 import sys
 import pathlib
 from controller.jobs import Jobs
+import time
 
 class SubtitleConverter:
 
@@ -36,6 +37,10 @@ class SubtitleConverter:
         self.finished_files_counter = 0
         self.files_with_error_counter = 0
         self.current_job = Jobs.IDLE
+
+        self.error_code = 0
+        self.error_message = ""
+        self.continue_flag = None
 
     def sub_formats(self) -> list[str]:
         subs = [
@@ -127,6 +132,9 @@ class SubtitleConverter:
         self.subtitle_ids = []
         thread_pool = []
 
+        if self.continue_flag is False:
+            return
+        
         self.current_job = Jobs.EXTRACT
 
         for track in self.mkv.tracks:
@@ -156,6 +164,9 @@ class SubtitleConverter:
 
     def convert_subtitles(self): # convert PGS subtitles to SRT subtitles
         thread_pool = []
+
+        if self.continue_flag is False:
+            return
 
         self.current_job = Jobs.CONVERT
 
@@ -223,6 +234,9 @@ class SubtitleConverter:
 
         if pgsreader.exit_code != 0:
             return
+        
+        if self.continue_flag is False:
+            return
 
         # building SRT file from DisplaySets
         sub_text = ""
@@ -267,6 +281,9 @@ class SubtitleConverter:
     def replace_subtitles(self):
         deleted_tracks = 0
 
+        if self.continue_flag is False:
+            return
+
         print(self.translate("Replacing subtitles in {file_name}...").format(file_name=self.file_name))
         self.config.logger.info(f'Replacing subtitles in {self.file_name}.')
         for track_id in self.subtitle_ids:
@@ -300,6 +317,9 @@ class SubtitleConverter:
         return new_size
 
     def mux_file(self):
+        if self.continue_flag is False:
+            return
+
         print(self.translate("Muxing file..."))
         self.config.logger.info(f'Muxing file {self.file_name}.')
         new_file_dir = os.path.dirname(self.file_path)
@@ -353,6 +373,8 @@ class SubtitleConverter:
             os.rename(new_file_path, self.file_path)
 
     def convert(self):
+        self.continue_flag = None
+        
         for self.file_path in self.file_paths:
             self.file_name = os.path.splitext(os.path.basename(self.file_path))[0]
             
@@ -403,13 +425,25 @@ class SubtitleConverter:
                 self.config.logger.info(f'Finished {self.file_name}.')
                 self.finished_files_counter += 1
             except Exception as e:
-                print(self.translate("Error while processing {file}: {exception}").format(file=self.file_name, exception=e))
-                self.config.logger.error(f'Error while processing {self.file_name}: {e}')
                 self.files_with_error_counter += 1
-                input(self.translate("Press Enter to continue with the next file..."))
-                self.config.logger.debug("Continuing with the next file.")
-                self.clean()
-                print()
+                self.error_code = 2
+                self.error_message = self.translate('Error while processing {file_name}: {error}').format(file_name=self.file_name, error=e)
+                self.config.logger.error(f'Error while processing {self.file_name}: {e}')
+
+                # wait for user input to continue
+                while self.continue_flag is None:
+                    time.sleep(1)
+
+                if self.continue_flag:
+                    self.config.logger.debug("Continuing with the next file after error.")
+                    self.clean()
+                    print()
+                else:
+                    self.config.logger.debug("Exiting program after error.")
+                    self.clean()
+                    break
+
+        self.current_job = Jobs.FINISHED
 
     def get_datadir(self) -> pathlib.Path:
         """
@@ -446,3 +480,20 @@ class SubtitleConverter:
     
     def get_current_job(self) -> str:
         return self.current_job
+    
+    def get_error_code(self) -> int:
+        return self.error_code
+    
+    def get_error_message(self) -> str:
+        return self.error_message
+    
+    def set_continue_flag(self, flag: bool):
+        self.continue_flag = flag
+        self.reset_error_code()
+
+    def get_continue_flag(self) -> bool:
+        return self.continue_flag
+    
+    def reset_error_code(self):
+        self.error_code = 0
+        self.error_message = ""

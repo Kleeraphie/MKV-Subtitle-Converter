@@ -47,8 +47,15 @@ class Controller:
         self.exit_code = exit_code
         self.sc_values = values
         self.file_counter = len(values['selected_paths'])
-        self.notify_gui()
-        self.start_subconverter()
+
+        if self.exit_code == 1:
+            return
+
+        if self.file_counter > 0:
+            self.notify_gui()
+            self.start_subconverter()
+        else:
+            self.gui.show_no_files_selected_dialog()
 
     def gui_send_values(self, exit_code, values):
         self.exit_code = exit_code
@@ -97,3 +104,6 @@ class Controller:
 
             self.job = sc.get_current_job()
             self.notify_gui()
+
+        self.gui.hide_progress()
+        self.gui.show_finish_dialog()

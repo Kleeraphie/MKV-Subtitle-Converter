@@ -261,27 +261,26 @@ class GUI:
         #     # self.controller.gui_send_values(self.wait_var.get(), self.values)
 
         # convert booleanvars to bools
+        new_values = {}
         for key in self.values:
             try:
-                self.values[key] = self.values[key].get()
+                new_values[key] = self.values[key].get()
             except AttributeError: # already converted because this is not the first click on the start button
                 pass
 
-        print(self.values)
-
         # add diff_langs to values if use_diff_langs is True
-        self.values['diff_langs'] = ''
+        new_values['diff_langs'] = ''
         if self.values.get('use_diff_langs'):
-            self.values['diff_langs'] = self.diff_langs.get('1.0', tk.END)
+            new_values['diff_langs'] = self.diff_langs.get('1.0', tk.END)
             # self.values['diff_langs'] = self.values['diff_langs'].split('\n')
             # self.values['diff_langs'] = [s for s in self.diff_langs if s.strip() != '']
 
-        self.values['selected_paths'] = self.selected_paths
-        self.values['brightness_diff'] = self.brightness_diff.get()
-        self.values['sub_format'] = self.subtitle_format.get()
+        new_values['selected_paths'] = self.selected_paths
+        new_values['brightness_diff'] = self.brightness_diff.get()
+        new_values['sub_format'] = self.subtitle_format.get()
         
-        # self.window.quit()
-        return self.wait_var.get(), self.values
+        print(new_values)
+        return self.wait_var.get(), new_values
         # self.controller.gui_send_values(self.wait_var.get(), self.values)
     
     def create_menu(self):
@@ -413,7 +412,13 @@ class GUI:
         self.job_progress_bar["value"] = Jobs.get_percentage(self.job)
         self.progress_window.after(100, self.show_progress)
 
-        # if self.job == Jobs.FINISHED:
-        #     time.sleep(5)
-        #     self.progress_window.destroy()
-        #     self.progress_window = None
+    def hide_progress(self):
+        time.sleep(5)
+        self.progress_window.destroy()
+        self.progress_window = None
+
+    def show_finish_dialog(self):
+        tk.messagebox.showinfo(self.translate("Conversion finished"), self.translate("The conversion is finished."))
+
+    def show_no_files_selected_dialog(self):
+        tk.messagebox.showerror(self.translate("Error"), self.translate("No files selected. Please select at least one file."))

@@ -11,6 +11,8 @@ from packaging.version import Version
 from config import Config
 import webbrowser
 import logging
+from controller.jobs import Jobs
+import time
 
 class GUI:
     
@@ -24,6 +26,7 @@ class GUI:
         self.selected_paths = [] # paths of the selected files
         self.old_path = ""
         self.reloaded = False
+        self.continue_flag = None
 
         self.window = tk.Tk()
         self.window.geometry(newGeometry="500x650+0+0")
@@ -31,6 +34,7 @@ class GUI:
         self.create_menu()
 
         self.values = {}
+        self.progress_window = None
 
         self.run_settings_help_window_row = 1
 
@@ -95,7 +99,7 @@ class GUI:
         # TODO: there is extra space between use_diff_langs and brightness_diff_label
         job_settings_window = tk.Frame(master=self.window)
         subtitle_format_label = tk.Label(master=job_settings_window, text=self.translate("Format of the new subtitles:"))
-        self.subtitle_format = ttk.Combobox(master=job_settings_window, values=SubtitleConverter.sub_formats(None), state="readonly")
+        self.subtitle_format = ttk.Combobox(master=job_settings_window, values=self.config.get_allowed_sub_formats(), state="readonly")
         edit_subtitles = tk.Checkbutton(master=job_settings_window, text=self.translate("Edit subtitles before muxing"), variable=self.add_variable('edit_subs'))
         save_images = tk.Checkbutton(master=job_settings_window, text=self.translate("Save images of PGS subtitles"), variable=self.add_variable('save_images'))
         keep_old_mkvs = tk.Checkbutton(master=job_settings_window, text=self.translate("Keep original MKV files"), variable=self.add_variable('keep_old_mkvs'))
@@ -163,6 +167,8 @@ class GUI:
         exit_button.pack(side=tk.LEFT, expand=True, padx=5, pady=5)
 
         buttons_window.pack(fill=tk.BOTH, expand=True)
+
+        self.window.tkraise()
 
     def add_variable(self, name):
         self.values[name] = tk.BooleanVar()
@@ -247,29 +253,34 @@ class GUI:
         self.wait_var.set(1)
 
     def run(self) -> tuple[int, dict]:
-        self.window.tkraise()
+        self.wait_var = tk.IntVar()
         self.window.wait_variable(self.wait_var)
 
-        if self.reloaded: # values are already converted from another GUI instance (e.g. after changing the language)
-            return self.wait_var.get(), self.values
+        # if self.reloaded: # values are already converted from another GUI instance (e.g. after changing the language)
+        #     return self.wait_var.get(), self.values
+        #     # self.controller.gui_send_values(self.wait_var.get(), self.values)
 
         # convert booleanvars to bools
+        new_values = {}
         for key in self.values:
-            self.values[key] = self.values[key].get()
+            try:
+                new_values[key] = self.values[key].get()
+            except AttributeError: # already converted because this is not the first click on the start button
+                pass
 
         # add diff_langs to values if use_diff_langs is True
-        self.values['diff_langs'] = ''
+        new_values['diff_langs'] = ''
         if self.values.get('use_diff_langs'):
-            self.values['diff_langs'] = self.diff_langs.get('1.0', tk.END)
+            new_values['diff_langs'] = self.diff_langs.get('1.0', tk.END)
             # self.values['diff_langs'] = self.values['diff_langs'].split('\n')
             # self.values['diff_langs'] = [s for s in self.diff_langs if s.strip() != '']
 
-        self.values['selected_paths'] = self.selected_paths
-        self.values['brightness_diff'] = self.brightness_diff.get()
-        self.values['sub_format'] = self.subtitle_format.get()
+        new_values['selected_paths'] = self.selected_paths
+        new_values['brightness_diff'] = self.brightness_diff.get()
+        new_values['sub_format'] = self.subtitle_format.get()
         
-        self.window.quit()
-        return self.wait_var.get(), self.values
+        return self.wait_var.get(), new_values
+        # self.controller.gui_send_values(self.wait_var.get(), self.values)
     
     def create_menu(self):
         self.menu = tk.Menu(self.window)
@@ -288,6 +299,10 @@ class GUI:
         help_window.transient(self.window)
         help_window.resizable(False, False)
 
+        help_window.wait_visibility()
+        x = self.window.winfo_x() + self.window.winfo_width()//2 - help_window.winfo_width()//2
+        y = self.window.winfo_y() + self.window.winfo_height()//2 - help_window.winfo_height()//2
+        help_window.geometry(f"+{x}+{y}")
 
         help_text = tk.Label(help_window, text=self.translate('Help for choosing the right settings'), font=("Helvetica", 12))
         help_text.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
@@ -345,3 +360,67 @@ class GUI:
         wait_var, values = new_gui.run()
         self.values = values
         self.wait_var.set(wait_var)
+
+
+    def update(self, file_counter, finished_files_counter, files_with_error_counter, job, sc_error_code, sc_error_msg):
+        """Update the GUI while the subconverter is running"""
+        self.file_counter = file_counter
+        self.finished_files_counter = finished_files_counter
+        self.files_with_error_counter = files_with_error_counter
+        self.job = job
+
+        if sc_error_code != 0:
+            self.window.bell()
+            self.continue_flag = tk.messagebox.askyesno(self.translate("Error"), self.translate("Error #{error_code}: {error}\nDo you want to continue with the next file?").format(error_code=sc_error_code, error=sc_error_msg))
+
+        self.window.update()
+
+    def show_progress(self):
+        if not self.progress_window:
+            self.progress_window = tk.Toplevel(self.window)
+
+            self.progress_window.wait_visibility()
+            x = self.window.winfo_x() + self.window.winfo_width()//2 - self.progress_window.winfo_width()//2
+            y = self.window.winfo_y() + self.window.winfo_height()//2 - self.progress_window.winfo_height()//2
+            self.progress_window.geometry(f"+{x}+{y}")
+            
+            self.progress_window.title(self.translate("Progress"))
+            self.progress_window.transient(self.window)
+            self.progress_window.resizable(False, False)
+
+            current_video_counter = self.finished_files_counter + self.files_with_error_counter + 1
+            self.video_progress_label = tk.Label(self.progress_window, text="Video {}/{}".format(current_video_counter, self.file_counter))
+            self.video_progress_bar = ttk.Progressbar(self.progress_window, length=200, mode='determinate')
+
+            self.job_progress_bar = ttk.Progressbar(self.progress_window, length=200, mode='determinate')
+            self.job_progress_label = tk.Label(self.progress_window, text=self.translate(f"Job: {self.job}"))
+            self.job_progress_bar["value"] = Jobs.get_percentage(self.job)
+
+            self.video_progress_label.grid(row=0, column=0, padx=10, pady=(5, 3), sticky="w")
+            self.video_progress_bar.grid(row=1, column=0, padx=10, pady=(0, 5), sticky="w")
+            self.job_progress_label.grid(row=2, column=0, padx=10, pady=(5, 3), sticky="w")
+            self.job_progress_bar.grid(row=3, column=0, padx=10, pady=(0, 5), sticky="w")
+
+            self.progress_window.tkraise()
+
+        current_video_counter = self.finished_files_counter + self.files_with_error_counter + 1
+        self.video_progress_label["text"] = "Video #{current_video_counter}/{total_video_counter}".format(current_video_counter=current_video_counter, total_video_counter=self.file_counter)
+        # video_progress_bar value is the number of finished videos plus the percentage of the current video based on the current job
+        self.video_progress_bar["value"] = (current_video_counter - 1) / self.file_counter * 100 + (Jobs.get_percentage(self.job) * (1 / self.file_counter))
+        # print(self.video_progress_bar["value"], (Jobs.get_percentage(self.job) * (1 / self.file_counter)))
+        self.job_progress_label["text"] = self.translate("Current job: {job}").format(job=self.job.value)
+        self.job_progress_bar["value"] = Jobs.get_percentage(self.job)
+        self.progress_window.after(100, self.show_progress)
+
+    def hide_progress(self):
+        time.sleep(5)
+        self.progress_window.destroy()
+        self.progress_window = None
+
+    def show_finish_dialog(self):
+        tk.messagebox.showinfo(self.translate("Conversion finished"), self.translate("The conversion is finished."))
+        self.window.bell()
+
+    def show_no_files_selected_dialog(self):
+        tk.messagebox.showerror(self.translate("Error"), self.translate("No files selected. Please select at least one file."))
+        

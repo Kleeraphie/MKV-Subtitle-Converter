@@ -10,6 +10,9 @@ import pymkv
 import shutil
 import pysubs2
 from config import Config
+from controller.jobs import Jobs
+from controller.sub_formats import SubtitleFormats, SubtitleFileEndings
+import time
 import sys
 from pathlib import Path
 import subprocess
@@ -18,7 +21,7 @@ import json
 
 class SubtitleConverter:
 
-    def __init__(self, files: list = [], edit_flag: bool = False, keep_imgs: bool = False, keep_old_mkvs: bool = False, keep_old_subs: bool = False, keep_new_subs: bool = False, diff_langs: bool = False, sub_format: str = "SubRip Text (.srt)", text_brightness_diff: float = 0.1):
+    def __init__(self, files: list = [], edit_flag: bool = False, keep_imgs: bool = False, keep_old_mkvs: bool = False, keep_old_subs: bool = False, keep_new_subs: bool = False, diff_langs: bool = False, sub_format: SubtitleFormats = SubtitleFormats.SRT, text_brightness_diff: float = 0.1):
         
         self.file_paths = files
         self.edit_flag = edit_flag
@@ -27,33 +30,20 @@ class SubtitleConverter:
         self.keep_old_subs = keep_old_subs
         self.keep_new_subs = keep_new_subs
         self.diff_langs = diff_langs
-        self.format = sub_format
+        self.format = SubtitleFileEndings.get_format(sub_format.name).value
         self.text_brightness_diff = text_brightness_diff
 
         self.config = Config()
         self.translate = self.config.translate
 
-    def sub_formats(self) -> list[str]:
-        subs = [
-            "SubRip Text (.srt)",
-            "Advanced SubStation Alpha (.ass)",
-            "SubStation Alpha (.ssa)",
-            "MicroDVD (.sub)",
-            "JSON (.json)",
-            "MPL2 (.mpl)",
-            "TMP (.tmp)",
-            "VTT (.vtt)"
-        ]
-        
-        return subs
-    
-    def sub_format_extension(self, format: str) -> str:
+        self.file_counter = 0 # number of mkv files
+        self.finished_files_counter = 0
+        self.files_with_error_counter = 0
+        self.current_job = Jobs.IDLE
 
-        # check if format is valid
-        if format not in self.sub_formats():
-            return "srt"
-
-        return format[format.find('.') + 1:format.find(')')]
+        self.error_code = 0
+        self.error_message = ""
+        self.continue_flag = None
     
     def convert_language(self, lang: str) -> str:
         '''
@@ -83,7 +73,7 @@ class SubtitleConverter:
 
         return alt_lang_codes.get(lang, lang)
 
-    def diff_langs_from_text(self, text) -> dict[str, str]:
+    def diff_langs_from_text(self, text: str) -> dict[str, str]:
         if text == "":
             return {}
         
@@ -156,6 +146,12 @@ class SubtitleConverter:
     def extract_subtitles(self) -> list[int]:
         self.subtitle_counter = 0
         thread_pool = []
+
+        if self.continue_flag is False:
+            return
+        
+        self.current_job = Jobs.EXTRACT
+
         subtitle_streams = [stream for stream in self.probe['streams'] if stream['codec_name'] == 'hdmv_pgs_subtitle']
         current_size, total_size_B = 0, 0
         current_sizes = []
@@ -198,6 +194,11 @@ class SubtitleConverter:
     def convert_subtitles(self): # convert PGS subtitles to SRT subtitles
         thread_pool = []
 
+        if self.continue_flag is False:
+            return
+
+        self.current_job = Jobs.CONVERT
+
         for id in range(self.subtitle_counter):
 
             # get language to use in subtitle
@@ -213,15 +214,15 @@ class SubtitleConverter:
 
         if pgsreader.exit_code != 0:
             self.config.logger.error('Error while converting subtitle #{id}. See messages before for more information.')
-            raise Exception(self.translate("Error while converting subtitle #{id}. See console for more info.").format(id))
+            raise Exception(self.translate("Error while converting subtitle #{id}. See logs for more info.").format(id))
             # TODO Print error message by exit code, therefore check which warnings trigger exceptions
 
         # no multithreading here because it's already fast enough
-        if self.format != "srt":
+        if self.format != SubtitleFileEndings.SRT.value:
             for id in range(self.subtitle_counter):
-                subs = pysubs2.load(os.path.join(self.sub_dir, f'{id}.srt'))
+                new_sub = pysubs2.load(os.path.join(self.sub_dir, f'{id}.srt'))
                 open(os.path.join(self.sub_dir, f'{id}.{self.format}'), 'w').close()
-                subs.save(os.path.join(self.sub_dir, f'{id}.{self.format}'))
+                new_sub.save(os.path.join(self.sub_dir, f'{id}.{self.format}'))
 
     def get_lang(self, lang_code: str) -> str | None:
 
@@ -259,6 +260,9 @@ class SubtitleConverter:
         all_sets = [ds for ds in tqdm(pgs.iter_displaysets(), unit=" ds")]
 
         if pgsreader.exit_code != 0:
+            return
+        
+        if self.continue_flag is False:
             return
 
         # building SRT file from DisplaySets
@@ -316,10 +320,15 @@ class SubtitleConverter:
         return new_size
 
     def mux_file(self):
+        if self.continue_flag is False:
+            return
+
         print(self.translate("Muxing file..."))
         self.config.logger.info(f'Muxing file {self.file_name}.')
         new_file_dir = os.path.dirname(self.file_path)
         new_file_path = f"{new_file_dir}\{self.file_name} (1).mkv"
+
+        self.current_job = Jobs.MUXING
 
         ffmpeg_cmd = f'ffmpeg -i \"{self.file_path}\" -y'
 
@@ -379,6 +388,8 @@ class SubtitleConverter:
             os.rename(new_file_path, self.file_path)
 
     def convert(self):
+        self.continue_flag = None
+        
         for self.file_path in self.file_paths:
             self.file_name = os.path.splitext(os.path.basename(self.file_path))[0]
             
@@ -387,7 +398,7 @@ class SubtitleConverter:
                 self.config.logger.info(f'Processing {self.file_name}.')
 
                 self.mkv = pymkv.MKVFile(self.file_path)
-                main_dir_path = self.get_datadir() / 'subtitles' / self.file_name
+                main_dir_path = self.config.get_datadir() / 'subtitles' / self.file_name
                 self.img_dir = main_dir_path / 'images'
                 self.sub_dir = main_dir_path / 'subtitles'
 
@@ -421,34 +432,54 @@ class SubtitleConverter:
 
                 print(self.translate("Finished {file}").format(file=self.file_name)) 
                 self.config.logger.info(f'Finished {self.file_name}.')
+                self.finished_files_counter += 1
             except Exception as e:
-                print(self.translate("Error while processing {file}: {exception}").format(file=self.file_name, exception=e))
+                self.files_with_error_counter += 1
+                self.error_code = 2
+                self.error_message = self.translate('Error while processing {file_name}: {error}').format(file_name=self.file_name, error=e)
                 self.config.logger.error(f'Error while processing {self.file_name}: {e}')
-                input(self.translate("Press Enter to continue with the next file..."))
-                self.config.logger.debug("Continuing with the next file.")
-                self.clean()
-                print()
 
-    def get_datadir(self) -> Path:
-        """
-        Returns a parent directory path
-        where persistent application data can be stored.
+                # wait for user input to continue
+                while self.continue_flag is None:
+                    time.sleep(1)
 
-        # Linux: ~/.local/share/MKV Subtitle Converter
-        # macOS: ~/Library/Application Support/MKV Subtitle Converter
-        # Windows: C:/Users/<USER>/AppData/Roaming/MKV Subtitle Converter
-        """
+                if self.continue_flag:
+                    self.config.logger.debug("Continuing with the next file after error.")
+                    self.clean()
+                    print()
+                else:
+                    self.config.logger.debug("Exiting program after error.")
+                    self.clean()
+                    break
 
-        if sys.platform.startswith("win"):
-            # path = Path(os.getenv("LOCALAPPDATA"))
-            path = Path('.')
-        elif sys.platform.startswith("darwin"):
-            path = Path("~/Library/Application Support")
-        else:
-            # linux
-            path = Path(os.getenv("XDG_DATA_HOME", "~/.local/share"))
+        self.current_job = Jobs.FINISHED
+    
+# ----------------FOR THE CONTROLLER----------------
+    def get_file_counter(self) -> int:
+        return self.file_counter
+    
+    def get_finished_files_counter(self) -> int:
+        return self.finished_files_counter
+    
+    def get_files_with_error_counter(self) -> int:
+        return self.files_with_error_counter
+    
+    def get_current_job(self) -> str:
+        return self.current_job
+    
+    def get_error_code(self) -> int:
+        return self.error_code
+    
+    def get_error_message(self) -> str:
+        return self.error_message
+    
+    def set_continue_flag(self, flag: bool):
+        self.continue_flag = flag
+        self.reset_error_code()
 
-        path = path / "MKV Subtitle Converter"
-        path.mkdir(parents=True, exist_ok=True)
-
-        return path
+    def get_continue_flag(self) -> bool:
+        return self.continue_flag
+    
+    def reset_error_code(self):
+        self.error_code = 0
+        self.error_message = ""

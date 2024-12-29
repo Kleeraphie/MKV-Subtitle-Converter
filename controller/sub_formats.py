@@ -30,11 +30,11 @@ class SubtitleFileEndings(Enum):
 class SubtitleFormats(Enum):
     SRT  = "SubRip Text (.srt)"
     ASS  = "Advanced SubStation Alpha (.ass)"
-    SSA  = "SubStation Alpha (.ssa)",
-    SUB  = "MicroDVD (.sub)"
-    JSON = "JSON (.json)"
-    MPL2 = "MPL2 (.mpl)"
-    TMP  = "TMP (.tmp)"
+    SSA  = "SubStation Alpha (.ssa)"
+    # SUB  = "MicroDVD (.sub)"  # Framerate must be specified when writing MicroDVD.
+    # JSON = "JSON (.json)"  # not supported by pysubs2
+    # MPL2 = "MPL2 (.mpl)"  # UnknownFileExtensionError: .mpl
+    # TMP  = "TMP (.tmp)"  UnknownFileExtensionError: .mpl
     VTT  = "VTT (.vtt)"
 
     def get_name(name: str):

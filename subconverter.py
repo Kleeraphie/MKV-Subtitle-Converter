@@ -11,14 +11,13 @@ import time
 import shutil
 import pysubs2
 from config import Config
-import sys
-import pathlib
 from controller.jobs import Jobs
+from controller.sub_formats import SubtitleFormats, SubtitleFileEndings
 import time
 
 class SubtitleConverter:
 
-    def __init__(self, files: list = [], edit_flag: bool = False, keep_imgs: bool = False, keep_old_mkvs: bool = False, keep_old_subs: bool = False, keep_new_subs: bool = False, diff_langs: bool = False, sub_format: str = "SubRip Text (.srt)", text_brightness_diff: float = 0.1):
+    def __init__(self, files: list = [], edit_flag: bool = False, keep_imgs: bool = False, keep_old_mkvs: bool = False, keep_old_subs: bool = False, keep_new_subs: bool = False, diff_langs: bool = False, sub_format: SubtitleFormats = SubtitleFormats.SRT, text_brightness_diff: float = 0.1):
         
         self.file_paths = files
         self.edit_flag = edit_flag
@@ -27,7 +26,7 @@ class SubtitleConverter:
         self.keep_old_subs = keep_old_subs
         self.keep_new_subs = keep_new_subs
         self.diff_langs = diff_langs
-        self.format = sub_format
+        self.format = SubtitleFileEndings.get_format(sub_format.name).value
         self.text_brightness_diff = text_brightness_diff
 
         self.config = Config()
@@ -41,28 +40,6 @@ class SubtitleConverter:
         self.error_code = 0
         self.error_message = ""
         self.continue_flag = None
-
-    def sub_formats(self) -> list[str]:
-        subs = [
-            "SubRip Text (.srt)",
-            "Advanced SubStation Alpha (.ass)",
-            "SubStation Alpha (.ssa)",
-            "MicroDVD (.sub)",
-            "JSON (.json)",
-            "MPL2 (.mpl)",
-            "TMP (.tmp)",
-            "VTT (.vtt)"
-        ]
-        
-        return subs
-    
-    def sub_format_extension(self, format: str) -> str:
-
-        # check if format is valid
-        if format not in self.sub_formats():
-            return "srt"
-
-        return format[format.find('.') + 1:format.find(')')]
     
     def convert_language(self, lang: str) -> str:
         '''
@@ -92,7 +69,7 @@ class SubtitleConverter:
 
         return alt_lang_codes.get(lang, lang)
 
-    def diff_langs_from_text(self, text) -> dict[str, str]:
+    def diff_langs_from_text(self, text: str) -> dict[str, str]:
         if text == "":
             return {}
         
@@ -187,15 +164,15 @@ class SubtitleConverter:
 
         if pgsreader.exit_code != 0:
             self.config.logger.error('Error while converting subtitle #{id}. See messages before for more information.')
-            raise Exception(self.translate("Error while converting subtitle #{id}. See console for more info.").format(id))
+            raise Exception(self.translate("Error while converting subtitle #{id}. See logs for more info.").format(id))
             # TODO Print error message by exit code, therefore check which warnings trigger exceptions
 
         # no multithreading here because it's already fast enough
-        if self.format != "srt":
+        if self.format != SubtitleFileEndings.SRT.value:
             for id in self.subtitle_ids:
-                subs = pysubs2.load(os.path.join(self.sub_dir, f'{id}.srt'))
+                new_sub = pysubs2.load(os.path.join(self.sub_dir, f'{id}.srt'))
                 open(os.path.join(self.sub_dir, f'{id}.{self.format}'), 'w').close()
-                subs.save(os.path.join(self.sub_dir, f'{id}.{self.format}'))
+                new_sub.save(os.path.join(self.sub_dir, f'{id}.{self.format}'))
 
     def get_lang(self, lang_code: str) -> str | None:
 
@@ -298,7 +275,7 @@ class SubtitleConverter:
             track: pymkv.MKVTrack
             track = self.mkv.tracks[track_id - deleted_tracks]
 
-            # make new track from new .srt file and settings from old PGS subtitle
+            # make new track from new subtitle file and settings of old PGS subtitle
             new_sub = pymkv.MKVTrack(sub_path, track_name=track.track_name, language=track.language, default_track=track.default_track, forced_track=track.forced_track)
             self.mkv.replace_track(track_id - deleted_tracks, new_sub)
 
@@ -383,7 +360,7 @@ class SubtitleConverter:
                 self.config.logger.info(f'Processing {self.file_name}.')
 
                 self.mkv = pymkv.MKVFile(self.file_path)
-                main_dir_path = self.get_datadir() / 'subtitles' / self.file_name
+                main_dir_path = self.config.get_datadir() / 'subtitles' / self.file_name
                 self.img_dir = main_dir_path / 'images'
                 self.sub_dir = main_dir_path / 'subtitles'
 
@@ -444,29 +421,6 @@ class SubtitleConverter:
                     break
 
         self.current_job = Jobs.FINISHED
-
-    def get_datadir(self) -> pathlib.Path:
-        """
-        Returns a parent directory path
-        where persistent application data can be stored.
-
-        # Linux: ~/.local/share/MKV Subtitle Converter
-        # macOS: ~/Library/Application Support/MKV Subtitle Converter
-        # Windows: C:/Users/<USER>/AppData/Roaming/MKV Subtitle Converter
-        """
-
-        if sys.platform.startswith("win"):
-            path = pathlib.Path(os.getenv("LOCALAPPDATA"))
-        elif sys.platform.startswith("darwin"):
-            path = pathlib.Path("~/Library/Application Support")
-        else:
-            # linux
-            path = pathlib.Path(os.getenv("XDG_DATA_HOME", "~/.local/share"))
-
-        path = path / "MKV Subtitle Converter"
-        path.mkdir(parents=True, exist_ok=True)
-
-        return path
     
 # ----------------FOR THE CONTROLLER----------------
     def get_file_counter(self) -> int:

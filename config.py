@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 import logging
 from datetime import datetime
+from controller.sub_formats import SubtitleFormats
 
 class Config:
     class Settings(Enum):
@@ -175,12 +176,14 @@ class Config:
     def create_logger(self):
         self.logger = logging.getLogger(__name__)
         date = datetime.now().strftime('%Y-%m-%d %H.%M.%S')
-        # logs_dir = Path(self.get_datadir() / 'logs')
-        logs_dir = Path('logs')
+        logs_dir = Path(self.get_datadir() / 'logs')
+        # logs_dir = Path('logs')
         logs_dir.mkdir(parents=True, exist_ok=True)
         logging.basicConfig(filename=str(logs_dir / f'{date}.log'), level=logging.DEBUG, format='[%(levelname)s] %(asctime)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
         # logging.getLogger().addHandler(logging.StreamHandler())  # print logs to console
         self.logger.debug(f'Program started at {date}.')
-        logging.warning('This is a warning message.')
 
         return self.logger
+    
+    def get_allowed_sub_formats(self) -> list[str]:
+        return [sub_format.value for sub_format in SubtitleFormats]

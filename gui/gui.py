@@ -99,7 +99,7 @@ class GUI:
         # TODO: there is extra space between use_diff_langs and brightness_diff_label
         job_settings_window = tk.Frame(master=self.window)
         subtitle_format_label = tk.Label(master=job_settings_window, text=self.translate("Format of the new subtitles:"))
-        self.subtitle_format = ttk.Combobox(master=job_settings_window, values=SubtitleConverter.sub_formats(None), state="readonly")
+        self.subtitle_format = ttk.Combobox(master=job_settings_window, values=self.config.get_allowed_sub_formats(), state="readonly")
         edit_subtitles = tk.Checkbutton(master=job_settings_window, text=self.translate("Edit subtitles before muxing"), variable=self.add_variable('edit_subs'))
         save_images = tk.Checkbutton(master=job_settings_window, text=self.translate("Save images of PGS subtitles"), variable=self.add_variable('save_images'))
         keep_old_mkvs = tk.Checkbutton(master=job_settings_window, text=self.translate("Keep original MKV files"), variable=self.add_variable('keep_old_mkvs'))
@@ -279,7 +279,6 @@ class GUI:
         new_values['brightness_diff'] = self.brightness_diff.get()
         new_values['sub_format'] = self.subtitle_format.get()
         
-        print(new_values)
         return self.wait_var.get(), new_values
         # self.controller.gui_send_values(self.wait_var.get(), self.values)
     
@@ -371,6 +370,7 @@ class GUI:
         self.job = job
 
         if sc_error_code != 0:
+            self.window.bell()
             self.continue_flag = tk.messagebox.askyesno(self.translate("Error"), self.translate("Error #{error_code}: {error}\nDo you want to continue with the next file?").format(error_code=sc_error_code, error=sc_error_msg))
 
         self.window.update()
@@ -419,6 +419,8 @@ class GUI:
 
     def show_finish_dialog(self):
         tk.messagebox.showinfo(self.translate("Conversion finished"), self.translate("The conversion is finished."))
+        self.window.bell()
 
     def show_no_files_selected_dialog(self):
         tk.messagebox.showerror(self.translate("Error"), self.translate("No files selected. Please select at least one file."))
+        

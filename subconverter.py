@@ -110,7 +110,7 @@ class SubtitleConverter:
         self.probe = json.loads(self.probe)
 
         self.subtitle_languages = []
-        metadata_file = str(Path(self.get_datadir(), "metadata.txt"))
+        metadata_file = str(Path(self.config.get_datadir(), "metadata.txt"))
 
         # TODO: can be stopped earlier (probably when time starts to change)
         os.system(f"ffmpeg -i \"{self.file_path}\" -map 0:s -c copy -f ffmetadata \"{metadata_file}\"")
@@ -137,6 +137,8 @@ class SubtitleConverter:
                 subtitle_size = bitmath.parse_string(latest_output)
                 subtitle_size.to_Byte()
                 sizes[track_id] = subtitle_size
+            elif "Timestamps are unset in a packet" in latest_output:
+                self.config.logger.warning(latest_output + ". This may lead to a decreased playback performance.")
 
         process.wait()
         finished[track_id] = True
@@ -163,7 +165,10 @@ class SubtitleConverter:
         for i, subtitle in enumerate(subtitle_streams):
 
             # calculate total size of subtitles
-            subtitle_size = int(subtitle['tags']['NUMBER_OF_BYTES-eng'])
+            subtitle_size = -1  # if size is not available, set it to 0
+            if 'tags' in subtitle and 'NUMBER_OF_BYTES-eng' in subtitle['tags']:
+                subtitle_size = int(subtitle['tags']['NUMBER_OF_BYTES-eng'])
+            
             total_size_B += subtitle_size
 
             self.subtitle_counter += 1

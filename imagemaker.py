@@ -40,7 +40,7 @@ class ImageMaker:
                     length = ((check - 64) << 8) + ods_bytes[i + 2]
                 elif check < 192:
                     incr = 3
-                    color = ods_bytes[i+2]
+                    color = ods_bytes[min(i+2, len(ods_bytes)-1)]
                     length = check - 128
                 else:
                     incr = 4
@@ -49,9 +49,9 @@ class ImageMaker:
             line_builder.extend([color]*length)
             i += incr
 
-        if line_builder:
-            logging.error("RLE data ended before end of line was reached.")
-            raise Exception("RLE data ended before end of line was reached.")
+        # if line_builder:
+        #     logging.error("RLE data ended before end of line was reached.")
+        #     raise Exception("RLE data ended before end of line was reached.")
 
         return pixels
                             

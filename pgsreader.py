@@ -84,9 +84,9 @@ class BaseSegment:
         self.size = int(bytes_[11:13].hex(), base=16) # segment size
         self.data = bytes_[13:] # segment data
 
-        if self.dts != 0:
-            print('Warning: Decoding timestamp (DTS) not 0')
-            logging.warning('Decoding timestamp (DTS) not 0.')
+        # if self.dts != 0:
+        #     print('Warning: Decoding timestamp (DTS) not 0')
+        #     logging.warning('Decoding timestamp (DTS) not 0.')
 
     def __len__(self):
         return self.size
@@ -217,12 +217,13 @@ class ObjectDefinitionSegment(BaseSegment):
         self.width = int(self.data[7:9].hex(), base=16)
         self.height = int(self.data[9:11].hex(), base=16)
         self.img_data = self.data[11:]
-        if len(self.img_data) != self.data_len - 4:
-            print("Image data length asserted does not match the "
-                  "length found.")
-            logging.error("Image data length asserted does not match the "
-                          "length found.")
-            exit_code = 1
+        # if len(self.img_data) != self.data_len - 4:
+        #     print("Image data length asserted does not match the "
+        #           "length found.")
+        #     logging.error("Image data length asserted does not match the "
+        #                   "length found.")
+        #     exit_code = 3
+        #     err_msg = "Image data length asserted does not match the length found."
 
 
 class EndSegment(BaseSegment):

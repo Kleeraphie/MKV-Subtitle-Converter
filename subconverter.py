@@ -13,7 +13,7 @@ from config import Config
 from controller.jobs import Jobs
 from controller.sub_formats import SubtitleFormats, SubtitleFileEndings
 import time
-import sys
+from datetime import datetime
 from pathlib import Path
 import subprocess
 import bitmath
@@ -122,21 +122,22 @@ class SubtitleConverter:
         os.remove(metadata_file)
 
     # helper function for threading
-    def extract(self, track_id: int, sizes: list[int], finished: list[bool]):
+    def extract(self, track_id: int, times: list[int], finished: list[bool]):
         sub_file_path = Path(self.sub_dir, f"{track_id}.sup")
         command = "ffmpeg -y -i \"{0}\" -map 0:s:{1} -c copy \"{2}\"".format(self.file_path, track_id, str(sub_file_path))
         print(f'Start {track_id}')
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        start_time = datetime(1900, 1, 1)
 
         for line in iter(process.stderr.readline, ''):
             latest_output = line.strip()
-            if "size=" in latest_output:
-                latest_output = latest_output.split("size=")[1]
-                latest_output = latest_output.split("time=")[0]
+            if "time=" in latest_output:
+                latest_output = latest_output.split("time=")[1]
+                latest_output = latest_output.split(" bitrate=")[0]
                 latest_output = latest_output.strip()
-                subtitle_size = bitmath.parse_string(latest_output)
-                subtitle_size.to_Byte()
-                sizes[track_id] = subtitle_size
+                subtitle_time = datetime.strptime(latest_output, "%H:%M:%S.%f")
+                subtitle_time = subtitle_time - start_time
+                times[track_id] = subtitle_time.total_seconds()
             elif "Timestamps are unset in a packet" in latest_output:
                 self.config.logger.warning(latest_output + ". This may lead to a decreased playback performance.")
 
@@ -155,21 +156,27 @@ class SubtitleConverter:
         self.current_job = Jobs.EXTRACT
 
         subtitle_streams = [stream for stream in self.probe['streams'] if stream['codec_name'] == 'hdmv_pgs_subtitle']
-        current_size, total_size_B = 0, 0
-        current_sizes = []
+        current_time, total_time = 0, 0
+        current_times = []
         finished = []
+        start_time = datetime(1900, 1, 1)
 
         if not os.path.exists(self.sub_dir):
             self.sub_dir.mkdir(parents=True, exist_ok=True)
             
         for i, subtitle in enumerate(subtitle_streams):
 
-            # calculate total size of subtitles
-            subtitle_size = -1  # if size is not available, set it to 0
-            if 'tags' in subtitle and 'NUMBER_OF_BYTES-eng' in subtitle['tags']:
-                subtitle_size = int(subtitle['tags']['NUMBER_OF_BYTES-eng'])
-            
-            total_size_B += subtitle_size
+            # calculate total timelength of subtitles
+            if 'tags' in subtitle and any('duration' in key.lower() for key in subtitle['tags']):
+                subtitle_time = subtitle['tags']['DURATION']
+                subtitle_time = subtitle_time.split('.')[0]  # remove milliseconds
+                subtitle_time = datetime.strptime(subtitle_time, "%H:%M:%S")
+                subtitle_time = subtitle_time - start_time
+                subtitle_time = subtitle_time.total_seconds()
+            else:
+                subtitle_time = 0
+
+            total_time += subtitle_time
 
             self.subtitle_counter += 1
 
@@ -177,8 +184,8 @@ class SubtitleConverter:
             if os.path.exists(str(self.sub_dir / f'{self.subtitle_counter - 1}.sup')):
                 continue
             
-            current_sizes.append(0)
-            thread = threading.Thread(name=f"Extract subtitle #{i}", target=self.extract, args=(i, current_sizes, finished))
+            current_times.append(0)
+            thread = threading.Thread(name=f"Extract subtitle #{i}", target=self.extract, args=(i, current_times, finished))
             finished.append(False)
             thread_pool.append(thread)
 
@@ -186,10 +193,10 @@ class SubtitleConverter:
             thread.start()
 
         while not all(finished):
-            current_size = sum(current_sizes)
-            print("Progress: " + str(int(current_size / total_size_B * 1024 * 100)) + "%", end="\r")
+            current_time = sum(current_times)
+            print("Progress: " + str(int(current_time / total_time * 100)) + "%", end="\r")
             
-        print("Progress: " + str(int(current_size / total_size_B * 1024 * 100)) + "%")
+        print("Progress: " + str(int(current_time / total_time * 1024 * 100)) + "%")
         # print("Progress: 100%")
         # TODO: add i18n
 

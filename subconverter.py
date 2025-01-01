@@ -218,8 +218,8 @@ class SubtitleConverter:
             thread.join()
 
         if pgsreader.exit_code != 0:
-            self.config.logger.error('Error while converting subtitle #{id}. See messages before for more information.')
-            raise Exception(self.translate("Error while converting subtitle #{id}. See logs for more info.").format(id))
+            self.config.logger.error(f'Error while converting subtitle #{id}. See messages before for more information.')
+            raise Exception(self.translate("Error while converting subtitle #{id}. See logs for more info.").format(id=id))
             # TODO Print error message by exit code, therefore check which warnings trigger exceptions
 
         # no multithreading here because it's already fast enough

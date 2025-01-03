@@ -135,6 +135,8 @@ class SubtitleConverter:
                 latest_output = latest_output.split("time=")[1]
                 latest_output = latest_output.split(" bitrate=")[0]
                 latest_output = latest_output.strip()
+                if latest_output.startswith('-'):
+                    latest_output = "00:00:00.000"
                 subtitle_time = datetime.strptime(latest_output, "%H:%M:%S.%f")
                 subtitle_time = subtitle_time - start_time
                 times[track_id] = subtitle_time.total_seconds()
@@ -168,7 +170,8 @@ class SubtitleConverter:
 
             # calculate total timelength of subtitles
             if 'tags' in subtitle and any('duration' in key.lower() for key in subtitle['tags']):
-                subtitle_time = subtitle['tags']['DURATION']
+                subtitle_time_key = [key for key in subtitle['tags'] if 'duration' in key.lower()][0]
+                subtitle_time = subtitle['tags'][subtitle_time_key]
                 subtitle_time = subtitle_time.split('.')[0]  # remove milliseconds
                 subtitle_time = datetime.strptime(subtitle_time, "%H:%M:%S")
                 subtitle_time = subtitle_time - start_time

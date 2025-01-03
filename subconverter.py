@@ -137,7 +137,8 @@ class SubtitleConverter:
                 latest_output = latest_output.strip()
                 if latest_output.startswith('-'):
                     latest_output = "00:00:00.000"
-                subtitle_time = datetime.strptime(latest_output, "%H:%M:%S.%f")
+                subtitle_time = subtitle_time.split('.')[0]  # remove milliseconds
+                subtitle_time = datetime.strptime(latest_output, "%H:%M:%S")
                 subtitle_time = subtitle_time - start_time
                 times[track_id] = subtitle_time.total_seconds()
             elif "Timestamps are unset in a packet" in latest_output:

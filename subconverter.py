@@ -155,8 +155,6 @@ class SubtitleConverter:
 
         for line in iter(process.stderr.readline, ''):
             times[track_id] = self.get_seconds_progress_from_ffmpeg_output(line)
-            if "Timestamps are unset in a packet" in line:
-                self.config.logger.warning(line + ". This may lead to a decreased playback performance.")
 
         process.wait()
         finished[track_id] = True
@@ -213,7 +211,7 @@ class SubtitleConverter:
             current_time = sum(current_times)
             print("Progress: " + str(int(current_time / total_time * 100)) + "%", end="\r")
             
-        print("Progress: " + str(int(current_time / total_time * 1024 * 100)) + "%")
+        print("Progress: " + str(int(current_time / total_time * 100)) + "%")
         # print("Progress: 100%")
         # TODO: add i18n
 
@@ -382,8 +380,13 @@ class SubtitleConverter:
         ffmpeg_cmd += f' -c copy'
         ffmpeg_cmd += f' \"{new_file_path}\"'
 
-        print(ffmpeg_cmd)
-        os.system(ffmpeg_cmd)
+        process = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        for line in iter(process.stderr.readline, ''):
+            if "Timestamps are unset in a packet" in line:
+                self.config.logger.warning(line + ". This may lead to a decreased playback performance.")
+
+        process.wait()
 
     # remove file that may not exist anymore without throwing an error
     def silent_remove(self, file: str):

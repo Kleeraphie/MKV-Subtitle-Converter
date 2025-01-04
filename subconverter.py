@@ -413,7 +413,6 @@ class SubtitleConverter:
                 print(self.translate("Processing {file_name}...").format(file_name=self.file_name))
                 self.config.logger.info(f'Processing {self.file_name}.')
 
-                self.mkv = pymkv.MKVFile(self.file_path)
                 main_dir_path = self.config.get_datadir() / 'subtitles' / self.file_name
                 self.img_dir = main_dir_path / 'images'
                 self.sub_dir = main_dir_path / 'subtitles'

@@ -419,7 +419,6 @@ class GUI:
 
     def show_finish_dialog(self):
         tk.messagebox.showinfo(self.translate("Conversion finished"), self.translate("The conversion is finished."))
-        self.window.bell()
 
     def show_no_files_selected_dialog(self):
         tk.messagebox.showerror(self.translate("Error"), self.translate("No files selected. Please select at least one file."))

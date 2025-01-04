@@ -6,7 +6,6 @@ from tqdm import tqdm
 from pysrt import SubRipFile, SubRipItem, SubRipTime
 import srtchecker
 import threading
-import pymkv
 import shutil
 import pysubs2
 from config import Config
@@ -16,7 +15,6 @@ import time
 from datetime import datetime
 from pathlib import Path
 import subprocess
-import bitmath
 import json
 
 class SubtitleConverter:
@@ -112,8 +110,15 @@ class SubtitleConverter:
         self.subtitle_languages = []
         metadata_file = str(Path(self.config.get_datadir(), "metadata.txt"))
 
-        # TODO: can be stopped earlier (probably when time starts to change)
-        os.system(f"ffmpeg -i \"{self.file_path}\" -map 0:s -c copy -f ffmetadata \"{metadata_file}\"")
+        command = f"ffmpeg -i \"{self.file_path}\" -map 0:s -c copy -y -f ffmetadata \"{metadata_file}\""
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, text=True)
+
+        for line in iter(process.stderr.readline, ''):
+            time = self.get_seconds_progress_from_ffmpeg_output(line)
+            if time > 0:
+                process.communicate('q')
+                break
+
         with open(metadata_file, "r") as file:
             metadata = file.read()
             metadata = metadata.splitlines()
@@ -121,32 +126,40 @@ class SubtitleConverter:
             self.subtitle_languages= [line.split("=")[1] for line in languages]
         os.remove(metadata_file)
 
+    def get_seconds_progress_from_ffmpeg_output(self, line: str) -> float:
+        start_time = datetime(1900, 1, 1)
+        line = line.strip()
+
+        if "time=" in line:
+            line = line.split("time=")[1]
+            line = line.split(" bitrate=")[0]
+            line = line.strip()
+            
+            if line.startswith('-'):
+                line = "00:00:00.000"
+            
+            subtitle_time = line.split('.')[0]
+            subtitle_time = datetime.strptime(subtitle_time, "%H:%M:%S")
+            subtitle_time = subtitle_time - start_time
+            
+            return subtitle_time.total_seconds()
+        
+        return -1
+
+
     # helper function for threading
     def extract(self, track_id: int, times: list[int], finished: list[bool]):
         sub_file_path = Path(self.sub_dir, f"{track_id}.sup")
         command = "ffmpeg -y -i \"{0}\" -map 0:s:{1} -c copy \"{2}\"".format(self.file_path, track_id, str(sub_file_path))
-        print(f'Start {track_id}')
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        start_time = datetime(1900, 1, 1)
 
         for line in iter(process.stderr.readline, ''):
-            latest_output = line.strip()
-            if "time=" in latest_output:
-                latest_output = latest_output.split("time=")[1]
-                latest_output = latest_output.split(" bitrate=")[0]
-                latest_output = latest_output.strip()
-                if latest_output.startswith('-'):
-                    latest_output = "00:00:00.000"
-                subtitle_time = subtitle_time.split('.')[0]  # remove milliseconds
-                subtitle_time = datetime.strptime(latest_output, "%H:%M:%S")
-                subtitle_time = subtitle_time - start_time
-                times[track_id] = subtitle_time.total_seconds()
-            elif "Timestamps are unset in a packet" in latest_output:
-                self.config.logger.warning(latest_output + ". This may lead to a decreased playback performance.")
+            times[track_id] = self.get_seconds_progress_from_ffmpeg_output(line)
+            if "Timestamps are unset in a packet" in line:
+                self.config.logger.warning(line + ". This may lead to a decreased playback performance.")
 
         process.wait()
         finished[track_id] = True
-        print(f'Finished {track_id}')
 
 
     def extract_subtitles(self) -> list[int]:

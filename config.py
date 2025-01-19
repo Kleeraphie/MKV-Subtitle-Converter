@@ -1,4 +1,4 @@
-__version__ = "v1.3.0"
+__version__ = "v1.4.0"
 
 import configparser
 from enum import Enum

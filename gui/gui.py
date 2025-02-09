@@ -20,9 +20,8 @@ class GUI:
         self.config = Config()
         self.translate = self.config.translate
 
-        self.__nothing_selected = self.translate("Select a file from the left list")
+        self.__nothing_selected = self.translate("Browse your computer to select files")
         self.__selected = [self.__nothing_selected] # names of the selected files
-        self.__fnames = []
         self.selected_paths = [] # paths of the selected files
         self.old_path = ""
         self.reloaded = False
@@ -43,46 +42,24 @@ class GUI:
 
         # =====Selection window===== #
         selection_window = tk.Frame(master=self.window)
-        dir_label = tk.Label(master=selection_window, text=self.translate("Directory:"))
-        self.dir_entry = tk.Entry(master=selection_window)
-        self.dir_entry.config(state="readonly")
-        dir_button = tk.Button(master=selection_window, text=self.translate("Browse"), command=lambda: self.choose_dir())
-        unselected_files_label = tk.Label(master=selection_window, text=self.translate("Unselected files:"))
+        dir_button = tk.Button(master=selection_window, text=self.translate("Browse"), command=lambda: self.choose_files())
         selected_files_label = tk.Label(master=selection_window, text=self.translate("Selected files:"))
-        self.unselected_files_listbox = tk.Listbox(master=selection_window)
         self.selected_files_listbox = tk.Listbox(master=selection_window)
-        separator = ttk.Separator(master=selection_window, orient="vertical")
-        
 
-        # TODO: put these three widgets on the left side of the window
-        # and not over the whole width (like in the GUI up to v1.2.5)
-        dir_label.grid(row=0, column=0, sticky="we", padx=5, pady=5)
-        self.dir_entry.grid(row=0, column=1, sticky="we", columnspan=5, padx=5, pady=5)
-        dir_button.grid(row=0, column=6, sticky="we", padx=5, pady=5)
+        dir_button.grid(row=2, column=0, sticky="we", padx=5, pady=5)
 
-        unselected_files_label.grid(row=1, column=0, sticky="w", columnspan=3)
-        selected_files_label.grid(row=1, column=4, sticky="w", columnspan=3)
-        self.unselected_files_listbox.grid(row=2, column=0, sticky="nsew", columnspan=3, padx=(5, 0))
-        separator.grid(row=2, column=3, sticky="ns", padx=5, pady=5)
-        self.selected_files_listbox.grid(row=2, column=4, sticky="nsew", columnspan=3, padx=(0, 5))
+        selected_files_label.grid(row=0, column=0, sticky="w")
+        self.selected_files_listbox.grid(row=1, column=0, sticky="nsew", padx=(5, 5))
 
-        self.unselected_files_listbox.bind("<Double-Button-1>", lambda _: self.select_file())
-        self.unselected_files_listbox.bind("<Return>", lambda _: self.select_file())
         self.selected_files_listbox.bind("<Double-Button-1>", lambda _: self.unselect_file())
         self.selected_files_listbox.bind("<Return>", lambda _: self.unselect_file())
 
         # Set up row and column configurations for responsive layout
-        selection_window.grid_rowconfigure(0, weight=0)
-        selection_window.grid_rowconfigure(1, weight=0)
-        selection_window.grid_rowconfigure(2, weight=1)
+        # selection_window.grid_rowconfigure(0, weight=0)
+        # selection_window.grid_rowconfigure(1, weight=0)
+        # selection_window.grid_rowconfigure(2, weight=1)
 
         selection_window.grid_columnconfigure(0, weight=1)
-        selection_window.grid_columnconfigure(1, weight=2)
-        selection_window.grid_columnconfigure(2, weight=1)
-        selection_window.grid_columnconfigure(3, weight=0) # separator has no weight
-        selection_window.grid_columnconfigure(4, weight=1)
-        selection_window.grid_columnconfigure(5, weight=2)
-        selection_window.grid_columnconfigure(6, weight=1)
 
         selection_window.pack(fill=tk.BOTH, expand=True)
 
@@ -174,65 +151,43 @@ class GUI:
         self.values[name] = tk.BooleanVar()
         return self.values[name]
 
-    def choose_dir(self):
-        dir_path = filedialog.askdirectory()
+    def choose_files(self):
+        videos_paths = filedialog.askopenfilenames(filetypes=[("MKV files", ".mkv")], title=self.translate("Select files"))
         
-        if dir_path:
-            self.dir_entry.config(state="normal")
-            self.dir_entry.delete(0, tk.END)
-            self.dir_entry.insert(0, dir_path)
-            self.dir_entry.config(state="readonly")
+        if videos_paths:
+            for path in videos_paths:
+                self.select_file(path)
 
-        if not os.path.isdir(dir_path) or dir_path == self.old_path:
-            return
+        self.old_path = videos_paths
 
-        self.old_path = dir_path
-
-        file_list = os.listdir(dir_path) # get list of files in selected folder
-        # show only MKV files in the left list that are not already selected
-        self.__fnames = [f for f in file_list if f.lower().endswith((".mkv")) and os.path.join(dir_path, f) not in self.selected_paths]
         self.update_selections()
 
     def update_selections(self):
         self.selected_files_listbox.delete(0,tk.END)
         self.selected_files_listbox.insert(tk.END, *self.__selected)
-        
-        self.unselected_files_listbox.delete(0,tk.END)
-        self.unselected_files_listbox.insert(tk.END, *self.__fnames)
 
-    def select_file(self):
+    def select_file(self, video_path: str):
         
-        try:
-            file_name = self.unselected_files_listbox.get(self.unselected_files_listbox.curselection())
-            
-            self.__fnames.remove(file_name)
+        try:            
             if self.__nothing_selected in self.__selected:
                 self.__selected.remove(self.__nothing_selected)
 
-            self.__selected.append(file_name)
-            self.selected_paths.append(os.path.join(self.old_path, file_name))
+            self.__selected.append(video_path)
 
             self.update_selections()
         except ValueError:
             pass
-        except tk.TclError: # i.e. because of double-clicking on empty space in the listbox
-            pass
 
     def unselect_file(self):
         try:
-            file_name = self.selected_files_listbox.get(self.selected_files_listbox.curselection())
+            video_path = self.selected_files_listbox.get(self.selected_files_listbox.curselection())
 
-            if file_name == self.__nothing_selected:
+            if video_path == self.__nothing_selected:
                 return
 
-            index = self.__selected.index(file_name)
-            unselected_file_path = self.selected_paths[index][:self.selected_paths[index].rfind(os.sep)]
+            index = self.__selected.index(video_path)
 
             self.__selected.pop(index)
-            self.selected_paths.pop(index)
-
-            if (unselected_file_path == self.old_path):
-                self.__fnames.append(file_name)
 
             if len(self.__selected) == 0:
                 self.__selected.append(self.__nothing_selected)
@@ -256,10 +211,6 @@ class GUI:
         self.wait_var = tk.IntVar()
         self.window.wait_variable(self.wait_var)
 
-        # if self.reloaded: # values are already converted from another GUI instance (e.g. after changing the language)
-        #     return self.wait_var.get(), self.values
-        #     # self.controller.gui_send_values(self.wait_var.get(), self.values)
-
         # convert booleanvars to bools
         new_values = {}
         for key in self.values:
@@ -272,15 +223,12 @@ class GUI:
         new_values['diff_langs'] = ''
         if self.values.get('use_diff_langs'):
             new_values['diff_langs'] = self.diff_langs.get('1.0', tk.END)
-            # self.values['diff_langs'] = self.values['diff_langs'].split('\n')
-            # self.values['diff_langs'] = [s for s in self.diff_langs if s.strip() != '']
 
-        new_values['selected_paths'] = self.selected_paths
+        new_values['selected_paths'] = self.__selected
         new_values['brightness_diff'] = self.brightness_diff.get()
         new_values['sub_format'] = self.subtitle_format.get()
         
         return self.wait_var.get(), new_values
-        # self.controller.gui_send_values(self.wait_var.get(), self.values)
     
     def create_menu(self):
         self.menu = tk.Menu(self.window)

@@ -32,6 +32,10 @@ class GUI:
         self.window.title("MKV Subtitle Converter")
         self.create_menu()
 
+        # self.window.tk.call('source', 'gui/themes/forest-dark.tcl')
+        self.window.tk.call('source', 'gui/themes/forest-light.tcl')
+        ttk.Style().theme_use('forest-light')
+
         self.values = {}
         self.progress_window = None
 
@@ -42,7 +46,7 @@ class GUI:
 
         # =====Selection window===== #
         selection_window = tk.Frame(master=self.window)
-        dir_button = tk.Button(master=selection_window, text=self.translate("Browse"), command=lambda: self.choose_files())
+        dir_button = ttk.Button(master=selection_window, text=self.translate("Browse"), command=lambda: self.choose_files())
         selected_files_label = tk.Label(master=selection_window, text=self.translate("Selected files:"))
         self.selected_files_listbox = tk.Listbox(master=selection_window)
 
@@ -74,19 +78,19 @@ class GUI:
 
         # =====Settings window===== #
         # TODO: there is extra space between use_diff_langs and brightness_diff_label
-        job_settings_window = tk.Frame(master=self.window)
-        subtitle_format_label = tk.Label(master=job_settings_window, text=self.translate("Format of the new subtitles:"))
+        job_settings_window = ttk.Frame(master=self.window)
+        subtitle_format_label = ttk.Label(master=job_settings_window, text=self.translate("Format of the new subtitles:"))
         self.subtitle_format = ttk.Combobox(master=job_settings_window, values=self.config.get_allowed_sub_formats(), state="readonly")
-        edit_subtitles = tk.Checkbutton(master=job_settings_window, text=self.translate("Edit subtitles before muxing"), variable=self.add_variable('edit_subs'))
-        save_images = tk.Checkbutton(master=job_settings_window, text=self.translate("Save images of PGS subtitles"), variable=self.add_variable('save_images'))
-        keep_old_mkvs = tk.Checkbutton(master=job_settings_window, text=self.translate("Keep original MKV files"), variable=self.add_variable('keep_old_mkvs'))
-        keep_old_subs = tk.Checkbutton(master=job_settings_window, text=self.translate("Keep a copy of the old subtitle files"), variable=self.add_variable('keep_old_subs'))
-        keep_new_subs = tk.Checkbutton(master=job_settings_window, text=self.translate("Keep a copy of the new subtitle files"), variable=self.add_variable('keep_new_subs'))
-        use_diff_langs = tk.Checkbutton(master=job_settings_window, text=self.translate("Use different languages for some subtitles"), variable=self.add_variable('use_diff_langs'), command=lambda: self.change_visibility(self.diff_langs, self.values.get('use_diff_langs').get()))
+        edit_subtitles = ttk.Checkbutton(master=job_settings_window, text=self.translate("Edit subtitles before muxing"), variable=self.add_variable('edit_subs'))
+        save_images = ttk.Checkbutton(master=job_settings_window, text=self.translate("Save images of PGS subtitles"), variable=self.add_variable('save_images'))
+        keep_old_mkvs = ttk.Checkbutton(master=job_settings_window, text=self.translate("Keep original MKV files"), variable=self.add_variable('keep_old_mkvs'))
+        keep_old_subs = ttk.Checkbutton(master=job_settings_window, text=self.translate("Keep a copy of the old subtitle files"), variable=self.add_variable('keep_old_subs'))
+        keep_new_subs = ttk.Checkbutton(master=job_settings_window, text=self.translate("Keep a copy of the new subtitle files"), variable=self.add_variable('keep_new_subs'))
+        use_diff_langs = ttk.Checkbutton(master=job_settings_window, text=self.translate("Use different languages for some subtitles"), variable=self.add_variable('use_diff_langs'), command=lambda: self.change_visibility(self.diff_langs, self.values.get('use_diff_langs').get()))
         self.diff_langs = tk.Text(master=job_settings_window, height=5, width=24)
-        brightness_diff_label = tk.Label(master=job_settings_window, text=self.translate("Allowed text color brightness deviation:"))
-        self.brightness_diff = tk.Scale(master=job_settings_window, from_=0, to=100, orient=tk.HORIZONTAL, showvalue=False, command=lambda _: brightness_value_label.config(text=f'{self.brightness_diff.get()}%'))
-        brightness_value_label = tk.Label(master=job_settings_window)
+        brightness_diff_label = ttk.Label(master=job_settings_window, text=self.translate("Allowed text color brightness deviation:"))
+        self.brightness_diff = ttk.Scale(master=job_settings_window, from_=0, to=100, orient=tk.HORIZONTAL, command=lambda _: brightness_value_label.config(text=f'{int(self.brightness_diff.get())}%'))
+        brightness_value_label = ttk.Label(master=job_settings_window)
 
         self.values.get('keep_old_subs').set(True)
         self.subtitle_format.set(self.subtitle_format["values"][0])

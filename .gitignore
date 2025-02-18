@@ -9,3 +9,4 @@ Output/
 *.png
 logs/
 .idea/
+!gui/themes/*/*.png

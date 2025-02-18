@@ -24,7 +24,9 @@ class SettingsWindow(tk.Toplevel):
         self.sidebar.place(relx=0, rely=0, relwidth=0.3, relheight=1)
 
         general_settings = SidebarOption(self.sidebar, self.translate("General"), lambda: self.show_frame(GeneralSettings))
+        graphics_settings = SidebarOption(self.sidebar, self.translate("Graphics"), lambda: self.show_frame(GraphicsSettings))
         general_settings.grid(row=0, column=0, padx=5, pady=(5, 0), sticky="w")
+        graphics_settings.grid(row=1, column=0, padx=5, pady=(5, 0), sticky="w")
 
         # --------------------  MULTI PAGE SETTINGS ----------------------------
 
@@ -34,7 +36,7 @@ class SettingsWindow(tk.Toplevel):
 
         self.frames = {}
 
-        for F in {GeneralSettings}:
+        for F in {GeneralSettings, GraphicsSettings}:
             frame = F(settings_frames_container)
             self.frames[F] = frame
             frame.place(relx=0, rely=0, relwidth=1, relheight=1)
@@ -42,9 +44,9 @@ class SettingsWindow(tk.Toplevel):
 
         # -----------------  FOOTER ----------------------------
         footer = tk.Frame(self)
-        save_button = tk.Button(footer, text=self.translate("Save"), command=self.save_settings)
+        save_button = ttk.Button(footer, text=self.translate("Save"), command=self.save_settings)
         save_button.place(relx=0.3, rely=0.25, relwidth=0.2, relheight=0.5)
-        exit_button = tk.Button(footer, text=self.translate("Exit"), command=self.destroy)
+        exit_button = ttk.Button(footer, text=self.translate("Exit"), command=self.destroy)
         exit_button.place(relx=0.6, rely=0.25, relwidth=0.2, relheight=0.5)
         footer.place(relx=0.3, rely=0.9, relwidth=0.7, relheight=0.1)
 
@@ -66,11 +68,12 @@ class SettingsWindow(tk.Toplevel):
         # save changes to config file
         config = Config()
         language_changed = config.get_language() != self.frames[GeneralSettings].language.get()
+        theme_changed = config.get_value(Config.Settings.THEME) != self.frames[GraphicsSettings].theme.get()
         config.save_config()
         
         self.destroy()
 
-        if language_changed:
+        if language_changed or theme_changed:
             self.parent.reload()
 
 # ------------------------ MULTIPAGE FRAMES ------------------------------------
@@ -116,6 +119,28 @@ class GeneralSettings(SettingsFrame):
         self.config.save_settings(settings)
 
 
+class GraphicsSettings(SettingsFrame):
+    def __init__(self, parent):
+        super().__init__(parent)
+
+        # variables
+        self.theme = tk.StringVar()
+
+        self.theme.set(self.config.get_value(Config.Settings.THEME))
+
+        # gui
+        theme_label = ttk.Label(self, text=self.translate("Theme:"))
+        theme_label.grid(row=0, column=0, padx=5, pady=(5, 0), sticky="w")
+
+        theme_list = ttk.Combobox(self, values=[self.translate("Light"), self.translate("Dark"), self.translate("Auto")], textvariable=self.theme, state="readonly")
+        theme_list.grid(row=0, column=1, padx=5, pady=(5, 0), sticky="w")
+
+    def save_settings(self):
+        settings = {
+            Config.Settings.THEME: self.theme.get()
+        }
+
+        self.config.save_settings(settings)
 
 # ----------------------------- CUSTOM WIDGETS ---------------------------------
 
@@ -142,7 +167,7 @@ class SidebarSubMenu(tk.Frame):
 
         self.options = {}
         for n, x in enumerate(sub_menu_options):
-            self.options[x] = tk.Button(self,
+            self.options[x] = ttk.Button(self,
                                         text=x,
                                         font=("Arial", 9, "normal"),
                                         bd=0,

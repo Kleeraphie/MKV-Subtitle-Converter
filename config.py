@@ -10,12 +10,14 @@ from pathlib import Path
 import logging
 from datetime import datetime
 from controller.sub_formats import SubtitleFormats
+import darkdetect
 
 class Config:
     class Settings(Enum):
         CHECK_FOR_UPDATES = 'bUpdates'
         LANGUAGE = 'sLanguage'
         FIRST_START = 'bFirstStart'
+        THEME = 'sTheme'
 
     
     config = None
@@ -46,6 +48,7 @@ class Config:
         settings[self.Settings.CHECK_FOR_UPDATES] = True
         settings[self.Settings.LANGUAGE] = 'en_US'
         settings[self.Settings.FIRST_START] = True
+        settings[self.Settings.THEME] = 'Light'
 
         self.save_settings(settings)
 
@@ -109,7 +112,7 @@ class Config:
             
     def _get_section(self, setting: Settings):
         config = {
-            'General': ['bUpdates', 'sLanguage'],
+            'General': ['bUpdates', 'sLanguage', 'sTheme'],
             'Misc': ['bFirstStart']
         }
 
@@ -187,3 +190,12 @@ class Config:
     
     def get_allowed_sub_formats(self) -> list[str]:
         return [sub_format.value for sub_format in SubtitleFormats]
+    
+    def get_theme(self):
+        theme = self.get_value(self.Settings.THEME)
+
+        if theme == 'Auto':
+            theme = 'Dark' if darkdetect.isDark() else 'Light'
+            print(theme)
+
+        return theme.lower()

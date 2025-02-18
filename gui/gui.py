@@ -32,9 +32,9 @@ class GUI:
         self.window.title("MKV Subtitle Converter")
         self.create_menu()
 
-        # self.window.tk.call('source', 'gui/themes/forest-dark.tcl')
-        self.window.tk.call('source', 'gui/themes/forest-light.tcl')
-        ttk.Style().theme_use('forest-light')
+        theme = self.config.get_theme()
+        self.window.tk.call('source', f'gui/themes/forest-{theme}.tcl')
+        ttk.Style().theme_use(f'forest-{theme}')
 
         self.values = {}
         self.progress_window = None

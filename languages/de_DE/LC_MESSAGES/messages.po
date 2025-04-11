@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2024-10-09 16:38+0200\n"
+"POT-Creation-Date: 2025-02-25 22:17+0100\n"
 "PO-Revision-Date: 2024-09-27 00:12+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de_DE\n"
@@ -19,168 +19,194 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.16.0\n"
 
-#: subconverter.py:93
+#: subconverter.py:85
 msgid "Invalid input: {line}"
 msgstr "Ungültige Eingabe: {line}"
 
-#: subconverter.py:100 subconverter.py:104
+#: subconverter.py:93 subconverter.py:98
 msgid "Changed \"{old_lang}\" to \"{new_lang}\""
 msgstr "Sprache \"{old_lang}\" zu \"{new_lang}\" geändert"
 
-#: subconverter.py:163
-msgid "Error while converting subtitle #{id}. See console for more info."
+#: subconverter.py:244
+#, fuzzy
+msgid "Error while converting subtitle #{id}. See logs for more info."
 msgstr ""
 "Fehler beim Konvertieren von Untertitel #{id}. Siehe Konsole für mehr "
 "Informationen."
 
-#: subconverter.py:182
+#: subconverter.py:263
 msgid "Language \"{new_lang}\" is not installed, using \"{lang_code}\" instead"
 msgstr ""
 "Sprache \"{new_lang}\" ist nicht installiert, \"{lang_code}\" wird "
 "stattdessen benutzt"
 
-#: subconverter.py:187
+#: subconverter.py:269
 msgid "Language \"{lang_code}\" is not installed, using English instead"
 msgstr ""
 "Sprache \"{new_lang}\" ist nicht installiert, Englisch wird stattdessen "
 "benutzt"
 
-#: subconverter.py:250
-msgid "Replacing subtitles in {file_name}..."
-msgstr "Untertitel in {file_name} werden ersetzt..."
-
-#: subconverter.py:282
+#: subconverter.py:353
 msgid "Muxing file..."
 msgstr "Datei muxen..."
 
-#: subconverter.py:311
+#: subconverter.py:402
 msgid "Cleaning up..."
 msgstr "Aufräumen..."
 
-#: subconverter.py:335
+#: subconverter.py:429
 msgid "Processing {file_name}..."
 msgstr "{file_name} verarbeiten..."
 
-#: subconverter.py:346
+#: subconverter.py:444
 msgid "No subtitles found."
 msgstr "Keine Untertitel gefunden."
 
-#: subconverter.py:352
+#: subconverter.py:453
 msgid "You can now edit the new subtitle files. Press Enter when you are done."
 msgstr ""
 "Du kannst jetzt die Untertitel bearbeiten. Drücke Enter wenn du fertig "
 "bist."
 
-#: subconverter.py:353
+#: subconverter.py:454
 msgid "They can be found at: {directory}"
 msgstr "Sie können unter \"{directory}\" gefunden werden"
 
-#: subconverter.py:369
+#: subconverter.py:464
 msgid "Finished {file}"
 msgstr "{file} abgeschlossen"
 
-#: subconverter.py:371
-msgid "Error while processing {file}: {exception}"
+#: subconverter.py:470
+#, fuzzy
+msgid "Error while processing {file_name}: {error}"
 msgstr "Fehler beim Bearbeiten von {file}: {exception}"
 
-#: subconverter.py:372
-msgid "Press Enter to continue with the next file..."
-msgstr "Drücke Enter um mit der nächsten Datei fortzufahren..."
+#: controller/jobs.py:6
+msgid "Idle"
+msgstr "Inaktiv"
 
-#: gui/about.py:10
+#: controller/jobs.py:7
+#, fuzzy
+msgid "Extracting"
+msgstr "Einstellungen"
+
+#: controller/jobs.py:8
+msgid "Converting"
+msgstr "Konvertieren"
+
+#: controller/jobs.py:9
+msgid "Replacing"
+msgstr "Ersetzen"
+
+#: controller/jobs.py:10
+#, fuzzy
+msgid "Muxing new video"
+msgstr "Datei muxen..."
+
+#: controller/jobs.py:11
+#, fuzzy
+msgid "Finished"
+msgstr "{file} abgeschlossen"
+
+#: controller/jobs.py:12
+msgid "Cancelled"
+msgstr "Abgebrochen"
+
+#: gui/about.py:12
 msgid "About"
 msgstr "Über"
 
-#: gui/about.py:19 gui/settings.py:100
+#: gui/about.py:26 gui/settings.py:110
 msgid "Check for updates"
 msgstr "Auf Updates überprüfen"
 
-#: gui/about.py:31
+#: gui/about.py:27
+msgid "View Licenses"
+msgstr "Lizenzen anzeigen"
+
+#: gui/about.py:54
 msgid "You are already up to date."
 msgstr "Die neuste Version ist bereits installiert."
 
-#: gui/gui.py:20
-msgid "Select a file from the left list"
-msgstr "Wähle eine Datei aus der linken Liste aus"
+#: gui/gui.py:23
+msgid "Browse your computer to select files"
+msgstr "Computer durchsuchen um Dateien auszuwählen"
 
-#: gui/gui.py:50
-msgid "Directory:"
-msgstr "Ordner:"
-
-#: gui/gui.py:53
+#: gui/gui.py:49
 msgid "Browse"
 msgstr "Durchsuchen"
 
-#: gui/gui.py:54
-msgid "Unselected files:"
-msgstr "Nicht-Ausgewählte Dateien:"
-
-#: gui/gui.py:55
+#: gui/gui.py:50
 msgid "Selected files:"
 msgstr "Ausgewählte Dateien"
 
-#: gui/gui.py:94 gui/gui.py:259 gui/settings.py:12
+#: gui/gui.py:71 gui/gui.py:239 gui/settings.py:13
 msgid "Settings"
 msgstr "Einstellungen"
 
-#: gui/gui.py:105
+#: gui/gui.py:82
 msgid "Format of the new subtitles:"
 msgstr "Format der neuen Untertitel"
 
-#: gui/gui.py:107
+#: gui/gui.py:84
 msgid "Edit subtitles before muxing"
 msgstr "Untertitel vor dem Muxen bearbeiten"
 
-#: gui/gui.py:108
+#: gui/gui.py:85
 msgid "Save images of PGS subtitles"
 msgstr "Bilder der PGS Untertitel speichern"
 
-#: gui/gui.py:109
+#: gui/gui.py:86
 msgid "Keep original MKV files"
 msgstr "Originale MKV-Dateien behalten"
 
-#: gui/gui.py:110
+#: gui/gui.py:87
 msgid "Keep a copy of the old subtitle files"
 msgstr "Kopie der alten Untertitel behalten"
 
-#: gui/gui.py:111
+#: gui/gui.py:88
 msgid "Keep a copy of the new subtitle files"
 msgstr "Kopie der neuen Untertitel behalten"
 
-#: gui/gui.py:112
+#: gui/gui.py:89
 msgid "Use different languages for some subtitles"
 msgstr "Eine andere Sprache für einige Untertitel verwenden"
 
-#: gui/gui.py:114
+#: gui/gui.py:91
 msgid "Allowed text color brightness deviation:"
 msgstr "Erlaubter Unterschied in der Helligkeit der Schrift:"
 
-#: gui/gui.py:151
+#: gui/gui.py:141
 msgid "Start"
 msgstr "Start"
 
-#: gui/gui.py:152 gui/settings.py:44
+#: gui/gui.py:142 gui/settings.py:49
 msgid "Exit"
 msgstr "Beenden"
 
-#: gui/gui.py:262
+#: gui/gui.py:159
+#, fuzzy
+msgid "Select files"
+msgstr "Ausgewählte Dateien"
+
+#: gui/gui.py:242
 #, fuzzy
 msgid "About..."
 msgstr "Über..."
 
-#: gui/gui.py:263 gui/gui.py:269
+#: gui/gui.py:243 gui/gui.py:249
 msgid "Help"
 msgstr "Hilfe"
 
-#: gui/gui.py:275
+#: gui/gui.py:259
 msgid "Help for choosing the right settings"
 msgstr "Hilfe beim Finden der richtigen Einstellungen"
 
-#: gui/gui.py:278
+#: gui/gui.py:262
 msgid "Format of the new subtitles: "
 msgstr "Format für die neuen Untertitel: "
 
-#: gui/gui.py:278
+#: gui/gui.py:262
 msgid ""
 "The format of your new subtitles. SRT is the most common format and is "
 "supported by most video players."
@@ -188,11 +214,11 @@ msgstr ""
 "Das Format der neuen Untertitel. SRT ist das am weitesten verbreitete "
 "Format und wird von den meisten Video-Playern unterstützt."
 
-#: gui/gui.py:279
+#: gui/gui.py:263
 msgid "Edit subtitles before muxing: "
 msgstr "Untertitel vor dem Muxen bearbeiten: "
 
-#: gui/gui.py:279
+#: gui/gui.py:263
 msgid ""
 "Before exchanging the subtitles with the new ones, the program will pause"
 " so that you can edit them. The program continues after pressing <Enter> "
@@ -202,11 +228,11 @@ msgstr ""
 "bearbeitet werden können. Das Programm fährt fort, wenn in der Konsole "
 "Enter gedrückt wird."
 
-#: gui/gui.py:280
+#: gui/gui.py:264
 msgid "Save images of PGS subtitles: "
 msgstr "Bilder der PGS Untertitel speichern: "
 
-#: gui/gui.py:280
+#: gui/gui.py:264
 msgid ""
 "You can save the images that make up the old subtitles. This can be "
 "useful if you want to compare the old and new subtitles. They are stored "
@@ -216,11 +242,11 @@ msgstr ""
 "Vergleichen der alten Untertitel mit den neuen helfen. Sie werden in dem "
 "Ordner gespeichert, in dem das Programm installiert ist."
 
-#: gui/gui.py:281
+#: gui/gui.py:265
 msgid "Keep original MKV files: "
 msgstr "Originale MKV-Dateien behalten: "
 
-#: gui/gui.py:281
+#: gui/gui.py:265
 msgid ""
 "You can keep the original video files. This way you can test different "
 "settings."
@@ -228,11 +254,11 @@ msgstr ""
 "Du kannst die originale Video-Datei behalten. So kannst du einfacher "
 "verschiedene Einstellungen ausprobieren."
 
-#: gui/gui.py:282
+#: gui/gui.py:266
 msgid "Keep a copy of the old subtitle files: "
 msgstr "Kopie der alten Untertitel behalten: "
 
-#: gui/gui.py:282
+#: gui/gui.py:266
 msgid ""
 "You can save the original subtitle files. This way the program does not "
 "need to extract them again if you run the program again."
@@ -241,11 +267,11 @@ msgstr ""
 " nicht wieder extrahieren, falls du die Untertitel später erneut "
 "konvertieren möchtest."
 
-#: gui/gui.py:283
+#: gui/gui.py:267
 msgid "Keep a copy of the new subtitle files: "
 msgstr "Kopie der neuen Untertitel behalten: "
 
-#: gui/gui.py:283
+#: gui/gui.py:267
 msgid ""
 "You can save the new subtitle files. This way you can easily edit them "
 "later."
@@ -253,11 +279,11 @@ msgstr ""
 "Du kannst die neuen Untertitel speichern. So kannst du sie einfacher "
 "später bearbeiten."
 
-#: gui/gui.py:284
+#: gui/gui.py:268
 msgid "Use different languages for some subtitles: "
 msgstr "Eine andere Sprache für einige Untertitel verwenden: "
 
-#: gui/gui.py:285
+#: gui/gui.py:269
 msgid "help.language"
 msgstr ""
 "Das Programm kann eine andere Sprache zum Erkennen des Texts in einem "
@@ -268,11 +294,11 @@ msgstr ""
 "durch eine neue Zeile getrennt und haben dieses Format: alte Sprache -> "
 "neue Sprache (z.B. eng -> deu)."
 
-#: gui/gui.py:286
+#: gui/gui.py:270
 msgid "Allowed text color brightness deviation: "
 msgstr "Erlaubter Unterschied in der Helligkeit der Schrift: "
 
-#: gui/gui.py:287
+#: gui/gui.py:271
 msgid "help.brightness"
 msgstr ""
 "Hier kannst du den maximalen Unterschied der Helligkeit in der Schrift "
@@ -280,27 +306,91 @@ msgstr ""
 "mehr Rauschen enthalten als andere. Der Wert sollte so niedrig wie "
 "möglich sein, aber der Text sollte nicht zu dünn werden."
 
-#: gui/gui.py:318
+#: gui/gui.py:304
 msgid "Update available"
 msgstr "Update verfügbar"
 
-#: gui/gui.py:318
+#: gui/gui.py:304
 msgid "Version {latest_version} is available. Do you want to download it?"
 msgstr "Version {latest_version} ist verfügbar. Möchstest du sie installieren?"
 
-#: gui/settings.py:20
+#: gui/gui.py:326 gui/gui.py:376
+msgid "Error"
+msgstr "Fehler"
+
+#: gui/gui.py:326
+#, fuzzy
+msgid ""
+"Error #{error_code}: {error}\n"
+"Do you want to continue with the next file?"
+msgstr "Drücke Enter um mit der nächsten Datei fortzufahren..."
+
+#: gui/gui.py:339
+msgid "Progress"
+msgstr "Fortschritt"
+
+#: gui/gui.py:363
+msgid "Current job: {job}"
+msgstr "Aktueller Job: {job}"
+
+#: gui/gui.py:373
+msgid "Conversion finished"
+msgstr "Konvertierung abgeschlossen"
+
+#: gui/gui.py:373
+msgid "The conversion is finished."
+msgstr "Die Konvertierung ist abgeschlossen."
+
+#: gui/gui.py:376
+msgid "No files selected. Please select at least one file."
+msgstr "Keine Dateien ausgewählt. Bitte mindestens eine Datei auswählen."
+
+#: gui/licenses.py:12
+msgid "Licenses"
+msgstr "Lizenzen"
+
+#: gui/settings.py:26
 msgid "General"
 msgstr "Allgemein"
 
-#: gui/settings.py:22
+#: gui/settings.py:27
 msgid "Graphics"
 msgstr "Graphik"
 
-#: gui/settings.py:42
+#: gui/settings.py:47
 msgid "Save"
 msgstr "Speichern"
 
-#: gui/settings.py:94
+#: gui/settings.py:104
 msgid "Language:"
 msgstr "Sprache:"
+
+#: gui/settings.py:132
+msgid "Theme:"
+msgstr "Theme"
+
+#: gui/settings.py:135
+msgid "Light"
+msgstr "Hell"
+
+#: gui/settings.py:135
+msgid "Dark"
+msgstr "Dunkel"
+
+#: gui/settings.py:135
+#, fuzzy
+msgid "Auto"
+msgstr "Auto"
+
+#~ msgid "Replacing subtitles in {file_name}..."
+#~ msgstr "Untertitel in {file_name} werden ersetzt..."
+
+#~ msgid "Select a file from the left list"
+#~ msgstr "Wähle eine Datei aus der linken Liste aus"
+
+#~ msgid "Directory:"
+#~ msgstr "Ordner:"
+
+#~ msgid "Unselected files:"
+#~ msgstr "Nicht-Ausgewählte Dateien:"
 

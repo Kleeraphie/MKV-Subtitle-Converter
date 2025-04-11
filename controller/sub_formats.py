@@ -34,7 +34,7 @@ class SubtitleFormats(Enum):
     # SUB  = "MicroDVD (.sub)"  # Framerate must be specified when writing MicroDVD.
     # JSON = "JSON (.json)"  # not supported by pysubs2
     # MPL2 = "MPL2 (.mpl)"  # UnknownFileExtensionError: .mpl
-    # TMP  = "TMP (.tmp)"  UnknownFileExtensionError: .mpl
+    # TMP  = "TMP (.tmp)"  # UnknownFileExtensionError: .tmp
     VTT  = "VTT (.vtt)"
 
     def get_name(name: str):

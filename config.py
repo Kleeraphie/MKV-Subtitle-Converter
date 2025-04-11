@@ -196,6 +196,5 @@ class Config:
 
         if theme == 'Auto':
             theme = 'Dark' if darkdetect.isDark() else 'Light'
-            print(theme)
 
         return theme.lower()

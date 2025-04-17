@@ -1,6 +1,6 @@
 from gui.gui import GUI
 from config import Config
-from backend.main import SubtitleConverter
+from backend.main import SubMain
 import backend.helper as subhelper
 import time
 from controller.jobs import Jobs
@@ -31,7 +31,7 @@ class Controller:
     def register_gui(self, gui: GUI):
         self.gui = gui
 
-    def register_subconverter(self, subconverter: SubtitleConverter):
+    def register_subconverter(self, subconverter: SubMain):
         self.subconverter = subconverter
 
     def start_program(self):
@@ -73,7 +73,7 @@ class Controller:
     def start_subconverter(self):
         if self.exit_code == 0:
             self.gui.show_progress()
-            sc = SubtitleConverter(self.sc_values['selected_paths'],
+            sc = SubMain(self.sc_values['selected_paths'],
                                    self.sc_values['edit_subs'],
                                    self.sc_values['save_images'],
                                    self.sc_values['keep_old_mkvs'],

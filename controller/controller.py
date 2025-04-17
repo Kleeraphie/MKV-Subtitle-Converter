@@ -1,6 +1,7 @@
 from gui.gui import GUI
 from config import Config
-from subconverter import SubtitleConverter
+from backend.main import SubtitleConverter
+import backend.helper as subhelper
 import time
 from controller.jobs import Jobs
 from controller.sub_formats import SubtitleFormats
@@ -72,14 +73,13 @@ class Controller:
     def start_subconverter(self):
         if self.exit_code == 0:
             self.gui.show_progress()
-            sc = SubtitleConverter()  # TODO: remove
             sc = SubtitleConverter(self.sc_values['selected_paths'],
                                    self.sc_values['edit_subs'],
                                    self.sc_values['save_images'],
                                    self.sc_values['keep_old_mkvs'],
                                    self.sc_values['keep_old_subs'],
                                    self.sc_values['keep_new_subs'],
-                                   sc.diff_langs_from_text(self.sc_values['diff_langs']),
+                                   subhelper.diff_langs_from_text(self.sc_values['diff_langs']),
                                    SubtitleFormats.get_name(self.sc_values['sub_format']),
                                    self.sc_values['brightness_diff'] / 100)
             

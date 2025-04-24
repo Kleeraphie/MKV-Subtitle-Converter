@@ -1,4 +1,3 @@
-from subconverter import SubtitleConverter
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
@@ -363,6 +362,10 @@ class GUI:
         self.job_progress_label["text"] = self.translate("Current job: {job}").format(job=self.job.value)
         self.job_progress_bar["value"] = Jobs.get_percentage(self.job)
         self.progress_window.after(100, self.show_progress)
+
+        self.stop_flag = tk.BooleanVar(value=False)
+        cancel_button = ttk.Button(self.progress_window, text=self.translate("Cancel"), command=lambda: self.stop_flag.set(True))
+        cancel_button.grid(row=4, column=0, padx=10, pady=(5, 5), sticky="e")
 
     def hide_progress(self):
         time.sleep(5)

@@ -5,8 +5,7 @@ import backend.helper as subhelper
 import time
 from controller.jobs import Jobs
 from controller.sub_formats import SubtitleFormats
-from threading import Thread
-
+from multiprocessing import Process, Manager
 
 class Controller:
     controller = None
@@ -73,38 +72,65 @@ class Controller:
     def start_subconverter(self):
         if self.exit_code == 0:
             self.gui.show_progress()
-            sc = SubMain(self.sc_values['selected_paths'],
-                                   self.sc_values['edit_subs'],
-                                   self.sc_values['save_images'],
-                                   self.sc_values['keep_old_mkvs'],
-                                   self.sc_values['keep_old_subs'],
-                                   self.sc_values['keep_new_subs'],
-                                   subhelper.diff_langs_from_text(self.sc_values['diff_langs']),
-                                   SubtitleFormats.get_name(self.sc_values['sub_format']),
-                                   self.sc_values['brightness_diff'] / 100)
-            
-            self.register_subconverter(sc)
-            
-            thread = Thread(target=sc.convert)
+            sc_values = {
+                'selected_paths': self.sc_values['selected_paths'],
+                'edit_subs': self.sc_values['edit_subs'],
+                'save_images': self.sc_values['save_images'],
+                'keep_old_mkvs': self.sc_values['keep_old_mkvs'],
+                'keep_old_subs': self.sc_values['keep_old_subs'],
+                'keep_new_subs': self.sc_values['keep_new_subs'],
+                'diff_langs': subhelper.diff_langs_from_text(self.sc_values['diff_langs']),
+                'sub_format': SubtitleFormats.get_name(self.sc_values['sub_format']),
+                'brightness_diff': self.sc_values['brightness_diff'] / 100
+            }
+
+            manager = Manager()
+            shared_dict = manager.dict({'done': False})
+
+            thread = Process(target=start_subconverter_2, args=(sc_values, shared_dict))
             thread.start()
 
-            while thread.is_alive():
-                self.finished_files_counter = sc.get_finished_files_counter()
-                self.files_with_error_counter = sc.get_files_with_error_counter()
-                self.job = sc.get_current_job()
-                self.sc_error_code = sc.get_error_code()
-                self.sc_error_msg = sc.get_error_message()
+            while not shared_dict['done']:  # Wait until the subprocess signals completion
+                self.finished_files_counter = shared_dict.get('finished_files_counter', 0)
+                self.files_with_error_counter = shared_dict.get('files_with_error_counter', 0)
+                self.job = shared_dict.get('current_job', Jobs.IDLE)
+                self.sc_error_code = shared_dict.get('error_code', 0)
+                self.sc_error_msg = shared_dict.get('error_message', "")
 
                 self.notify_gui()
 
                 if self.gui.continue_flag is not None:
-                    sc.set_continue_flag(self.gui.continue_flag)
-                    self.gui.continue_flag = None
+                    shared_dict['continue_flag'] = self.gui.continue_flag
+                if self.gui.stop_flag.get():
+                    # Handle stop flag if needed
+                    thread.terminate()
+                    break
 
                 time.sleep(1)
 
-            self.job = sc.get_current_job()
-            self.notify_gui()
+            self.gui.hide_progress()
+            self.gui.show_finish_dialog()
 
-        self.gui.hide_progress()
-        self.gui.show_finish_dialog()
+
+def start_subconverter_2(sc_values, shared_dict):
+    sc = SubMain(sc_values['selected_paths'],
+                 sc_values['edit_subs'],
+                 sc_values['save_images'],
+                 sc_values['keep_old_mkvs'],
+                 sc_values['keep_old_subs'],
+                 sc_values['keep_new_subs'],
+                 sc_values['diff_langs'],
+                 sc_values['sub_format'],
+                 sc_values['brightness_diff'],
+                 shared_dict)
+
+    # Start the conversion process
+    sc.convert()
+
+    # Update shared_dict with the final state after conversion
+    shared_dict['finished_files_counter'] = sc.get_finished_files_counter()
+    shared_dict['files_with_error_counter'] = sc.get_files_with_error_counter()
+    shared_dict['current_job'] = sc.get_current_job()
+    shared_dict['error_code'] = sc.get_error_code()
+    shared_dict['error_message'] = sc.get_error_message()
+    shared_dict['done'] = True  # Indicate completion

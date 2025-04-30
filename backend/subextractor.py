@@ -29,7 +29,11 @@ class SubExtractor:
         self.subtitle_languages = []
         metadata_file = str(Path(self.config.get_datadir(), "metadata.txt"))
 
-        command = f"ffmpeg -i \"{self.file_path}\" -map 0:s -c copy -y -f ffmetadata \"{metadata_file}\""
+        command = [
+            "ffmpeg", "-i", self.file_path,
+            "-map", "0:s", "-c", "copy", "-y",
+            "-f", "ffmetadata", metadata_file
+        ]
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, text=True)
 
         for line in iter(process.stderr.readline, ''):
@@ -71,7 +75,15 @@ class SubExtractor:
     # helper function for threading
     def __extract(self, track_id: int, times: list[int], finished: list[bool]):
         sub_file_path = Path(self.sub_dir, f"{track_id}.sup")
-        command = "ffmpeg -y -i \"{0}\" -map 0:s:{1} -c copy \"{2}\"".format(self.file_path, track_id, str(sub_file_path))
+        command = [
+            "ffmpeg",
+            "-y",
+            "-i", self.file_path,
+            "-map", f"0:s:{track_id}",
+            "-c", "copy",
+            str(sub_file_path)
+        ]
+
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
         for line in iter(process.stderr.readline, ''):

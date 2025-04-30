@@ -128,9 +128,4 @@ def start_subconverter_2(sc_values, shared_dict):
     sc.convert()
 
     # Update shared_dict with the final state after conversion
-    shared_dict['finished_files_counter'] = sc.get_finished_files_counter()
-    shared_dict['files_with_error_counter'] = sc.get_files_with_error_counter()
-    shared_dict['current_job'] = sc.get_current_job()
-    shared_dict['error_code'] = sc.get_error_code()
-    shared_dict['error_message'] = sc.get_error_message()
     shared_dict['done'] = True  # Indicate completion

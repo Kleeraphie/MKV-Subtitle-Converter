@@ -58,28 +58,32 @@ class SubMain:
 
         self.shared_dict['current_job'] = Jobs.MUXING
 
-        ffmpeg_cmd = f'ffmpeg -i \"{self.file_path}\" -y'
+        ffmpeg_cmd = [
+            "ffmpeg",
+            "-i", self.file_path,
+            "-y"
+        ]
 
         # add new subtitles as inputs
         for track_id in range(self.subtitle_counter):
-            sub_path = os.path.join(self.sub_dir, f'{track_id}.{self.format}')
-            ffmpeg_cmd += f' -i \"{sub_path}\"'
+            sub_path = os.path.join(self.sub_dir, f"{track_id}.{self.format}")
+            ffmpeg_cmd += ["-i", sub_path]
 
         # add video and audio streams to new file
-        ffmpeg_cmd += ' -map 0:v -map 0:a'
+        ffmpeg_cmd += ["-map", "0:v", "-map", "0:a"]
 
         # add new subtitles to the new file
         for i in range(self.subtitle_counter):
-            ffmpeg_cmd += f" -map {i + 1}:0"
+            ffmpeg_cmd += ["-map", f"{i + 1}:0"]
 
         # add metadata for new subtitles
         for i in range(self.subtitle_counter):
             lang = self.subtitle_languages[i]
-            ffmpeg_cmd += f' -metadata:s:s:{i} language={lang}'
+            ffmpeg_cmd += ["-metadata:s:s:" + str(i), f"language={lang}"]
 
         # copy the codecs of video, audio and subtitle streams
-        ffmpeg_cmd += f' -c copy'
-        ffmpeg_cmd += f' \"{new_file_path}\"'
+        ffmpeg_cmd += ["-c", "copy", new_file_path]
+
 
         process = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 

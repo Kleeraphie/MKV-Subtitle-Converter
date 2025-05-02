@@ -3,7 +3,6 @@
 import numpy as np
 from PIL import Image
 import cv2
-import logging
 
 class ImageMaker:
 
@@ -84,13 +83,15 @@ class ImageMaker:
 
     def make_image(self, ods, pds, swap=False):
         px, rgb, a = self.px_rgb_a(ods, pds, swap)
-        alpha = Image.fromarray(a, mode='L')
-        img = Image.fromarray(px, mode='P')
-        img.putpalette(rgb)
-        img.putalpha(alpha)
-        img = img.convert("RGB")
+        
+        rgb_img = rgb[px]
+        rgba_img = np.dstack((rgb_img, a))  # combine RGB and A channels
+        img = Image.fromarray(rgba_img, mode='RGBA')
 
-        image = np.array(img)
+        new_image = Image.new("RGBA", img.size, "BLACK") # Create a white rgba background
+        new_image.paste(img, (0, 0), img)
+
+        image = np.array(new_image)
 
         # Convert image to HSV color space
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)

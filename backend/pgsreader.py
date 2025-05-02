@@ -34,17 +34,15 @@ class PGSReader:
         return cls(bytes_) # can return any segment, but cls is no segment
 
     def iter_segments(self):
-        bytes_ = self.bytes[:]
-        while bytes_:
-            size = 13 + int(bytes_[11:13].hex(), 16)
-            yield self.make_segment(bytes_[:size])
-            bytes_ = bytes_[size:]
+        index = 0
+        while index < len(self.bytes):
+            size = 13 + int(self.bytes[index + 11:index + 13].hex(), 16)
+            yield self.make_segment(self.bytes[index:index + size])
+            index += size
 
     def iter_displaysets(self):
         ds = []
         for s in self.iter_segments():
-            if exit_code != 0:
-                break
             ds.append(s)
             if s.type == 'END':
                 yield DisplaySet(ds)
@@ -102,87 +100,11 @@ class BaseSegment:
 
 
 class PresentationCompositionSegment(BaseSegment):
-
-    class CompositionObject:
-
-        def __init__(self, bytes_):
-            self.bytes = bytes_
-            self.object_id = int(bytes_[0:2].hex(), base=16) # ID of the ODS segment that defines the image to be shown
-            self.window_id = bytes_[2] # ID of the WDS segment that defines the window in which the image is to be shown
-            self.cropped = bool(bytes_[3]) # 0x00: not cropped, 0x40: Force display of the cropped image object
-            self.x_offset = int(bytes_[4:6].hex(), base=16) # horizontal offset of the image in the window
-            self.y_offset = int(bytes_[6:8].hex(), base=16) # vertical offset of the image in the window
-            if self.cropped:
-                self.crop_x_offset = int(bytes_[8:10].hex(), base=16) # horizontal offset of the cropped image
-                self.crop_y_offset = int(bytes_[10:12].hex(), base=16) # vertical offset of the cropped image
-                self.crop_width = int(bytes_[12:14].hex(), base=16) # width of the cropped image
-                self.crop_height = int(bytes_[14:16].hex(), base=16) # height of the cropped image
-
-    STATE = {
-        int('0x00', base=16): 'Normal',
-        int('0x40', base=16): 'Acquisition Point',
-        int('0x80', base=16): 'Epoch Start'
-    }
-
-    def __init__(self, bytes_):
-        BaseSegment.__init__(self, bytes_)
-        self.width = int(self.data[0:2].hex(), base=16) # video width
-        self.height = int(self.data[2:4].hex(), base=16) # video height
-        self.frame_rate = self.data[4] # can be ignored because it should always be 1 (0x10).
-        self._num = int(self.data[5:7].hex(), base=16) # number of composition objects (max 32, Number of this specific composition. It is incremented by one every time a graphics update occurs.)
-        self._state = self.STATE[self.data[7]] # composition state (0x00: Normal, 0x40: Acquisition Point, 0x80: Epoch Start)
-        self.palette_update = bool(self.data[8]) # palette update flag (0x00: No update, 0x80: Update)
-        self.palette_id = self.data[9] # palette id (0x00: Palette 0, 0x01: Palette 1)
-        self._num_comps = self.data[10] # number of composition objects in this segment (max 16)
-
-        """about composition state:
-        Epoch Start: defines a new display; contains all functional segments needed to display a new composition
-        Acquisition Point: defines a display refresh; used to compose in the middle of the Epoch. includes functional segments with new objects to be used in a new composition, replacing old objects with same Object ID.
-        Normal: defines a display update, and contains only functional segments with elements that are different from the preceding composition. mostly used to stop displaying objects on the screen by defining a composition with no composition objects (0x0 in the Number of Composition Objects flag) but also used to define a new composition with new objects and objects defined since the Epoch Start."""
-
-    @property
-    def composition_number(self) -> int:
-        return self._num
-
-    @property
-    def composition_state(self) -> str:
-        return self._state
-
-    @property
-    def composition_objects(self) -> list[CompositionObject]:
-        if not hasattr(self, '_composition_objects'):
-            self._composition_objects = self.get_composition_objects()
-
-            if len(self._composition_objects) != self._num_comps:
-                print('Warning: Number of composition objects is not equal to the number of composition objects in this segment.')
-                logging.warning('Number of composition objects is not equal to the number of composition objects in this segment.')
-
-        return self._composition_objects
-
-    def get_composition_objects(self) -> list[CompositionObject]:
-        bytes_ = self.data[11:]
-        compositions = []
-
-        while len(bytes_) > 0:
-            length = 8
-            if bytes_[3]:
-                length += 8
-
-            compositions.append(self.CompositionObject(bytes_[:length]))
-            bytes_ = bytes_[length:]
-        return compositions
+    pass
 
 
 class WindowDefinitionSegment(BaseSegment):
-
-    def __init__(self, bytes_):
-        BaseSegment.__init__(self, bytes_)
-        self.num_windows = self.data[0]
-        self.window_id = self.data[1]
-        self.x_offset = int(self.data[2:4].hex(), base=16)
-        self.y_offset = int(self.data[4:6].hex(), base=16)
-        self.width = int(self.data[6:8].hex(), base=16)
-        self.height = int(self.data[8:10].hex(), base=16)
+    pass
 
 class PaletteDefinitionSegment(BaseSegment):
 

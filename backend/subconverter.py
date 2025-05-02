@@ -2,11 +2,11 @@ from threading import Thread
 import backend.helper as subhelper
 import os
 import pytesseract
-import pgsreader
-from imagemaker import ImageMaker
+import backend.pgsreader as pgsreader
+from backend.imagemaker import ImageMaker
 from tqdm import tqdm
 from pysrt import SubRipFile, SubRipItem, SubRipTime
-import srtchecker
+import backend.srtchecker as srtchecker
 import pysubs2
 from controller.sub_formats import SubtitleFileEndings
 from config import Config

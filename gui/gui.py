@@ -20,8 +20,7 @@ class GUI:
         self.translate = self.config.translate
 
         self.__nothing_selected = self.translate("Browse your computer to select files")
-        self.__selected = [self.__nothing_selected] # names of the selected files
-        self.selected_paths = [] # paths of the selected files
+        self.__selected_paths = [self.__nothing_selected] # paths of the selected files
         self.old_path = ""
         self.reloaded = False
         self.continue_flag = None
@@ -167,15 +166,15 @@ class GUI:
 
     def update_selections(self):
         self.selected_files_listbox.delete(0,tk.END)
-        self.selected_files_listbox.insert(tk.END, *self.__selected)
+        self.selected_files_listbox.insert(tk.END, *self.__selected_paths)
 
     def select_file(self, video_path: str):
         
         try:            
-            if self.__nothing_selected in self.__selected:
-                self.__selected.remove(self.__nothing_selected)
+            if self.__nothing_selected in self.__selected_paths:
+                self.__selected_paths.remove(self.__nothing_selected)
 
-            self.__selected.append(video_path)
+            self.__selected_paths.append(video_path)
 
             self.update_selections()
         except ValueError:
@@ -188,12 +187,12 @@ class GUI:
             if video_path == self.__nothing_selected:
                 return
 
-            index = self.__selected.index(video_path)
+            index = self.__selected_paths.index(video_path)
 
-            self.__selected.pop(index)
+            self.__selected_paths.pop(index)
 
-            if len(self.__selected) == 0:
-                self.__selected.append(self.__nothing_selected)
+            if len(self.__selected_paths) == 0:
+                self.__selected_paths.append(self.__nothing_selected)
 
             self.update_selections()
         except ValueError:
@@ -227,7 +226,12 @@ class GUI:
         if self.values.get('use_diff_langs'):
             new_values['diff_langs'] = self.diff_langs.get('1.0', tk.END)
 
-        new_values['selected_paths'] = self.__selected
+        try:
+            self.__selected_paths.remove(self.__nothing_selected)
+        except ValueError:
+            pass
+
+        new_values['selected_paths'] = self.__selected_paths
         new_values['brightness_diff'] = self.brightness_diff.get()
         new_values['sub_format'] = self.subtitle_format.get()
         

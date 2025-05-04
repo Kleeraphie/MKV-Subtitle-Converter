@@ -87,7 +87,7 @@ class Controller:
             manager = Manager()
             shared_dict = manager.dict({'done': False})
 
-            thread = Process(target=start_subconverter_2, args=(sc_values, shared_dict))
+            thread = Process(target=start_subconverter_thread, args=(sc_values, shared_dict))
             thread.start()
 
             while not shared_dict['done']:  # Wait until the subprocess signals completion
@@ -112,7 +112,7 @@ class Controller:
             self.gui.show_finish_dialog()
 
 
-def start_subconverter_2(sc_values, shared_dict):
+def start_subconverter_thread(sc_values, shared_dict):
     sc = SubMain(sc_values['selected_paths'],
                  sc_values['edit_subs'],
                  sc_values['save_images'],

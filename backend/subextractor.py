@@ -31,7 +31,7 @@ class SubExtractor:
 
         command = [
             "ffmpeg", "-i", self.file_path,
-            "-map", "0:s", "-c", "copy", "-y",
+            "-map", "0:s?", "-c", "copy", "-y",
             "-f", "ffmetadata", metadata_file
         ]
         process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE, text=True)
@@ -133,18 +133,8 @@ class SubExtractor:
             current_times.append(0)
             thread = Thread(name=f"Extract subtitle #{i}", target=self.__extract, args=(i, current_times, finished))
             finished.append(False)
-            thread_pool.append(thread)
-
-        for thread in thread_pool:
             thread.start()
-
-        while not all(finished):
-            current_time = sum(current_times)
-            print("Progress: " + str(int(current_time / total_time * 100)) + "%", end="\r")
-            
-        print("Progress: " + str(int(current_time / total_time * 100)) + "%")
-        # print("Progress: 100%")
-        # TODO: add i18n
+            thread_pool.append(thread)
 
         for thread in thread_pool:
             thread.join()

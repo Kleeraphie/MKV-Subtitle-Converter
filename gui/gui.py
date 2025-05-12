@@ -362,7 +362,6 @@ class GUI:
         self.video_progress_label["text"] = "Video #{current_video_counter}/{total_video_counter}".format(current_video_counter=current_video_counter, total_video_counter=self.file_counter)
         # video_progress_bar value is the number of finished videos plus the percentage of the current video based on the current job
         self.video_progress_bar["value"] = (current_video_counter - 1) / self.file_counter * 100 + (Jobs.get_percentage(self.job) * (1 / self.file_counter))
-        # print(self.video_progress_bar["value"], (Jobs.get_percentage(self.job) * (1 / self.file_counter)))
         self.job_progress_label["text"] = self.translate("Current job: {job}").format(job=self.job.value)
         self.job_progress_bar["value"] = Jobs.get_percentage(self.job)
         self.progress_window.after(100, self.show_progress)

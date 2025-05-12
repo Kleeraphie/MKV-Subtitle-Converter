@@ -67,13 +67,11 @@ class SubtitleConverter:
             if new_lang in pytesseract.get_languages():
                 return new_lang
             else:
-                print(self.translate('Language "{new_lang}" is not installed, using "{lang_code}" instead').format(new_lang, lang_code))
                 self.config.logger.warning(f'Language "{new_lang}" is not installed, using "{lang_code}" instead.')
 
         if lang_code in pytesseract.get_languages(): # when user doesn't want to change language or changed language is not installed
             return lang_code
         else:
-            print(self.translate('Language "{lang_code}" is not installed, using English instead').format(lang_code))
             self.config.logger.warning(f'Language "{lang_code}" is not installed, using English instead.')
             return None
 

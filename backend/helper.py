@@ -39,21 +39,19 @@ def diff_langs_from_text(text: str) -> dict[str, str]:
         if line.strip() == "":
             continue
 
-        if "->" not in line:
-            print(config.translate("Invalid input: {line}").format(line))
+        if "->" not in line or line.count("->") > 1:
             config.logger.error(f"Invalid input: {line}.")
+            continue
 
         old_lang, new_lang = line.split("->")
         old_lang = old_lang.strip()
         new_lang = new_lang.strip()
         
         if old_lang != convert_language(old_lang):
-            print(config.translate('Changed "{old_lang}" to "{new_lang}"').format(old_lang=old_lang, new_lang=convert_language(old_lang)))
             config.logger.info(f'Changed "{old_lang}" to "{convert_language(old_lang)}".')
             old_lang = convert_language(old_lang)
 
         if new_lang != convert_language(new_lang):
-            print(config.translate('Changed "{old_lang}" to "{new_lang}"').format(old_lang=new_lang, new_lang=convert_language(new_lang)))
             config.logger.info(f'Changed "{new_lang}" to "{convert_language(new_lang)}".')
             new_lang = convert_language(new_lang)
 

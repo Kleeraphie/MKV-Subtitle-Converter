@@ -51,7 +51,6 @@ class SubMain:
         if self.shared_dict.get('continue_flag', None) is False:
             return
 
-        print(self.translate("Muxing file..."))
         self.config.logger.info(f'Muxing file {self.file_name}.')
         new_file_dir = os.path.dirname(self.file_path)
         new_file_path = f"{new_file_dir}\{self.file_name} (1).mkv"
@@ -104,7 +103,6 @@ class SubMain:
         new_file_dir = os.path.dirname(self.file_path)
         new_file_path = os.path.join(new_file_dir, f"{self.file_name} (1).mkv")
 
-        print(self.translate("Cleaning up...") + "\n")
         self.config.logger.info("Cleaning up.")
 
         if not (self.keep_old_subs or self.keep_new_subs):
@@ -131,7 +129,6 @@ class SubMain:
             self.file_name = os.path.splitext(os.path.basename(self.file_path))[0]
             
             try:
-                print(self.translate("Processing {file_name}...").format(file_name=self.file_name))
                 self.config.logger.info(f'Processing {self.file_name}.')
 
                 main_dir_path = self.config.get_datadir() / 'subtitles' / self.file_name
@@ -151,7 +148,6 @@ class SubMain:
 
                 # skip title if no PGS subtitles were found
                 if self.subtitle_counter == 0:
-                    print(self.translate("No subtitles found.") + "\n")
                     self.config.logger.info("No subtitles found.")
                     continue
 
@@ -163,8 +159,6 @@ class SubMain:
                 self.config.logger.debug(f'Finished converting subtitles.')
 
                 if self.edit_flag:
-                    print(self.translate("You can now edit the new subtitle files. Press Enter when you are done."))
-                    print(self.translate("They can be found at: {directory}").format(directory=str(self.sub_dir)))
                     self.config.logger.debug(f'Pause for editing subtitles in {self.sub_dir}.')
                     if os.name == "nt":
                         os.system(f"explorer.exe \"{os.path.join(os.getcwd(), self.sub_dir)}\"")
@@ -174,7 +168,6 @@ class SubMain:
                 self.mux_file()
                 self.clean()
 
-                print(self.translate("Finished {file}").format(file=self.file_name)) 
                 self.config.logger.info(f'Finished {self.file_name}.')
                 self.shared_dict['finished_files_counter'] += 1
             except Exception as e:
@@ -190,7 +183,6 @@ class SubMain:
                 if self.shared_dict.get('continue_flag', None):
                     self.config.logger.debug("Continuing with the next file after error.")
                     self.clean()
-                    print()
                 else:
                     self.config.logger.debug("Exiting program after error.")
                     self.clean()

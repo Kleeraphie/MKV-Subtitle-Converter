@@ -107,14 +107,14 @@ class SubMain:
 
         if not (self.keep_old_subs or self.keep_new_subs):
             if not self.keep_imgs:
-                shutil.rmtree(os.path.pardir(self.img_dir))
+                shutil.rmtree(self.img_dir.parent)
             else:
                 shutil.rmtree(self.sub_dir)
         elif not self.keep_old_subs:
             for track_id in range(self.subtitle_counter):
                 self.silent_remove(os.path.join(self.sub_dir, f'{track_id}.sup'))
         elif not self.keep_new_subs:
-            for track_id in self.subtitle_counter:
+            for track_id in range(self.subtitle_counter):
                 self.silent_remove(os.path.join(self.sub_dir, f'{track_id}.srt'))
                 self.silent_remove(os.path.join(self.sub_dir, f'{track_id}.{self.format}'))
 

@@ -158,11 +158,16 @@ class SubMain:
                 converter.convert_subtitles()
                 self.config.logger.debug(f'Finished converting subtitles.')
 
+                self.shared_dict['edit_flag'] = self.edit_flag
+
                 if self.edit_flag:
                     self.config.logger.debug(f'Pause for editing subtitles in {self.sub_dir}.')
                     if os.name == "nt":
                         os.system(f"explorer.exe \"{os.path.join(os.getcwd(), self.sub_dir)}\"")
-                    input()
+                    
+                    while self.shared_dict.get('edit_flag', False) is not False:
+                        time.sleep(1)
+
                     self.config.logger.debug(f'Continue after pausing for subtitle editing.')
                 
                 self.mux_file()

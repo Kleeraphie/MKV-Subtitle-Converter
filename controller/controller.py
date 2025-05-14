@@ -26,6 +26,7 @@ class Controller:
         self.exit_code = -1
         self.sc_error_code = 0
         self.sc_error_msg = ""
+        self.sc_edit_flag = False
 
     def register_gui(self, gui: GUI):
         self.gui = gui
@@ -67,7 +68,7 @@ class Controller:
         self.job = job
 
     def notify_gui(self):
-        self.gui.update(self.file_counter, self.finished_files_counter, self.files_with_error_counter, self.job, self.sc_error_code, self.sc_error_msg)
+        self.gui.update(self.file_counter, self.finished_files_counter, self.files_with_error_counter, self.job, self.sc_error_code, self.sc_error_msg, self.sc_edit_flag)
 
     def start_subconverter(self):
         if self.exit_code == 0:
@@ -96,11 +97,14 @@ class Controller:
                 self.job = shared_dict.get('current_job', Jobs.IDLE)
                 self.sc_error_code = shared_dict.get('error_code', 0)
                 self.sc_error_msg = shared_dict.get('error_message', "")
+                self.sc_edit_flag = shared_dict.get('edit_flag', False)
 
                 self.notify_gui()
 
                 if self.gui.continue_flag is not None:
                     shared_dict['continue_flag'] = self.gui.continue_flag
+                if self.gui.edit_flag is not None:
+                    shared_dict['edit_flag'] = self.gui.edit_flag
                 if self.gui.stop_flag.get():
                     # Handle stop flag if needed
                     thread.terminate()

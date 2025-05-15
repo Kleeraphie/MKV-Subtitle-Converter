@@ -60,6 +60,8 @@ class SubExtractor:
             line = line.split(" bitrate=")[0]
             line = line.strip()
             
+            if 'N/A' in line:
+                return -1
             if line.startswith('-'):
                 line = "00:00:00.000"
             
@@ -101,7 +103,7 @@ class SubExtractor:
             return
 
         subtitle_streams = [stream for stream in self.probe['streams'] if stream['codec_name'] == 'hdmv_pgs_subtitle']
-        current_time, total_time = 0, 0
+        total_time = 0
         current_times = []
         finished = []
         start_time = datetime(1900, 1, 1)

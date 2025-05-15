@@ -27,6 +27,7 @@ class Controller:
         self.sc_error_code = 0
         self.sc_error_msg = ""
         self.sc_edit_flag = False
+        self.sub_dir = None
 
     def register_gui(self, gui: GUI):
         self.gui = gui
@@ -68,7 +69,7 @@ class Controller:
         self.job = job
 
     def notify_gui(self):
-        self.gui.update(self.file_counter, self.finished_files_counter, self.files_with_error_counter, self.job, self.sc_error_code, self.sc_error_msg, self.sc_edit_flag)
+        self.gui.update(self.file_counter, self.finished_files_counter, self.files_with_error_counter, self.job, self.sc_error_code, self.sc_error_msg, self.sc_edit_flag, self.sub_dir)
 
     def start_subconverter(self):
         if self.exit_code == 0:
@@ -98,6 +99,7 @@ class Controller:
                 self.sc_error_code = shared_dict.get('error_code', 0)
                 self.sc_error_msg = shared_dict.get('error_message', "")
                 self.sc_edit_flag = shared_dict.get('edit_flag', False)
+                self.sub_dir = shared_dict.get('sub_dir', None)
 
                 self.notify_gui()
 

@@ -318,7 +318,7 @@ class GUI:
         self.wait_var.set(wait_var)
 
 
-    def update(self, file_counter, finished_files_counter, files_with_error_counter, job, sc_error_code, sc_error_msg, sc_edit_flag):
+    def update(self, file_counter, finished_files_counter, files_with_error_counter, job, sc_error_code, sc_error_msg, sc_edit_flag, sc_sub_dir):
         """Update the GUI while the subconverter is running"""
         self.file_counter = file_counter
         self.finished_files_counter = finished_files_counter
@@ -329,7 +329,7 @@ class GUI:
             self.window.bell()
             self.continue_flag = tk.messagebox.askyesno(self.translate("Error"), self.translate("Error #{error_code}: {error}\nDo you want to continue with the next file?").format(error_code=sc_error_code, error=sc_error_msg))
         if sc_edit_flag:
-            tk.messagebox.showinfo(self.translate("Edit subtitles"), self.translate("The subtitles are ready for editing. Press OK when you are done."))
+            tk.messagebox.showinfo(self.translate("Edit subtitles"), self.translate(f"The subtitles are ready for editing. They can be found at {sc_sub_dir}. Press OK when you are done."))
             self.edit_flag = False
 
         self.window.update()

@@ -159,6 +159,7 @@ class SubMain:
                 self.config.logger.debug(f'Finished converting subtitles.')
 
                 self.shared_dict['edit_flag'] = self.edit_flag
+                self.shared_dict['sub_dir'] = self.sub_dir
 
                 if self.edit_flag:
                     self.config.logger.debug(f'Pause for editing subtitles in {self.sub_dir}.')

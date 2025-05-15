@@ -329,7 +329,7 @@ class GUI:
             self.window.bell()
             self.continue_flag = tk.messagebox.askyesno(self.translate("Error"), self.translate("Error #{error_code}: {error}\nDo you want to continue with the next file?").format(error_code=sc_error_code, error=sc_error_msg))
         if sc_edit_flag:
-            tk.messagebox.showinfo(self.translate("Edit subtitles"), self.translate(f"The subtitles are ready for editing. They can be found at {sc_sub_dir}. Press OK when you are done."))
+            tk.messagebox.showinfo(self.translate("Edit subtitles"), self.translate("The subtitles are ready for editing. They can be found at {sub_dir}. Press OK when you are done.").format(sub_dir=sc_sub_dir))
             self.edit_flag = False
 
         self.window.update()

@@ -169,7 +169,7 @@ class Config:
             path = Path("~/Library/Application Support")
         else:
             # linux
-            path = Path(os.getenv("XDG_DATA_HOME", "~/.local/share"))
+            path = Path(os.path.expanduser(os.getenv("XDG_DATA_HOME", "~/.local/share")))
 
         path = path / "MKV Subtitle Converter"
         path.mkdir(parents=True, exist_ok=True)

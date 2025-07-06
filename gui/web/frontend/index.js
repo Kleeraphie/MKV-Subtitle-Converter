@@ -68,25 +68,68 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleFiles(files) {
         if (!files.length) return;
         
-        uploadedFiles = [...uploadedFiles, ...files]; // Store file objects
-        if(fileList) fileList.innerHTML = ''; 
-        if(uploadPrompt) uploadPrompt.classList.add('hidden');
-        if(fileList) fileList.classList.remove('hidden');
+        const newFilesToAdd = [];
+        for (const newFile of files) {
+            const isDuplicate = uploadedFiles.some(existingFile => 
+                existingFile.name === newFile.name && existingFile.size === newFile.size
+            );
 
-        uploadedFiles.forEach(file => {
+            if (!isDuplicate) {
+                newFilesToAdd.push(newFile);
+            }
+        }
+
+        uploadedFiles = [...uploadedFiles, ...newFilesToAdd]; 
+        renderFileList(); // Call a new function to render the list
+    }
+
+    function renderFileList() {
+        if(fileList) fileList.innerHTML = ''; 
+        
+        if (uploadedFiles.length > 0) {
+            if(uploadPrompt) uploadPrompt.classList.add('hidden');
+            if(fileList) fileList.classList.remove('hidden');
+        } else {
+            if(uploadPrompt) uploadPrompt.classList.remove('hidden');
+            if(fileList) fileList.classList.add('hidden');
+        }
+
+        uploadedFiles.forEach((file, index) => {
             const fileElement = document.createElement('div');
-            // TODO: Make icon color change with darkmode like in initial commit
             fileElement.className = 'flex items-center justify-between bg-white dark:bg-slate-700 p-2 rounded-md border border-slate-200 dark:border-slate-600 mb-2';
             fileElement.innerHTML = `
                 <div class="flex items-center overflow-hidden">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4 text-slate-500 dark:text-slate-400">
                         <path fill-rule="evenodd" d="M1 3.5A1.5 1.5 0 0 1 2.5 2h11A1.5 1.5 0 0 1 15 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9Zm1.5.25a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1Zm3.75-.25a.25.25 0 0 0-.25.25v3.5c0 .138.112.25.25.25h3.5a.25.25 0 0 0 .25-.25v-3.5a.25.25 0 0 0-.25-.25h-3.5ZM6 8.75a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.5a.25.25 0 0 1-.25.25h-3.5a.25.25 0 0 1-.25-.25v-3.5Zm5.75-5.25a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5ZM2.5 11.25a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1Zm9.25-.25a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5ZM2.5 8.75a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1Zm9.25-.25a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5ZM2.5 6.25A.25.25 0 0 1 2.75 6h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1ZM11.75 6a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5Z" clip-rule="evenodd" />
                     </svg>
                     <span class="ml-3 text-sm text-slate-700 dark:text-slate-200 truncate">${file.name}</span>
                 </div>
-                <span class="text-xs text-slate-500 dark:text-slate-400 flex-shrink-0 ml-2">${filesize(file.size)}</span>`;
+                <div class="flex items-center">
+                    <span class="text-xs text-slate-500 dark:text-slate-400 flex-shrink-0 ml-2">${filesize(file.size)}</span>
+                    <button class="delete-file-btn ml-3 p-1 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors duration-200" data-index="${index}" title="Datei entfernen">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
+                            <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14Zm2.78-4.22a.75.75 0 0 0 0-1.06L9.06 8l1.72-1.72a.75.75 0 0 0-1.06-1.06L8 6.94l-1.72-1.72a.75.75 0 0 0-1.06 1.06L6.94 8l-1.72 1.72a.75.75 0 1 0 1.06 1.06L8 9.06l1.72 1.72a.75.75 0 0 0 1.06 0Z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+                `;
             if(fileList) fileList.appendChild(fileElement);
         });
+
+        document.querySelectorAll('.delete-file-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const indexToDelete = parseInt(e.currentTarget.dataset.index);
+                deleteFile(indexToDelete);
+            });
+        });
+    }
+
+    // New function to delete a file
+    function deleteFile(index) {
+        if (index > -1 && index < uploadedFiles.length) {
+            uploadedFiles.splice(index, 1); // Remove the file at the given index
+            renderFileList(); // Re-render the list
+        }
     }
 
     // --- Slider Logic ---

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="de" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MKV Subtitle Converter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Korrekter Link zur externen CSS-Datei -->
+    <link rel="stylesheet" href="static/index.css">
+    <script>
+        // Tailwind Dark Mode Konfiguration bleibt hier, da sie vor dem Laden des CSS ausgeführt werden muss.
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 flex items-center justify-center min-h-screen p-4 transition-colors duration-300">
+
+    <div class="w-full max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-2xl shadow-slate-300/60 dark:shadow-black/40 p-6 md:p-10">
+        <!-- Header Section -->
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-slate-200 dark:border-slate-700">
+            <h1 class="text-2xl font-bold text-slate-800 dark:text-slate-100">MKV Subtitle Converter</h1>
+            <div class="flex items-center mt-3 sm:mt-0">
+                 <nav>
+                    <a href="#" id="open-help" class="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 ml-0 sm:ml-6">Help</a>
+                    <a href="#" id="open-settings" class="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 ml-4">Settings</a>
+                </nav>
+                <!-- Dark Mode Toggle -->
+                <button id="dark-mode-toggle" class="ml-6 p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-slate-800 focus:ring-blue-500">
+                    <svg id="sun-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    <svg id="moon-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                </button>
+            </div>
+        </header>
+
+        <main class="mt-8">
+            <!-- File Upload Section -->
+            <section class="mb-8">
+                <label class="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4 block">Selected files</label>
+                <div id="drop-area" class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-xl p-8 text-center bg-slate-50 dark:bg-slate-800/50 transition-all duration-300">
+                    <div id="file-list" class="text-left mb-4 hidden"></div>
+                    <p id="upload-prompt" class="text-slate-500 dark:text-slate-400">Drag & drop files here or</p>
+                    <label for="file-input" class="mt-4 inline-block cursor-pointer px-6 py-2.5 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200">
+                        Browse your computer
+                    </label>
+                    <input type="file" id="file-input" accept=".mkv,.mp4,.webm" class="hidden" multiple>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section>
+                 <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200">Settings</h2>
+                        <button class="ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" title="Help with settings">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Format Selection -->
+                <div class="mb-6">
+                    <label for="subtitle-format" class="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Format of the new subtitles</label>
+                    <select id="subtitle-format" class="w-full px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-shadow">
+                        <option value="srt">SubRip Text (.srt)</option>
+                        <option value="ass">Advanced SubStation Alpha (.ass)</option>
+                        <option value="ssa">SubStation Alpha (.ssa)</option>
+                        <option value="vtt">WebVTT (.vtt)</option>
+                    </select>
+                </div>
+
+                <!-- Checkbox Options -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mb-6">
+                    <div class="relative flex items-start"><div class="flex items-center h-5"><input id="edit-before-muxing" type="checkbox" class="h-4 w-4 text-blue-600 border-slate-300 dark:border-slate-500 rounded focus:ring-blue-500"></div><div class="ml-3 text-sm"><label for="edit-before-muxing" class="font-medium text-slate-700 dark:text-slate-300">Edit subtitles before muxing</label></div></div>
+                    <div class="relative flex items-start"><div class="flex items-center h-5"><input id="save-pgs-images" type="checkbox" class="h-4 w-4 text-blue-600 border-slate-300 dark:border-slate-500 rounded focus:ring-blue-500"></div><div class="ml-3 text-sm"><label for="save-pgs-images" class="font-medium text-slate-700 dark:text-slate-300">Save images of PGS subtitles</label></div></div>
+                    <div class="relative flex items-start"><div class="flex items-center h-5"><input id="keep-original-mkv" type="checkbox" class="h-4 w-4 text-blue-600 border-slate-300 dark:border-slate-500 rounded focus:ring-blue-500"></div><div class="ml-3 text-sm"><label for="keep-original-mkv" class="font-medium text-slate-700 dark:text-slate-300">Keep original MKV files</label></div></div>
+                    <div class="relative flex items-start"><div class="flex items-center h-5"><input id="keep-copy-old" type="checkbox" checked class="h-4 w-4 text-blue-600 border-slate-300 dark:border-slate-500 rounded focus:ring-blue-500"></div><div class="ml-3 text-sm"><label for="keep-copy-old" class="font-medium text-slate-700 dark:text-slate-300">Keep a copy of the old subtitle files</label></div></div>
+                    <div class="relative flex items-start"><div class="flex items-center h-5"><input id="keep-copy-new" type="checkbox" class="h-4 w-4 text-blue-600 border-slate-300 dark:border-slate-500 rounded focus:ring-blue-500"></div><div class="ml-3 text-sm"><label for="keep-copy-new" class="font-medium text-slate-700 dark:text-slate-300">Keep a copy of the new subtitle files</label></div></div>
+                    <div class="relative flex items-start"><div class="flex items-center h-5"><input id="use-different-languages" type="checkbox" class="h-4 w-4 text-blue-600 border-slate-300 dark:border-slate-500 rounded focus:ring-blue-500"></div><div class="ml-3 text-sm"><label for="use-different-languages" class="font-medium text-slate-700 dark:text-slate-300">Use different languages for some subtitles</label></div></div>
+                </div>
+
+                <!-- Brightness Slider -->
+                <div>
+                    <label for="brightness-slider" class="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Allowed text color brightness deviation</label>
+                    <div class="flex items-center gap-4">
+                        <input type="range" id="brightness-slider" min="0" max="100" value="3" class="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer">
+                        <span id="brightness-value" class="font-semibold text-slate-700 dark:text-slate-200 text-sm w-12 text-right">3%</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer Actions -->
+        <footer class="mt-10 pt-6 border-t border-slate-200 dark:border-slate-700 flex justify-end items-center gap-4">
+            <button class="px-8 py-2.5 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200">
+                Start
+            </button>
+        </footer>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-md min-h-[350px] relative flex flex-col" style="min-width: 420px;">
+            <!-- Modal Header -->
+            <div class="flex items-center border-b border-slate-200 dark:border-slate-700 px-4 py-2">
+                <span class="text-lg font-medium text-slate-800 dark:text-slate-100 flex-1">Settings</span>
+                <button id="close-settings" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-2xl font-bold">&times;</button>
+            </div>
+            <div class="flex flex-1 min-h-[250px]">
+                <!-- Sidebar -->
+                <nav class="w-32 border-r border-slate-200 dark:border-slate-700 py-4 flex flex-col gap-2">
+                    <button class="settings-tab text-left px-4 py-2 w-full text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition" data-tab="general" id="tab-general">General</button>
+                    <button class="settings-tab text-left px-4 py-2 w-full text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition" data-tab="graphics" id="tab-graphics">Graphics</button>
+                </nav>
+                <!-- Tab Content -->
+                <div class="flex-1 p-6">
+                    <!-- General Tab -->
+                    <div id="settings-content-general" class="settings-content">
+                        <div class="mb-6 flex items-center">
+                            <label for="popup-language" class="block text-base font-medium text-slate-700 dark:text-slate-300 mr-2">Language:</label>
+                            <select id="popup-language" class="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none">
+                                <option>English (United States)</option>
+                                <option>Deutsch (Deutschland)</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center">
+                            <input id="popup-updates" type="checkbox" class="h-5 w-5 text-green-600 border-slate-300 rounded focus:ring-green-500">
+                            <label for="popup-updates" class="ml-2 text-base text-slate-700 dark:text-slate-300 select-none">Check for updates</label>
+                        </div>
+                    </div>
+                    <!-- Graphics Tab -->
+                    <div id="settings-content-graphics" class="settings-content hidden">
+                        <div class="mb-6 flex items-center">
+                            <label for="popup-theme" class="block text-base font-medium text-slate-700 dark:text-slate-300 mr-2">Theme:</label>
+                            <select id="popup-theme" class="px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:outline-none">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                                <option value="auto">Auto</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Modal Footer -->
+            <div class="flex justify-end gap-4 border-t border-slate-200 dark:border-slate-700 px-4 py-3">
+                <button id="close-settings-2" class="px-6 py-1.5 bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200 rounded hover:bg-slate-300 dark:hover:bg-slate-500">Cancel</button>
+                <button class="px-6 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-md min-h-[350px] relative flex flex-col" style="min-width: 420px;">
+            <!-- Modal Header -->
+            <div class="flex items-center border-b border-slate-200 dark:border-slate-700 px-4 py-2">
+                <span class="text-lg font-medium text-slate-800 dark:text-slate-100 flex-1">Help</span>
+                <button id="close-help" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-2xl font-bold">&times;</button>
+            </div>
+            <div class="flex flex-1 min-h-[250px]">
+                <!-- Sidebar -->
+                <nav class="w-32 border-r border-slate-200 dark:border-slate-700 py-4 flex flex-col gap-2">
+                    <button class="help-tab text-left px-4 py-2 w-full text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition" data-tab="about" id="help-tab-about">About...</button>
+                    <button class="help-tab text-left px-4 py-2 w-full text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded transition" data-tab="settings" id="help-tab-settings">Settings</button>
+                </nav>
+                <!-- Tab Content -->
+                <div class="flex-1 p-6">
+                    <!-- About Tab -->
+                    <div id="help-content-about" class="help-content">
+                        <div class="flex flex-col items-center justify-center h-full pt-6">
+                            <span class="text-xl font-semibold text-slate-800 dark:text-slate-100 mb-2 text-center">MKV Subtitle Converter</span>
+                            <span class="text-lg text-slate-700 dark:text-slate-300 mb-6 text-center">
+                                <p class="text-xl text-slate-600 mb-8" id="help-version">Loading...</p>
+                            </span>
+                            <button class="mb-3 px-6 py-2 bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200 rounded hover:bg-slate-300 dark:hover:bg-slate-500 transition">Check for updates</button>
+                            <button class="px-6 py-2 bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200 rounded hover:bg-slate-300 dark:hover:bg-slate-500 transition">View Licenses</button>
+                        </div>
+                    </div>
+                    <!-- Settings Help Tab -->
+                    <div id="help-content-settings" class="help-content hidden">
+                        <h3 class="font-bold text-slate-800 dark:text-slate-100 mb-2">Settings Help</h3>
+                        <p class="text-sm text-slate-600 dark:text-slate-300">Here you can find help for the different settings...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="static/index.js"></script>
+    <script src="static/settings.js"></script>
+    <script src="static/help.js"></script>
+
+</body>
+</html>

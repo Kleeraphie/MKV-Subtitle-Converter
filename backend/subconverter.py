@@ -10,6 +10,8 @@ import backend.srtchecker as srtchecker
 import pysubs2
 from controller.sub_formats import SubtitleFileEndings
 from config import Config
+import requests
+from io import BytesIO
 
 
 class SubtitleConverter:
@@ -114,7 +116,12 @@ class SubtitleConverter:
                 if self.keep_imgs:
                     img.save(os.path.join(track_img_dir, f"{sub_index}.jpg"))
                 
-                sub_text = pytesseract.image_to_string(img, lang)
+                # sub_text = pytesseract.image_to_string(img, lang)
+                buffer = BytesIO()
+                img.save(buffer, format="JPEG")  # or "JPEG"
+                buffer.seek(0)
+                files = {'image': ('image.png', buffer, 'image/jpg')}
+                sub_text = requests.post('http://127.0.0.1:5000/image', files=files)
                 sub_start = ods.presentation_timestamp
             else:
                 start_time = SubRipTime(milliseconds=int(sub_start))

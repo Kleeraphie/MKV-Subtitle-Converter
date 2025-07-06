@@ -1,0 +1,37 @@
+/* Custom styles to complement Tailwind CSS */
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Custom focus ring color */
+input:focus, select:focus, input[type="range"]:focus {
+    --tw-ring-color: #3b82f6; /* blue-500 */
+}
+
+/* Custom checkbox and radio button color */
+input[type="checkbox"]:checked {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+/* Custom range slider thumb for light and dark mode */
+html:not(.dark) input[type="range"]::-webkit-slider-thumb {
+    background: #3b82f6;
+}
+html.dark input[type="range"]::-webkit-slider-thumb {
+    background: #60a5fa; /* blue-400 */
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    border-radius: 9999px;
+    border: 3px solid #fff; /* white */
+}
+
+html.dark input[type="range"]::-webkit-slider-thumb {
+     border: 3px solid #1f2937; /* gray-800 */
+}

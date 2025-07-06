@@ -10,3 +10,4 @@ Output/
 logs/
 .idea/
 !gui/themes/*/*.png
+gui/web/node_modules/

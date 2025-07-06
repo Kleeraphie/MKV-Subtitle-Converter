@@ -55,7 +55,7 @@
                  <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center">
                         <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-200">Settings</h2>
-                        <button class="ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" title="Help with settings">
+                        <button class="ml-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" title="Help with settings" id="open-settings-help">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg>
                         </button>
                     </div>
@@ -86,7 +86,7 @@
                 <div>
                     <label for="brightness-slider" class="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">Allowed text color brightness deviation</label>
                     <div class="flex items-center gap-4">
-                        <input type="range" id="brightness-slider" min="0" max="100" value="3" class="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer">
+                        <input type="range" id="brightness-slider" min="1" max="100" value="3" class="w-full h-2 bg-slate-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer">
                         <span id="brightness-value" class="font-semibold text-slate-700 dark:text-slate-200 text-sm w-12 text-right">3%</span>
                     </div>
                 </div>
@@ -185,6 +185,52 @@
                         <p class="text-sm text-slate-600 dark:text-slate-300">Here you can find help for the different settings...</p>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Help Modal -->
+    <div id="settings-help-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-2xl w-full max-w-lg relative flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 px-6 py-3">
+                <h2 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Help for choosing the right settings</h2>
+                <button id="close-settings-help" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-2xl font-bold">&times;</button>
+            </div>
+            <!-- Modal Body -->
+            <div class="p-6 space-y-4 text-sm text-slate-600 dark:text-slate-300 max-h-[60vh] overflow-y-auto">
+                <div class="border-b border-slate-200 dark:border-slate-700 pb-3">
+                    <p class="font-bold text-slate-800 dark:text-slate-200">Format of the new subtitles:</p>
+                    <p>The format of your new subtitles.</p>
+                </div>
+                <div class="border-b border-slate-200 dark:border-slate-700 pb-3">
+                    <p class="font-bold text-slate-800 dark:text-slate-200">Edit subtitles before muxing:</p>
+                    <p>Before exchanging the subtitles with the new ones, the program will pause so you can edit them.</p>
+                </div>
+                <div class="border-b border-slate-200 dark:border-slate-700 pb-3">
+                    <p class="font-bold text-slate-800 dark:text-slate-200">Save images of PGS subtitles:</p>
+                    <p>You can save the images that make up the old subtitles. This can be useful for debugging.</p>
+                </div>
+                <div class="border-b border-slate-200 dark:border-slate-700 pb-3">
+                    <p class="font-bold text-slate-800 dark:text-slate-200">Keep original MKV files:</p>
+                    <p>You can keep the original MKV files after conversion.</p>
+                </div>
+                <div class="border-b border-slate-200 dark:border-slate-700 pb-3">
+                    <p class="font-bold text-slate-800 dark:text-slate-200">Keep a copy of the new subtitle files:</p>
+                    <p>You can save a copy of the new subtitle files separately.</p>
+                </div>
+                <div class="border-b border-slate-200 dark:border-slate-700 pb-3">
+                    <p class="font-bold text-slate-800 dark:text-slate-200">Use different languages for some subtitles:</p>
+                    <p>This can be useful if the English subtitles contain letters like ä, ö or ü. Then you could use the German language because it contains all characters.</p>
+                </div>
+                <div>
+                    <p class="font-bold text-slate-800 dark:text-slate-200">Allowed text color brightness deviation:</p>
+                    <p>You can change the maximum allowed difference in brightness in the text color. This can be useful because some subtitles are not perfectly white.</p>
+                </div>
+            </div>
+             <!-- Modal Footer -->
+            <div class="flex justify-end gap-4 border-t border-slate-200 dark:border-slate-700 px-6 py-3 bg-slate-50 dark:bg-slate-800/50">
+                <button id="close-settings-help-2" class="px-6 py-2 bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-500">Close</button>
             </div>
         </div>
     </div>

@@ -20,3 +20,14 @@ tabs.forEach(tab => {
         document.getElementById('settings-content-' + tab.dataset.tab).classList.remove('hidden');
     });
 });
+document.getElementById('open-settings-help').addEventListener('click', function(e) {
+    e.preventDefault();
+    document.getElementById('settings-help-modal').classList.remove('hidden');
+    document.getElementById('tab-general').focus();
+});
+document.getElementById('close-settings-help').addEventListener('click', function() {
+    document.getElementById('settings-help-modal').classList.add('hidden');
+});
+document.getElementById('close-settings-help-2').addEventListener('click', function() {
+    document.getElementById('settings-help-modal').classList.add('hidden');
+});

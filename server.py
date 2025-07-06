@@ -2,7 +2,7 @@
 from flask import Flask, render_template, make_response
 from config import Config
 
-app = Flask(__name__, template_folder='gui/web/templates', static_folder='gui/web/static')
+app = Flask(__name__, template_folder='gui/web/templates', static_folder='gui/web/frontend')
 
 @app.route('/')
 def home():

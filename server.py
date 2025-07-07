@@ -2,6 +2,9 @@ from flask import Flask, render_template, make_response, request
 from config import Config
 import json
 import os
+import logging
+import requests
+from packaging.version import Version
 
 app = Flask(__name__, template_folder='gui/web/templates', static_folder='gui/web/frontend')
 
@@ -39,6 +42,30 @@ def get_theme():
         response = make_response(config.get_theme(), 200)
         response.mimetype = "text/plain"
         return response
+
+@app.route('/checkForUpdate')
+def check_for_update():
+    config = Config()
+    logging.info("Checking for updates.")
+
+    try:
+        response = requests.get("https://api.github.com/repos/Kleeraphie/MKV-Subtitle-Converter/releases/latest")
+        latest_version = response.json()["tag_name"]
+
+        update_available = Version(latest_version) > Version(config.get_version())
+    except: # if there is no internet connection or the request fails
+        update_available = False
+
+        if update_available:
+            print(f"Update available: {latest_version}")
+        else:
+            print("No update available or unable to check for updates.")
+
+    response = {
+        'updateAvailable': update_available,
+        'latestVersion': latest_version if update_available else None
+    }
+    return make_response(json.dumps(response), 200, {'Content-Type': 'application/json'})
 
 @app.route('/upload', methods=['POST'])
 def upload_file():

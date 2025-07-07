@@ -22,6 +22,24 @@ def get_version():
     response.mimetype = "text/plain"
     return response
 
+@app.route('/theme', methods=['GET', 'POST'])
+def get_theme():
+    config = Config()
+    if request.method == 'POST':
+        # Assuming the theme is in plain text format
+        theme = request.data.decode('utf-8')
+        settings = {
+            Config.Settings.THEME: theme
+        }
+        print(f"Setting theme to: {theme}")
+        config.save_settings(settings)
+        config.save_config()
+        return make_response("Theme updated successfully", 200)  # Add this line
+    else:
+        response = make_response(config.get_theme(), 200)
+        response.mimetype = "text/plain"
+        return response
+
 @app.route('/upload', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:

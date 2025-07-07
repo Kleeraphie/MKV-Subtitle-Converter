@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const darkModeToggle = document.getElementById('dark-mode-toggle');
     const sunIcon = document.getElementById('sun-icon');
     const moonIcon = document.getElementById('moon-icon');
+    const convertButton = document.getElementById('convert-button');
     let uploadedFiles = [];
 
     // --- Dark Mode Logic ---
@@ -31,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isDarkMode = document.documentElement.classList.toggle('dark');
             localStorage.setItem('darkMode', isDarkMode);
             applyDarkMode(isDarkMode);
+            setTheme(isDarkMode ? 'Dark' : 'Light'); // Save theme preference
         });
     }
 
@@ -139,11 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Fetch the version when the page loads
-    getVersion();
-});
-
-function getVersion() {
+    function getVersion() {
     fetch('/version')
         .then(response => response.text())
         .then(version => {
@@ -153,4 +151,101 @@ function getVersion() {
             }
         })
         .catch(error => console.error('Error fetching version:', error));
-}
+    }
+
+    function getTheme() {
+        fetch('/theme')
+            .then(response => response.text())
+            .then(theme => {
+                // select theme in the dropdown
+                const themeSelect = document.getElementById('popup-theme');
+                if (themeSelect) {
+                    themeSelect.value = theme;
+                }
+                // apply dark mode based on the theme
+                applyDarkMode(theme === 'dark');
+            })
+            .catch(error => console.error('Error fetching theme:', error));
+
+            // print response.text to console
+            fetch('/theme')
+                .then(response => response.text())
+                .then(theme => console.log('Current theme:', theme))
+                .catch(error => console.error('Error fetching theme:', error));
+    }
+
+    function setTheme(theme) {
+        fetch('/theme', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/plain'
+            },
+            body: theme
+        })
+        .then(response => {
+            if (!response.ok) {
+                console.error('Failed to set theme:', response.statusText);
+            }
+        })
+        .catch(error => console.error('Error setting theme:', error));
+    }
+
+    async function uploadFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                console.error('File upload failed:', response.statusText);
+            }
+        } catch (error) {
+            console.error('Error uploading file:', error);
+        }
+    }
+
+    async function startConversion() {
+        for (const file of uploadedFiles) {
+            await uploadFile(file);
+        }
+
+        const settings = {
+            brightness: document.getElementById('brightness-slider').value,
+            edit: document.getElementById('edit-before-muxing').checked,
+            saveImages: document.getElementById('save-pgs-images').checked,
+            keepFiles: document.getElementById('keep-original-mkv').checked,
+            keepOldSubs: document.getElementById('keep-copy-old').checked,
+            keepNewSubs: document.getElementById('keep-copy-new').checked,
+            useDiffLang: document.getElementById('use-different-languages').checked
+        };
+
+        try {
+            const response = await fetch('/convert', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(settings)
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                alert('Konvertierung erfolgreich!');
+            } else {
+                alert('Fehler bei der Konvertierung: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Error during conversion:', error);
+        }
+    }
+
+    // Fetch the version when the page loads
+    getVersion();
+    getTheme();
+
+    convertButton.addEventListener('click', startConversion);
+});

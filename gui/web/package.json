@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "description": "This program extracts all PGS subtitles (i.e .sup files) in a MKV file, converts them to text based subtitles (e.g. .srt, .ass, ...) using OCR and replace the old PGS subtitles with the newly created subtitle files. It also allows you to edit the subtitles before replacing them. \\ Using text based subtitles instead of PGS subtitles is useful because they can be edited and are supported by more players.",
   "main": "frontend/index.js",
+  "private": true,
+  "type": "module",
   "scripts": {
+    "dev": "vite",
+    "build": "node scripts/build-translations.js && vite build",
+    "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:css": "npx tailwindcss -i ./gui/web/frontend/index.css -o ./gui/web/frontend/output.css --watch"
   },
@@ -22,6 +27,9 @@
     "tailwindcss": "^4.1.11"
   },
   "dependencies": {
-    "filesize": "^10.1.6"
+    "@tailwindcss/vite": "^4.1.11",
+    "filesize": "^10.1.6",
+    "pofile": "^1.1.4",
+    "vite": "^7.0.4"
   }
 }

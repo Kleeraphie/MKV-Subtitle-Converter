@@ -1,6 +1,27 @@
 import { filesize } from "https://esm.sh/filesize";
+import { loadTranslations, setLanguage, t } from './i18n.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Set default language and load translations
+    const userLanguage = 'de'; // or get from user settings
+    loadTranslations(userLanguage).then(() => {
+        // Simuliert die Sprache des Benutzers (z.B. aus einem Cookie oder Header)
+        // const userLanguage = 'de'; 
+
+        // Jetzt kannst du die t-Funktion benutzen, um Texte auszugeben
+        console.log("--- Deutsche Übersetzung ---");
+        console.log(t('Format of the new subtitles:', userLanguage));       // Ausgabe: Hallo Welt
+        console.log(t('welcome_message', userLanguage));  // Ausgabe: Willkommen auf meiner Webseite.
+        console.log(t('non_existent_key', userLanguage)); // Ausgabe: non_existent_key (Fallback)
+
+        console.log("\n--- Englische Übersetzung ---");
+        console.log(t('page_title', 'en'));       // Ausgabe: Hello World
+        console.log(t('welcome_message', 'en'));  // Ausgabe: Welcome to my website.
+    }).catch(error => {
+        console.error(`Error loading translations for ${userLanguage}:`, error);
+    });
+    setLanguage(userLanguage);
+
     // --- DOM Elements ---
     const dropArea = document.getElementById('drop-area');
     const fileInput = document.getElementById('file-input');

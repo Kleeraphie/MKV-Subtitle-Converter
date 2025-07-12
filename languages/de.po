@@ -1,0 +1,456 @@
+# German (Germany) translations for MKV Subtitle Converter.
+# Copyright (C) 2024 ORGANIZATION
+# This file is distributed under the same license as the MKV Subtitle
+# Converter project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-05-15 21:41+0200\n"
+"PO-Revision-Date: 2024-09-27 00:12+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: de_DE\n"
+"Language-Team: de_DE <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+
+#: backend/main.py:182
+#, fuzzy
+msgid "Error while processing {file_name}: {error}"
+msgstr "Fehler beim Bearbeiten von {file}: {exception}"
+
+#: backend/subconverter.py:52
+#, fuzzy
+msgid "Error while converting subtitle #{id}. See logs for more info."
+msgstr ""
+"Fehler beim Konvertieren von Untertitel #{id}. Siehe Konsole für mehr "
+"Informationen."
+
+#: controller/jobs.py:6
+msgid "Idle"
+msgstr "Inaktiv"
+
+#: controller/jobs.py:7
+#, fuzzy
+msgid "Extracting"
+msgstr "Einstellungen"
+
+#: controller/jobs.py:8
+msgid "Converting"
+msgstr "Konvertieren"
+
+#: controller/jobs.py:9
+msgid "Replacing"
+msgstr "Ersetzen"
+
+#: controller/jobs.py:10
+#, fuzzy
+msgid "Muxing new video"
+msgstr "Datei muxen..."
+
+#: controller/jobs.py:11
+#, fuzzy
+msgid "Finished"
+msgstr "{file} abgeschlossen"
+
+#: controller/jobs.py:12
+msgid "Cancelled"
+msgstr "Abgebrochen"
+
+#: Converter/gui/about.py:12 Subtitle dist/MKV dist/gui/about.py:12
+#: gui/about.py:12
+msgid "About"
+msgstr "Über"
+
+#: Converter/gui/about.py:26 Converter/gui/settings.py:110 Subtitle dist/MKV
+#: dist/gui/about.py:26 dist/gui/settings.py:110 gui/about.py:26
+#: gui/settings.py:110
+msgid "Check for updates"
+msgstr "Auf Updates überprüfen"
+
+#: Converter/gui/about.py:27 Subtitle dist/MKV dist/gui/about.py:27
+#: gui/about.py:27
+msgid "View Licenses"
+msgstr "Lizenzen anzeigen"
+
+#: Converter/gui/about.py:54 Subtitle dist/MKV dist/gui/about.py:54
+#: gui/about.py:54
+msgid "You are already up to date."
+msgstr "Die neuste Version ist bereits installiert."
+
+#: Converter/gui/gui.py:22 Subtitle dist/MKV dist/gui/gui.py:22 gui/gui.py:22
+msgid "Browse your computer to select files"
+msgstr "Computer durchsuchen um Dateien auszuwählen"
+
+#: Converter/gui/gui.py:47 Subtitle dist/MKV dist/gui/gui.py:47 gui/gui.py:48
+msgid "Browse"
+msgstr "Durchsuchen"
+
+#: Converter/gui/gui.py:48 Subtitle dist/MKV dist/gui/gui.py:48 gui/gui.py:49
+msgid "Selected files:"
+msgstr "Ausgewählte Dateien"
+
+#: Converter/gui/gui.py:69 Converter/gui/gui.py:242
+#: Converter/gui/settings.py:13 Subtitle dist/MKV dist/gui/gui.py:69
+#: dist/gui/gui.py:242 dist/gui/settings.py:13 gui/gui.py:70 gui/gui.py:243
+#: gui/settings.py:13
+msgid "Settings"
+msgstr "Einstellungen"
+
+#: Converter/gui/gui.py:80 Subtitle dist/MKV dist/gui/gui.py:80 gui/gui.py:81
+msgid "Format of the new subtitles:"
+msgstr "Format der neuen Untertitel"
+
+#: Converter/gui/gui.py:82 Subtitle dist/MKV dist/gui/gui.py:82 gui/gui.py:83
+msgid "Edit subtitles before muxing"
+msgstr "Untertitel vor dem Muxen bearbeiten"
+
+#: Converter/gui/gui.py:83 Subtitle dist/MKV dist/gui/gui.py:83 gui/gui.py:84
+msgid "Save images of PGS subtitles"
+msgstr "Bilder der PGS Untertitel speichern"
+
+#: Converter/gui/gui.py:84 Subtitle dist/MKV dist/gui/gui.py:84 gui/gui.py:85
+msgid "Keep original MKV files"
+msgstr "Originale MKV-Dateien behalten"
+
+#: Converter/gui/gui.py:85 Subtitle dist/MKV dist/gui/gui.py:85 gui/gui.py:86
+msgid "Keep a copy of the old subtitle files"
+msgstr "Kopie der alten Untertitel behalten"
+
+#: Converter/gui/gui.py:86 Subtitle dist/MKV dist/gui/gui.py:86 gui/gui.py:87
+msgid "Keep a copy of the new subtitle files"
+msgstr "Kopie der neuen Untertitel behalten"
+
+#: Converter/gui/gui.py:87 Subtitle dist/MKV dist/gui/gui.py:87 gui/gui.py:88
+msgid "Use different languages for some subtitles"
+msgstr "Eine andere Sprache für einige Untertitel verwenden"
+
+#: Converter/gui/gui.py:89 Subtitle dist/MKV dist/gui/gui.py:89 gui/gui.py:90
+msgid "Allowed text color brightness deviation:"
+msgstr "Erlaubter Unterschied in der Helligkeit der Schrift:"
+
+#: Converter/gui/gui.py:139 Subtitle dist/MKV dist/gui/gui.py:139
+#: gui/gui.py:140
+msgid "Start"
+msgstr "Start"
+
+#: Converter/gui/gui.py:140 Converter/gui/settings.py:49 Subtitle dist/MKV
+#: dist/gui/gui.py:140 dist/gui/settings.py:49 gui/gui.py:141
+#: gui/settings.py:49
+msgid "Exit"
+msgstr "Beenden"
+
+#: Converter/gui/gui.py:157 Subtitle dist/MKV dist/gui/gui.py:157
+#: gui/gui.py:158
+#, fuzzy
+msgid "Select files"
+msgstr "Ausgewählte Dateien"
+
+#: Converter/gui/gui.py:245 Subtitle dist/MKV dist/gui/gui.py:245
+#: gui/gui.py:246
+#, fuzzy
+msgid "About..."
+msgstr "Über..."
+
+#: Converter/gui/gui.py:246 Converter/gui/gui.py:252 Subtitle dist/MKV
+#: dist/gui/gui.py:246 dist/gui/gui.py:252 gui/gui.py:247 gui/gui.py:253
+msgid "Help"
+msgstr "Hilfe"
+
+#: Converter/gui/gui.py:262 Subtitle dist/MKV dist/gui/gui.py:262
+#: gui/gui.py:263
+msgid "Help for choosing the right settings"
+msgstr "Hilfe beim Finden der richtigen Einstellungen"
+
+#: Converter/gui/gui.py:265 Subtitle dist/MKV dist/gui/gui.py:265
+#: gui/gui.py:266
+msgid "Format of the new subtitles: "
+msgstr "Format für die neuen Untertitel: "
+
+#: Converter/gui/gui.py:265 Subtitle dist/MKV dist/gui/gui.py:265
+#: gui/gui.py:266
+msgid ""
+"The format of your new subtitles. SRT is the most common format and is "
+"supported by most video players."
+msgstr ""
+"Das Format der neuen Untertitel. SRT ist das am weitesten verbreitete "
+"Format und wird von den meisten Video-Playern unterstützt."
+
+#: Converter/gui/gui.py:266 Subtitle dist/MKV dist/gui/gui.py:266
+#: gui/gui.py:267
+msgid "Edit subtitles before muxing: "
+msgstr "Untertitel vor dem Muxen bearbeiten: "
+
+#: Converter/gui/gui.py:266 Subtitle dist/MKV dist/gui/gui.py:266
+#: gui/gui.py:267
+msgid ""
+"Before exchanging the subtitles with the new ones, the program will pause"
+" so that you can edit them. The program continues after pressing <Enter> "
+"in the console."
+msgstr ""
+"Bevor die Untertitel ausgetauscht werden hält das Programm an damit sie "
+"bearbeitet werden können. Das Programm fährt fort, wenn in der Konsole "
+"Enter gedrückt wird."
+
+#: Converter/gui/gui.py:267 Subtitle dist/MKV dist/gui/gui.py:267
+#: gui/gui.py:268
+msgid "Save images of PGS subtitles: "
+msgstr "Bilder der PGS Untertitel speichern: "
+
+#: Converter/gui/gui.py:267 Subtitle dist/MKV dist/gui/gui.py:267
+#: gui/gui.py:268
+msgid ""
+"You can save the images that make up the old subtitles. This can be "
+"useful if you want to compare the old and new subtitles. They are stored "
+"in a directory where this program is installed."
+msgstr ""
+"Du kannst die Bilder der alten Untertitel speichern. Das kann beim "
+"Vergleichen der alten Untertitel mit den neuen helfen. Sie werden in dem "
+"Ordner gespeichert, in dem das Programm installiert ist."
+
+#: Converter/gui/gui.py:268 Subtitle dist/MKV dist/gui/gui.py:268
+#: gui/gui.py:269
+msgid "Keep original MKV files: "
+msgstr "Originale MKV-Dateien behalten: "
+
+#: Converter/gui/gui.py:268 Subtitle dist/MKV dist/gui/gui.py:268
+#: gui/gui.py:269
+msgid ""
+"You can keep the original video files. This way you can test different "
+"settings."
+msgstr ""
+"Du kannst die originale Video-Datei behalten. So kannst du einfacher "
+"verschiedene Einstellungen ausprobieren."
+
+#: Converter/gui/gui.py:269 Subtitle dist/MKV dist/gui/gui.py:269
+#: gui/gui.py:270
+msgid "Keep a copy of the old subtitle files: "
+msgstr "Kopie der alten Untertitel behalten: "
+
+#: Converter/gui/gui.py:269 Subtitle dist/MKV dist/gui/gui.py:269
+#: gui/gui.py:270
+msgid ""
+"You can save the original subtitle files. This way the program does not "
+"need to extract them again if you run the program again."
+msgstr ""
+"Du kannst die alten Untertitel speichern. Dadurch muss das Programm diese"
+" nicht wieder extrahieren, falls du die Untertitel später erneut "
+"konvertieren möchtest."
+
+#: Converter/gui/gui.py:270 Subtitle dist/MKV dist/gui/gui.py:270
+#: gui/gui.py:271
+msgid "Keep a copy of the new subtitle files: "
+msgstr "Kopie der neuen Untertitel behalten: "
+
+#: Converter/gui/gui.py:270 Subtitle dist/MKV dist/gui/gui.py:270
+#: gui/gui.py:271
+msgid ""
+"You can save the new subtitle files. This way you can easily edit them "
+"later."
+msgstr ""
+"Du kannst die neuen Untertitel speichern. So kannst du sie einfacher "
+"später bearbeiten."
+
+#: Converter/gui/gui.py:271 Subtitle dist/MKV dist/gui/gui.py:271
+#: gui/gui.py:272
+msgid "Use different languages for some subtitles: "
+msgstr "Eine andere Sprache für einige Untertitel verwenden: "
+
+#: Converter/gui/gui.py:272 Subtitle dist/MKV dist/gui/gui.py:272
+#: gui/gui.py:273
+msgid "help.language"
+msgstr ""
+"Das Programm kann eine andere Sprache zum Erkennen des Texts in einem "
+"Untertitel nutzen als die Datei angibt. Das ist nützlich, da z.B. einige "
+"englische Untertitel Buchstaben wie ä, ö oder ü enthalten. Dann kann man "
+"'Deutsch' als Sprache verwenden, da das deutsche Alphabet alle Buchstaben"
+" des englischen Alphabets enthält + diese Umlaute. Änderungen werden "
+"durch eine neue Zeile getrennt und haben dieses Format: alte Sprache -> "
+"neue Sprache (z.B. eng -> deu)."
+
+#: Converter/gui/gui.py:273 Subtitle dist/MKV dist/gui/gui.py:273
+#: gui/gui.py:274
+msgid "Allowed text color brightness deviation: "
+msgstr "Erlaubter Unterschied in der Helligkeit der Schrift: "
+
+#: Converter/gui/gui.py:274 Subtitle dist/MKV dist/gui/gui.py:274
+#: gui/gui.py:275
+msgid "help.brightness"
+msgstr ""
+"Hier kannst du den maximalen Unterschied der Helligkeit in der Schrift "
+"von den alten Untertiteln einstellen. Das ist nützlich, da einige Bilder "
+"mehr Rauschen enthalten als andere. Der Wert sollte so niedrig wie "
+"möglich sein, aber der Text sollte nicht zu dünn werden."
+
+#: Converter/gui/gui.py:307 Subtitle dist/MKV dist/gui/gui.py:307
+#: gui/gui.py:308
+msgid "Update available"
+msgstr "Update verfügbar"
+
+#: Converter/gui/gui.py:307 Subtitle dist/MKV dist/gui/gui.py:307
+#: gui/gui.py:308
+msgid "Version {latest_version} is available. Do you want to download it?"
+msgstr "Version {latest_version} ist verfügbar. Möchstest du sie installieren?"
+
+#: Converter/gui/gui.py:330 Converter/gui/gui.py:384 Subtitle dist/MKV
+#: dist/gui/gui.py:330 dist/gui/gui.py:384 gui/gui.py:330 gui/gui.py:386
+msgid "Error"
+msgstr "Fehler"
+
+#: Converter/gui/gui.py:330 Subtitle dist/MKV dist/gui/gui.py:330
+#: gui/gui.py:330
+#, fuzzy
+msgid ""
+"Error #{error_code}: {error}\n"
+"Do you want to continue with the next file?"
+msgstr "Drücke Enter um mit der nächsten Datei fortzufahren..."
+
+#: Converter/gui/gui.py:343 Subtitle dist/MKV dist/gui/gui.py:343
+#: gui/gui.py:346
+msgid "Progress"
+msgstr "Fortschritt"
+
+#: Converter/gui/gui.py:367 Subtitle dist/MKV dist/gui/gui.py:367
+#: gui/gui.py:369
+msgid "Current job: {job}"
+msgstr "Aktueller Job: {job}"
+
+#: Converter/gui/gui.py:372 Subtitle dist/MKV dist/gui/gui.py:372
+#: gui/gui.py:374
+#, fuzzy
+msgid "Cancel"
+msgstr "Abgebrochen"
+
+#: Converter/gui/gui.py:381 Subtitle dist/MKV dist/gui/gui.py:381
+#: gui/gui.py:383
+msgid "Conversion finished"
+msgstr "Konvertierung abgeschlossen"
+
+#: Converter/gui/gui.py:381 Subtitle dist/MKV dist/gui/gui.py:381
+#: gui/gui.py:383
+msgid "The conversion is finished."
+msgstr "Die Konvertierung ist abgeschlossen."
+
+#: Converter/gui/gui.py:384 Subtitle dist/MKV dist/gui/gui.py:384
+#: gui/gui.py:386
+msgid "No files selected. Please select at least one file."
+msgstr "Keine Dateien ausgewählt. Bitte mindestens eine Datei auswählen."
+
+#: Converter/gui/licenses.py:12 Subtitle dist/MKV dist/gui/licenses.py:12
+#: gui/licenses.py:12
+msgid "Licenses"
+msgstr "Lizenzen"
+
+#: Converter/gui/settings.py:26 Subtitle dist/MKV dist/gui/settings.py:26
+#: gui/settings.py:26
+msgid "General"
+msgstr "Allgemein"
+
+#: Converter/gui/settings.py:27 Subtitle dist/MKV dist/gui/settings.py:27
+#: gui/settings.py:27
+msgid "Graphics"
+msgstr "Graphik"
+
+#: Converter/gui/settings.py:47 Subtitle dist/MKV dist/gui/settings.py:47
+#: gui/settings.py:47
+msgid "Save"
+msgstr "Speichern"
+
+#: Converter/gui/settings.py:104 Subtitle dist/MKV dist/gui/settings.py:104
+#: gui/settings.py:104
+msgid "Language:"
+msgstr "Sprache:"
+
+#: Converter/gui/settings.py:132 Subtitle dist/MKV dist/gui/settings.py:132
+#: gui/settings.py:132
+msgid "Theme:"
+msgstr "Theme"
+
+#: Converter/gui/settings.py:135 Subtitle dist/MKV dist/gui/settings.py:135
+#: gui/settings.py:135
+msgid "Light"
+msgstr "Hell"
+
+#: Converter/gui/settings.py:135 Subtitle dist/MKV dist/gui/settings.py:135
+#: gui/settings.py:135
+msgid "Dark"
+msgstr "Dunkel"
+
+#: Converter/gui/settings.py:135 Subtitle dist/MKV dist/gui/settings.py:135
+#: gui/settings.py:135
+#, fuzzy
+msgid "Auto"
+msgstr "Auto"
+
+#: gui/gui.py:332
+#, fuzzy
+msgid "Edit subtitles"
+msgstr "Untertitel bearbeiten"
+
+#: gui/gui.py:332
+msgid ""
+"The subtitles are ready for editing. They can be found at {sub_dir}. "
+"Press OK when you are done."
+msgstr ""
+"Die Untertitel sind bereit zur Bearbeitung. Sie können hier gefunden werden: {sub_dir}. "
+"Nach dem Bearbeiten drücke OK."
+
+#~ msgid "Replacing subtitles in {file_name}..."
+#~ msgstr "Untertitel in {file_name} werden ersetzt..."
+
+#~ msgid "Select a file from the left list"
+#~ msgstr "Wähle eine Datei aus der linken Liste aus"
+
+#~ msgid "Directory:"
+#~ msgstr "Ordner:"
+
+#~ msgid "Unselected files:"
+#~ msgstr "Nicht-Ausgewählte Dateien:"
+
+#~ msgid "Invalid input: {line}"
+#~ msgstr "Ungültige Eingabe: {line}"
+
+#~ msgid "Changed \"{old_lang}\" to \"{new_lang}\""
+#~ msgstr "Sprache \"{old_lang}\" zu \"{new_lang}\" geändert"
+
+#~ msgid "Muxing file..."
+#~ msgstr "Datei muxen..."
+
+#~ msgid "Cleaning up..."
+#~ msgstr "Aufräumen..."
+
+#~ msgid "Processing {file_name}..."
+#~ msgstr "{file_name} verarbeiten..."
+
+#~ msgid "No subtitles found."
+#~ msgstr "Keine Untertitel gefunden."
+
+#~ msgid "They can be found at: {directory}"
+#~ msgstr "Sie können unter \"{directory}\" gefunden werden"
+
+#~ msgid "Finished {file}"
+#~ msgstr "{file} abgeschlossen"
+
+#~ msgid "Language \"{new_lang}\" is not installed, using \"{lang_code}\" instead"
+#~ msgstr ""
+#~ "Sprache \"{new_lang}\" ist nicht installiert,"
+#~ " \"{lang_code}\" wird stattdessen benutzt"
+
+#~ msgid "Language \"{lang_code}\" is not installed, using English instead"
+#~ msgstr ""
+#~ "Sprache \"{new_lang}\" ist nicht installiert,"
+#~ " Englisch wird stattdessen benutzt"
+
+#~ msgid "The subtitles are ready for editing. Press OK when you are done."
+#~ msgstr ""
+#~ "Du kannst jetzt die Untertitel "
+#~ "bearbeiten. Drücke Enter wenn du fertig"
+#~ " bist."
+
+msgid "page_title"
+msgstr "Test"

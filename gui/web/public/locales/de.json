@@ -13,7 +13,7 @@
   "View Licenses": "Lizenzen anzeigen",
   "You are already up to date.": "Die neuste Version ist bereits installiert.",
   "Browse your computer to select files": "Computer durchsuchen um Dateien auszuwählen",
-  "Browse": "Durchsuchen",
+  "Browse": "Dateien durchsuchen",
   "Selected files:": "Ausgewählte Dateien",
   "Settings": "Einstellungen",
   "Format of the new subtitles:": "Format der neuen Untertitel",
@@ -61,7 +61,7 @@
   "Graphics": "Graphik",
   "Save": "Speichern",
   "Language:": "Sprache:",
-  "Theme:": "Theme",
+  "Theme:": "Theme:",
   "Light": "Hell",
   "Dark": "Dunkel",
   "Auto": "Auto",
@@ -82,5 +82,5 @@
   "Language \"{new_lang}\" is not installed, using \"{lang_code}\" instead": "Sprache \"{new_lang}\" ist nicht installiert, \"{lang_code}\" wird stattdessen benutzt",
   "Language \"{lang_code}\" is not installed, using English instead": "Sprache \"{new_lang}\" ist nicht installiert, Englisch wird stattdessen benutzt",
   "The subtitles are ready for editing. Press OK when you are done.": "Du kannst jetzt die Untertitel bearbeiten. Drücke Enter wenn du fertig bist.",
-  "page_title": "Test"
+  "Drag&Drop": "Ziehe Dateien hierher oder"
 }

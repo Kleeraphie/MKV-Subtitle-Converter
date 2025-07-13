@@ -1,6 +1,6 @@
 // An object to store our loaded translations
 const translations = {};
-let currentLanguage = 'en';
+let currentLanguage = 'de';
 
 async function loadTranslations(lang) {
     if (translations[lang]) {
@@ -28,9 +28,7 @@ function setLanguage(lang) {
 
 // The translation function "t"
 function t(key, lang = currentLanguage) {
-    // Fallback to 'en' if the current language isn't loaded for some reason
-    // const lang = translations[currentLanguage] ? currentLanguage : 'en';
-    return translations[lang]?.[key] || "Test";
+    return translations[lang]?.[key] || "TODO: " + key;
 }
 
 // Export the functions so we can use them in other files

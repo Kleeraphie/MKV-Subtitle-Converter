@@ -29,18 +29,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const languageMappingContainer = document.getElementById('language-mapping-container');
     const languageMappingRows = document.getElementById('language-mapping-rows');
     const addMappingBtn = document.getElementById('add-language-mapping');
-    let languages = {}
+    let languages = []
+    let allIsoCodes = []
 
     // --- Dark Mode Logic ---
     const applyDarkMode = (isDark) => {
         if (isDark) {
             document.documentElement.classList.add('dark');
-            if(sunIcon) sunIcon.classList.add('hidden');
-            if(moonIcon) moonIcon.classList.remove('hidden');
+            if (sunIcon) sunIcon.classList.add('hidden');
+            if (moonIcon) moonIcon.classList.remove('hidden');
         } else {
             document.documentElement.classList.remove('dark');
-            if(sunIcon) sunIcon.classList.remove('hidden');
-            if(moonIcon) moonIcon.classList.add('hidden');
+            if (sunIcon) sunIcon.classList.remove('hidden');
+            if (moonIcon) moonIcon.classList.add('hidden');
         }
     };
 
@@ -60,21 +61,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- File Handling Logic ---
     if (dropArea) {
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-          dropArea.addEventListener(eventName, preventDefaults, false);
-          document.body.addEventListener(eventName, preventDefaults, false);
+            dropArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
         });
 
         function preventDefaults(e) {
-          e.preventDefault();
-          e.stopPropagation();
+            e.preventDefault();
+            e.stopPropagation();
         }
 
         ['dragenter', 'dragover'].forEach(eventName => {
-          dropArea.addEventListener(eventName, () => dropArea.classList.add('bg-blue-50', 'dark:bg-blue-900/50', 'border-blue-500'), false);
+            dropArea.addEventListener(eventName, () => dropArea.classList.add('bg-blue-50', 'dark:bg-blue-900/50', 'border-blue-500'), false);
         });
 
         ['dragleave', 'drop'].forEach(eventName => {
-          dropArea.addEventListener(eventName, () => dropArea.classList.remove('bg-blue-50', 'dark:bg-blue-900/50', 'border-blue-500'), false);
+            dropArea.addEventListener(eventName, () => dropArea.classList.remove('bg-blue-50', 'dark:bg-blue-900/50', 'border-blue-500'), false);
         });
 
         dropArea.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files), false);
@@ -86,10 +87,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function handleFiles(files) {
         if (!files.length) return;
-        
+
         const newFilesToAdd = [];
         for (const newFile of files) {
-            const isDuplicate = uploadedFiles.some(existingFile => 
+            const isDuplicate = uploadedFiles.some(existingFile =>
                 existingFile.name === newFile.name && existingFile.size === newFile.size
             );
 
@@ -98,19 +99,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        uploadedFiles = [...uploadedFiles, ...newFilesToAdd]; 
+        uploadedFiles = [...uploadedFiles, ...newFilesToAdd];
         renderFileList(); // Call a new function to render the list
     }
 
     function renderFileList() {
-        if(fileList) fileList.innerHTML = ''; 
-        
+        if (fileList) fileList.innerHTML = '';
+
         if (uploadedFiles.length > 0) {
-            if(uploadPrompt) uploadPrompt.classList.add('hidden');
-            if(fileList) fileList.classList.remove('hidden');
+            if (uploadPrompt) uploadPrompt.classList.add('hidden');
+            if (fileList) fileList.classList.remove('hidden');
         } else {
-            if(uploadPrompt) uploadPrompt.classList.remove('hidden');
-            if(fileList) fileList.classList.add('hidden');
+            if (uploadPrompt) uploadPrompt.classList.remove('hidden');
+            if (fileList) fileList.classList.add('hidden');
         }
 
         uploadedFiles.forEach((file, index) => {
@@ -132,7 +133,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </button>
                 </div>
                 `;
-            if(fileList) fileList.appendChild(fileElement);
+            if (fileList) fileList.appendChild(fileElement);
         });
 
         document.querySelectorAll('.delete-file-btn').forEach(button => {
@@ -154,7 +155,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Slider Logic ---
     if (brightnessSlider) {
         brightnessSlider.addEventListener('input', (e) => {
-            if(brightnessValue) brightnessValue.textContent = `${e.target.value}%`;
+            if (brightnessValue) brightnessValue.textContent = `${e.target.value}%`;
         });
     }
 
@@ -162,41 +163,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Fetch Languages ---
     const fetchLanguages = async () => {
         try {
-            const response = await fetch('/languages');
+            const response = await fetch('/userLanguages');
             if (!response.ok) {
                 throw new Error(`Language fetching failed: ${response.statusText}`);
             }
             languages = await response.json();
         } catch (error) {
-            console.error("Failed to fetch languages, using fallback:", error);
-            // Fallback to a minimal set of languages in case of an error
-            // TODO: remove
-            languages = {
-                'eng': 'English',
-                'ger': 'German',
-                'fre': 'French'
-            };
+            console.error("Failed to fetch languages:", error);
         }
     };
-    
+
     // Await the languages before setting up the rest of the logic
     await fetchLanguages();
 
-    if (Array.isArray(languages)) {
-        languages = Object.fromEntries(languages.map(code => [code, code]));
+    const fetchIsoCodes = async () => {
+        try {
+            const response = await fetch('/isoCodes');
+            if (!response.ok) {
+                throw new Error(`Iso Codes fetching failed: ${response.statusText}`);
+            }
+
+            allIsoCodes = await response.json();
+        } catch (error) {
+            console.error("Failed to fetch Iso Codes:", error);
+        }
     }
 
-    const createLanguageSelect = (name) => {
+    // Await the IsoCodes before setting up the rest of the logic
+    await fetchIsoCodes();
+
+    const createLanguageSelect = (name, all_langs = false) => {
         const select = document.createElement('select');
-        select.id
         select.name = name;
         select.className = "w-full sm:w-auto flex-1 px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500";
-        for (const [code, name] of Object.entries(languages)) {
+        var langs;
+
+        if (all_langs) {
+            langs = allIsoCodes;
+        } else {
+            langs = languages;
+        }
+
+        langs.forEach((code) => {
             const option = document.createElement('option');
             option.value = code;
-            option.textContent = name;
+            option.textContent = code;
             select.appendChild(option);
-        }
+        });
         return select;
     };
 
@@ -208,22 +221,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         insteadOfText.textContent = t('Instead of');
         insteadOfText.className = 'text-slate-600 dark:text-slate-300';
 
-        const fromSelect = createLanguageSelect('from_lang');
+        const fromSelect = createLanguageSelect('from_lang', true);
 
         const useText = document.createElement('span');
         useText.textContent = t('use');
         useText.className = 'text-slate-600 dark:text-slate-300';
-        
+
         const toSelect = createLanguageSelect('to_lang');
 
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
         deleteBtn.className = 'p-1 text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700';
         deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>';
-        deleteBtn.onclick = () => row.remove();
+        deleteBtn.onclick = () => {
+            console.log(languageMappingRows.children.length)
+            if (languageMappingRows.children.length > 1) {
+                row.remove();
+                showOrHideDelButtons(Array.from(languageMappingRows.children));
+            }
+        }
 
         row.append(insteadOfText, fromSelect, useText, toSelect, deleteBtn);
         languageMappingRows.appendChild(row);
+
+        showOrHideDelButtons(Array.from(languageMappingRows.children));
     };
 
     if (useDifferentLanguagesCheckbox) {
@@ -244,15 +265,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function getVersion() {
-    fetch('/version')
-        .then(response => response.text())
-        .then(version => {
-            const versionElement = document.getElementById('help-version');
-            if (versionElement) {
-                versionElement.textContent = `${version}`;
-            }
-        })
-        .catch(error => console.error('Error fetching version:', error));
+        fetch('/version')
+            .then(response => response.text())
+            .then(version => {
+                const versionElement = document.getElementById('help-version');
+                if (versionElement) {
+                    versionElement.textContent = `${version}`;
+                }
+            })
+            .catch(error => console.error('Error fetching version:', error));
     }
 
     function getTheme() {
@@ -269,11 +290,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             })
             .catch(error => console.error('Error fetching theme:', error));
 
-            // print response.text to console
-            fetch('/theme')
-                .then(response => response.text())
-                .then(theme => console.log('Current theme:', theme))
-                .catch(error => console.error('Error fetching theme:', error));
+        // print response.text to console
+        fetch('/theme')
+            .then(response => response.text())
+            .then(theme => console.log('Current theme:', theme))
+            .catch(error => console.error('Error fetching theme:', error));
     }
 
     function setTheme(theme) {
@@ -284,12 +305,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
             body: theme
         })
-        .then(response => {
-            if (!response.ok) {
-                console.error('Failed to set theme:', response.statusText);
-            }
-        })
-        .catch(error => console.error('Error setting theme:', error));
+            .then(response => {
+                if (!response.ok) {
+                    console.error('Failed to set theme:', response.statusText);
+                }
+            })
+            .catch(error => console.error('Error setting theme:', error));
     }
 
     async function uploadFile(file) {
@@ -363,3 +384,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 });
+
+function showOrHideDelButtons(rows) {
+    rows.forEach((row) => {
+        const deleteBtn = row.querySelector('button');
+        if (rows.length === 1) {
+            deleteBtn.classList.add('hidden');
+        } else {
+            deleteBtn.classList.remove('hidden');
+        }
+    });
+}

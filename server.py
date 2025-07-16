@@ -59,10 +59,17 @@ def check_for_update():
     }
     return make_response(json.dumps(response), 200, {'Content-Type': 'application/json'})
 
-@app.route('/languages')
+@app.route('/userLanguages')
 def get_languages():
     languages = pytesseract.get_languages()
     return make_response(json.dumps(languages), 200, {'Content-Type': 'application/json'})
+
+@app.route('/isoCodes')
+def get_iso_codes():
+    iso_codes = open('gui/web/scripts/iso_codes.txt').readlines()
+    iso_codes = [line.removesuffix('\n') for line in iso_codes]
+    return make_response(json.dumps(iso_codes), 200, {'Content-Type': 'application/json'})
+
 
 @app.route('/upload', methods=['POST'])
 def upload_file():

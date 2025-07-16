@@ -24,6 +24,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const moonIcon = document.getElementById('moon-icon');
     const convertButton = document.getElementById('convert-button');
     let uploadedFiles = [];
+    // --- Language Mapping Elements ---
+    const useDifferentLanguagesCheckbox = document.getElementById('use-different-languages');
+    const languageMappingContainer = document.getElementById('language-mapping-container');
+    const languageMappingRows = document.getElementById('language-mapping-rows');
+    const addMappingBtn = document.getElementById('add-language-mapping');
+    let languages = {}
 
     // --- Dark Mode Logic ---
     const applyDarkMode = (isDark) => {
@@ -152,6 +158,91 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // --- Language Mapping Logic ---
+    // --- Fetch Languages ---
+    const fetchLanguages = async () => {
+        try {
+            const response = await fetch('/languages');
+            if (!response.ok) {
+                throw new Error(`Language fetching failed: ${response.statusText}`);
+            }
+            languages = await response.json();
+        } catch (error) {
+            console.error("Failed to fetch languages, using fallback:", error);
+            // Fallback to a minimal set of languages in case of an error
+            // TODO: remove
+            languages = {
+                'eng': 'English',
+                'ger': 'German',
+                'fre': 'French'
+            };
+        }
+    };
+    
+    // Await the languages before setting up the rest of the logic
+    await fetchLanguages();
+
+    if (Array.isArray(languages)) {
+        languages = Object.fromEntries(languages.map(code => [code, code]));
+    }
+
+    const createLanguageSelect = (name) => {
+        const select = document.createElement('select');
+        select.id
+        select.name = name;
+        select.className = "w-full sm:w-auto flex-1 px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500";
+        for (const [code, name] of Object.entries(languages)) {
+            const option = document.createElement('option');
+            option.value = code;
+            option.textContent = name;
+            select.appendChild(option);
+        }
+        return select;
+    };
+
+    const addMappingRow = () => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-2 animate-fade-in';
+
+        const insteadOfText = document.createElement('span');
+        insteadOfText.textContent = t('Instead of');
+        insteadOfText.className = 'text-slate-600 dark:text-slate-300';
+
+        const fromSelect = createLanguageSelect('from_lang');
+
+        const useText = document.createElement('span');
+        useText.textContent = t('use');
+        useText.className = 'text-slate-600 dark:text-slate-300';
+        
+        const toSelect = createLanguageSelect('to_lang');
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'p-1 text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700';
+        deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>';
+        deleteBtn.onclick = () => row.remove();
+
+        row.append(insteadOfText, fromSelect, useText, toSelect, deleteBtn);
+        languageMappingRows.appendChild(row);
+    };
+
+    if (useDifferentLanguagesCheckbox) {
+        useDifferentLanguagesCheckbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                languageMappingContainer.classList.remove('hidden');
+                if (languageMappingRows.children.length === 0) {
+                    addMappingRow(); // Add one row by default
+                }
+            } else {
+                languageMappingContainer.classList.add('hidden');
+            }
+        });
+    }
+
+    if (addMappingBtn) {
+        addMappingBtn.addEventListener('click', addMappingRow);
+    }
+
     function getVersion() {
     fetch('/version')
         .then(response => response.text())
@@ -231,7 +322,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             keepFiles: document.getElementById('keep-original-mkv').checked,
             keepOldSubs: document.getElementById('keep-copy-old').checked,
             keepNewSubs: document.getElementById('keep-copy-new').checked,
-            useDiffLang: document.getElementById('use-different-languages').checked
+            useDiffLang: document.getElementById('use-different-languages').checked,
+            diffLangs: Array.from(document.querySelectorAll('#language-mapping-rows > div')).map(row => {
+                const fromLang = row.querySelector('select[name="from_lang"]').value;
+                const toLang = row.querySelector('select[name="to_lang"]').value;
+                return { from: fromLang, to: toLang };
+            })
         };
 
         try {

@@ -5,6 +5,7 @@ import os
 import logging
 import requests
 from packaging.version import Version
+import pytesseract
 
 app = Flask(__name__)
 
@@ -52,16 +53,16 @@ def check_for_update():
     except: # if there is no internet connection or the request fails
         update_available = False
 
-        if update_available:
-            print(f"Update available: {latest_version}")
-        else:
-            print("No update available or unable to check for updates.")
-
     response = {
         'updateAvailable': update_available,
         'latestVersion': latest_version if update_available else None
     }
     return make_response(json.dumps(response), 200, {'Content-Type': 'application/json'})
+
+@app.route('/languages')
+def get_languages():
+    languages = pytesseract.get_languages()
+    return make_response(json.dumps(languages), 200, {'Content-Type': 'application/json'})
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -89,6 +90,12 @@ def convert():
     keep_copy_old = data.get('keepOldSubs', False)
     keep_copy_new = data.get('keepNewSubs', False)
     use_different_languages = data.get('useDiffLang', False)
+    different_languages = data.get('diffLangs', [])
+    different_languages = [
+        f'{lang['from']} -> {lang['to']}' for lang in different_languages
+    ] if use_different_languages else []
+
+    print(different_languages)
 
     print(uploaded_files)
     

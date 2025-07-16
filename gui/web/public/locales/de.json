@@ -82,5 +82,7 @@
   "Language \"{new_lang}\" is not installed, using \"{lang_code}\" instead": "Sprache \"{new_lang}\" ist nicht installiert, \"{lang_code}\" wird stattdessen benutzt",
   "Language \"{lang_code}\" is not installed, using English instead": "Sprache \"{new_lang}\" ist nicht installiert, Englisch wird stattdessen benutzt",
   "The subtitles are ready for editing. Press OK when you are done.": "Du kannst jetzt die Untertitel bearbeiten. Drücke Enter wenn du fertig bist.",
-  "Drag&Drop": "Ziehe Dateien hierher oder"
+  "Drag&Drop": "Ziehe Dateien hierher oder",
+  "Instead of": "Anstelle von",
+  "use": "benutze"
 }

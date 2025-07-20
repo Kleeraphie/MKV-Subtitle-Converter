@@ -43,7 +43,7 @@
   "Keep a copy of the new subtitle files: ": "Kopie der neuen Untertitel behalten: ",
   "You can save the new subtitle files. This way you can easily edit them later.": "Du kannst die neuen Untertitel speichern. So kannst du sie einfacher später bearbeiten.",
   "Use different languages for some subtitles: ": "Eine andere Sprache für einige Untertitel verwenden: ",
-  "help.language": "Das Programm kann eine andere Sprache zum Erkennen des Texts in einem Untertitel nutzen als die Datei angibt. Das ist nützlich, da z.B. einige englische Untertitel Buchstaben wie ä, ö oder ü enthalten. Dann kann man 'Deutsch' als Sprache verwenden, da das deutsche Alphabet alle Buchstaben des englischen Alphabets enthält + diese Umlaute. Änderungen werden durch eine neue Zeile getrennt und haben dieses Format: alte Sprache -> neue Sprache (z.B. eng -> deu).",
+  "help.language": "Das Programm kann eine andere Sprache zum Erkennen des Texts in einem Untertitel nutzen als die Datei angibt. Das ist nützlich, da z.B. einige englische Untertitel Buchstaben wie ä, ö oder ü enthalten. Dann kann man 'Deutsch' als Sprache verwenden, da das deutsche Alphabet alle Buchstaben des englischen Alphabets enthält + diese Umlaute.",
   "Allowed text color brightness deviation: ": "Erlaubter Unterschied in der Helligkeit der Schrift: ",
   "help.brightness": "Hier kannst du den maximalen Unterschied der Helligkeit in der Schrift von den alten Untertiteln einstellen. Das ist nützlich, da einige Bilder mehr Rauschen enthalten als andere. Der Wert sollte so niedrig wie möglich sein, aber der Text sollte nicht zu dünn werden.",
   "Update available": "Update verfügbar",
@@ -84,5 +84,6 @@
   "The subtitles are ready for editing. Press OK when you are done.": "Du kannst jetzt die Untertitel bearbeiten. Drücke Enter wenn du fertig bist.",
   "Drag&Drop": "Ziehe Dateien hierher oder",
   "Instead of": "Anstelle von",
-  "use": "benutze"
+  "use": "benutze",
+  "Add mapping": "Änderung hinzufügen"
 }

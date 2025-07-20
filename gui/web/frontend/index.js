@@ -1,6 +1,20 @@
 import { filesize } from "https://esm.sh/filesize";
 import { loadTranslations, setLanguage, t } from './i18n.js';
 
+let languages = []
+let allIsoCodes = []
+// --- Language Mapping Elements ---
+const useDifferentLanguagesCheckbox = document.getElementById('use-different-languages');
+const languageMappingContainer = document.getElementById('language-mapping-container');
+const languageMappingRows = document.getElementById('language-mapping-rows');
+const addMappingBtn = document.getElementById('add-language-mapping');
+
+const fileList = document.getElementById('file-list');
+const uploadPrompt = document.getElementById('upload-prompt');
+const sunIcon = document.getElementById('sun-icon');
+const moonIcon = document.getElementById('moon-icon');
+let uploadedFiles = [];
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Set default language and load translations
     const userLanguage = 'de'; // or get from user settings
@@ -15,35 +29,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- DOM Elements ---
     const dropArea = document.getElementById('drop-area');
     const fileInput = document.getElementById('file-input');
-    const fileList = document.getElementById('file-list');
-    const uploadPrompt = document.getElementById('upload-prompt');
     const brightnessSlider = document.getElementById('brightness-slider');
     const brightnessValue = document.getElementById('brightness-value');
     const darkModeToggle = document.getElementById('dark-mode-toggle');
-    const sunIcon = document.getElementById('sun-icon');
-    const moonIcon = document.getElementById('moon-icon');
     const convertButton = document.getElementById('convert-button');
-    let uploadedFiles = [];
-    // --- Language Mapping Elements ---
-    const useDifferentLanguagesCheckbox = document.getElementById('use-different-languages');
-    const languageMappingContainer = document.getElementById('language-mapping-container');
-    const languageMappingRows = document.getElementById('language-mapping-rows');
-    const addMappingBtn = document.getElementById('add-language-mapping');
-    let languages = []
-    let allIsoCodes = []
-
-    // --- Dark Mode Logic ---
-    const applyDarkMode = (isDark) => {
-        if (isDark) {
-            document.documentElement.classList.add('dark');
-            if (sunIcon) sunIcon.classList.add('hidden');
-            if (moonIcon) moonIcon.classList.remove('hidden');
-        } else {
-            document.documentElement.classList.remove('dark');
-            if (sunIcon) sunIcon.classList.remove('hidden');
-            if (moonIcon) moonIcon.classList.add('hidden');
-        }
-    };
+    
 
     if (darkModeToggle) {
         darkModeToggle.addEventListener('click', () => {
@@ -85,73 +75,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
     }
 
-    function handleFiles(files) {
-        if (!files.length) return;
-
-        const newFilesToAdd = [];
-        for (const newFile of files) {
-            const isDuplicate = uploadedFiles.some(existingFile =>
-                existingFile.name === newFile.name && existingFile.size === newFile.size
-            );
-
-            if (!isDuplicate) {
-                newFilesToAdd.push(newFile);
-            }
-        }
-
-        uploadedFiles = [...uploadedFiles, ...newFilesToAdd];
-        renderFileList(); // Call a new function to render the list
-    }
-
-    function renderFileList() {
-        if (fileList) fileList.innerHTML = '';
-
-        if (uploadedFiles.length > 0) {
-            if (uploadPrompt) uploadPrompt.classList.add('hidden');
-            if (fileList) fileList.classList.remove('hidden');
-        } else {
-            if (uploadPrompt) uploadPrompt.classList.remove('hidden');
-            if (fileList) fileList.classList.add('hidden');
-        }
-
-        uploadedFiles.forEach((file, index) => {
-            const fileElement = document.createElement('div');
-            fileElement.className = 'flex items-center justify-between bg-white dark:bg-slate-700 p-2 rounded-md border border-slate-200 dark:border-slate-600 mb-2';
-            fileElement.innerHTML = `
-                <div class="flex items-center overflow-hidden">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4 text-slate-500 dark:text-slate-400">
-                        <path fill-rule="evenodd" d="M1 3.5A1.5 1.5 0 0 1 2.5 2h11A1.5 1.5 0 0 1 15 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9Zm1.5.25a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1Zm3.75-.25a.25.25 0 0 0-.25.25v3.5c0 .138.112.25.25.25h3.5a.25.25 0 0 0 .25-.25v-3.5a.25.25 0 0 0-.25-.25h-3.5ZM6 8.75a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.5a.25.25 0 0 1-.25.25h-3.5a.25.25 0 0 1-.25-.25v-3.5Zm5.75-5.25a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5ZM2.5 11.25a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1Zm9.25-.25a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5ZM2.5 8.75a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1Zm9.25-.25a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5ZM2.5 6.25A.25.25 0 0 1 2.75 6h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1ZM11.75 6a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5Z" clip-rule="evenodd" />
-                    </svg>
-                    <span class="ml-3 text-sm text-slate-700 dark:text-slate-200 truncate">${file.name}</span>
-                </div>
-                <div class="flex items-center">
-                    <span class="text-xs text-slate-500 dark:text-slate-400 flex-shrink-0 ml-2">${filesize(file.size)}</span>
-                    <button class="delete-file-btn ml-3 p-1 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors duration-200" data-index="${index}" title="Datei entfernen">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
-                            <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14Zm2.78-4.22a.75.75 0 0 0 0-1.06L9.06 8l1.72-1.72a.75.75 0 0 0-1.06-1.06L8 6.94l-1.72-1.72a.75.75 0 0 0-1.06 1.06L6.94 8l-1.72 1.72a.75.75 0 1 0 1.06 1.06L8 9.06l1.72 1.72a.75.75 0 0 0 1.06 0Z" clip-rule="evenodd" />
-                        </svg>
-                    </button>
-                </div>
-                `;
-            if (fileList) fileList.appendChild(fileElement);
-        });
-
-        document.querySelectorAll('.delete-file-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const indexToDelete = parseInt(e.currentTarget.dataset.index);
-                deleteFile(indexToDelete);
-            });
-        });
-    }
-
-    // New function to delete a file
-    function deleteFile(index) {
-        if (index > -1 && index < uploadedFiles.length) {
-            uploadedFiles.splice(index, 1); // Remove the file at the given index
-            renderFileList(); // Re-render the list
-        }
-    }
-
     // --- Slider Logic ---
     if (brightnessSlider) {
         brightnessSlider.addEventListener('input', (e) => {
@@ -160,92 +83,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // --- Language Mapping Logic ---
-    // --- Fetch Languages ---
-    const fetchLanguages = async () => {
-        try {
-            const response = await fetch('/userLanguages');
-            if (!response.ok) {
-                throw new Error(`Language fetching failed: ${response.statusText}`);
-            }
-            languages = await response.json();
-        } catch (error) {
-            console.error("Failed to fetch languages:", error);
-        }
-    };
-
     // Await the languages before setting up the rest of the logic
     await fetchLanguages();
-
-    const fetchIsoCodes = async () => {
-        try {
-            const response = await fetch('/isoCodes');
-            if (!response.ok) {
-                throw new Error(`Iso Codes fetching failed: ${response.statusText}`);
-            }
-
-            allIsoCodes = await response.json();
-        } catch (error) {
-            console.error("Failed to fetch Iso Codes:", error);
-        }
-    }
-
     // Await the IsoCodes before setting up the rest of the logic
     await fetchIsoCodes();
-
-    const createLanguageSelect = (name, all_langs = false) => {
-        const select = document.createElement('select');
-        select.name = name;
-        select.className = "w-full sm:w-auto flex-1 px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500";
-        var langs;
-
-        if (all_langs) {
-            langs = allIsoCodes;
-        } else {
-            langs = languages;
-        }
-
-        langs.forEach((code) => {
-            const option = document.createElement('option');
-            option.value = code;
-            option.textContent = code;
-            select.appendChild(option);
-        });
-        return select;
-    };
-
-    const addMappingRow = () => {
-        const row = document.createElement('div');
-        row.className = 'flex items-center gap-2 animate-fade-in';
-
-        const insteadOfText = document.createElement('span');
-        insteadOfText.textContent = t('Instead of');
-        insteadOfText.className = 'text-slate-600 dark:text-slate-300';
-
-        const fromSelect = createLanguageSelect('from_lang', true);
-
-        const useText = document.createElement('span');
-        useText.textContent = t('use');
-        useText.className = 'text-slate-600 dark:text-slate-300';
-
-        const toSelect = createLanguageSelect('to_lang');
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.type = 'button';
-        deleteBtn.className = 'p-1 text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700';
-        deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>';
-        deleteBtn.onclick = () => {
-            console.log(languageMappingRows.children.length)
-            if (languageMappingRows.children.length > 1) {
-                row.remove();
-                showOrHideDelButtons(Array.from(languageMappingRows.children));
-            }
-        }
-
-        row.append(insteadOfText, fromSelect, useText, toSelect, deleteBtn);
-        languageMappingRows.appendChild(row);
-
-        showOrHideDelButtons(Array.from(languageMappingRows.children));
-    };
 
     if (useDifferentLanguagesCheckbox) {
         useDifferentLanguagesCheckbox.addEventListener('change', (e) => {
@@ -264,126 +105,286 @@ document.addEventListener('DOMContentLoaded', async () => {
         addMappingBtn.addEventListener('click', addMappingRow);
     }
 
-    function getVersion() {
-        fetch('/version')
-            .then(response => response.text())
-            .then(version => {
-                const versionElement = document.getElementById('help-version');
-                if (versionElement) {
-                    versionElement.textContent = `${version}`;
-                }
-            })
-            .catch(error => console.error('Error fetching version:', error));
-    }
-
-    function getTheme() {
-        fetch('/theme')
-            .then(response => response.text())
-            .then(theme => {
-                // select theme in the dropdown
-                const themeSelect = document.getElementById('popup-theme');
-                if (themeSelect) {
-                    themeSelect.value = theme;
-                }
-                // apply dark mode based on the theme
-                applyDarkMode(theme === 'dark');
-            })
-            .catch(error => console.error('Error fetching theme:', error));
-
-        // print response.text to console
-        fetch('/theme')
-            .then(response => response.text())
-            .then(theme => console.log('Current theme:', theme))
-            .catch(error => console.error('Error fetching theme:', error));
-    }
-
-    function setTheme(theme) {
-        fetch('/theme', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain'
-            },
-            body: theme
-        })
-            .then(response => {
-                if (!response.ok) {
-                    console.error('Failed to set theme:', response.statusText);
-                }
-            })
-            .catch(error => console.error('Error setting theme:', error));
-    }
-
-    async function uploadFile(file) {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        try {
-            const response = await fetch('/upload', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) {
-                console.error('File upload failed:', response.statusText);
-            }
-        } catch (error) {
-            console.error('Error uploading file:', error);
-        }
-    }
-
-    async function startConversion() {
-        for (const file of uploadedFiles) {
-            await uploadFile(file);
-        }
-
-        const settings = {
-            brightness: document.getElementById('brightness-slider').value,
-            edit: document.getElementById('edit-before-muxing').checked,
-            saveImages: document.getElementById('save-pgs-images').checked,
-            keepFiles: document.getElementById('keep-original-mkv').checked,
-            keepOldSubs: document.getElementById('keep-copy-old').checked,
-            keepNewSubs: document.getElementById('keep-copy-new').checked,
-            useDiffLang: document.getElementById('use-different-languages').checked,
-            diffLangs: Array.from(document.querySelectorAll('#language-mapping-rows > div')).map(row => {
-                const fromLang = row.querySelector('select[name="from_lang"]').value;
-                const toLang = row.querySelector('select[name="to_lang"]').value;
-                return { from: fromLang, to: toLang };
-            })
-        };
-
-        try {
-            const response = await fetch('/convert', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(settings)
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                alert('Konvertierung erfolgreich!');
-            } else {
-                alert('Fehler bei der Konvertierung: ' + data.error);
-            }
-        } catch (error) {
-            console.error('Error during conversion:', error);
-        }
-    }
-
     // Fetch the version when the page loads
     getVersion();
     getTheme();
 
     convertButton.addEventListener('click', startConversion);
-
-    function applyTranslations() {
-        document.querySelectorAll('[i18n]').forEach(element => {
-            const key = element.getAttribute('i18n');
-            element.textContent = t(key);
-        });
-    }
 });
+
+// --- Dark Mode Logic ---
+const applyDarkMode = (isDark) => {
+    if (isDark) {
+        document.documentElement.classList.add('dark');
+        if (sunIcon) sunIcon.classList.add('hidden');
+        if (moonIcon) moonIcon.classList.remove('hidden');
+    } else {
+        document.documentElement.classList.remove('dark');
+        if (sunIcon) sunIcon.classList.remove('hidden');
+        if (moonIcon) moonIcon.classList.add('hidden');
+    }
+};
+
+function handleFiles(files) {
+    if (!files.length) return;
+
+    const newFilesToAdd = [];
+    for (const newFile of files) {
+        const isDuplicate = uploadedFiles.some(existingFile =>
+            existingFile.name === newFile.name && existingFile.size === newFile.size
+        );
+
+        if (!isDuplicate) {
+            newFilesToAdd.push(newFile);
+        }
+    }
+
+    uploadedFiles = [...uploadedFiles, ...newFilesToAdd];
+    renderFileList(); // Call a new function to render the list
+}
+
+function renderFileList() {
+    if (fileList) fileList.innerHTML = '';
+
+    if (uploadedFiles.length > 0) {
+        if (uploadPrompt) uploadPrompt.classList.add('hidden');
+        if (fileList) fileList.classList.remove('hidden');
+    } else {
+        if (uploadPrompt) uploadPrompt.classList.remove('hidden');
+        if (fileList) fileList.classList.add('hidden');
+    }
+
+    uploadedFiles.forEach((file, index) => {
+        const fileElement = document.createElement('div');
+        fileElement.className = 'flex items-center justify-between bg-white dark:bg-slate-700 p-2 rounded-md border border-slate-200 dark:border-slate-600 mb-2';
+        fileElement.innerHTML = `
+            <div class="flex items-center overflow-hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4 text-slate-500 dark:text-slate-400">
+                    <path fill-rule="evenodd" d="M1 3.5A1.5 1.5 0 0 1 2.5 2h11A1.5 1.5 0 0 1 15 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9Zm1.5.25a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1Zm3.75-.25a.25.25 0 0 0-.25.25v3.5c0 .138.112.25.25.25h3.5a.25.25 0 0 0 .25-.25v-3.5a.25.25 0 0 0-.25-.25h-3.5ZM6 8.75a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.5a.25.25 0 0 1-.25.25h-3.5a.25.25 0 0 1-.25-.25v-3.5Zm5.75-5.25a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5ZM2.5 11.25a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1Zm9.25-.25a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5ZM2.5 8.75a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1Zm9.25-.25a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5ZM2.5 6.25A.25.25 0 0 1 2.75 6h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1ZM11.75 6a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5Z" clip-rule="evenodd" />
+                </svg>
+                <span class="ml-3 text-sm text-slate-700 dark:text-slate-200 truncate">${file.name}</span>
+            </div>
+            <div class="flex items-center">
+                <span class="text-xs text-slate-500 dark:text-slate-400 flex-shrink-0 ml-2">${filesize(file.size)}</span>
+                <button class="delete-file-btn ml-3 p-1 rounded-full text-slate-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors duration-200" data-index="${index}" title="Datei entfernen">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4">
+                        <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14Zm2.78-4.22a.75.75 0 0 0 0-1.06L9.06 8l1.72-1.72a.75.75 0 0 0-1.06-1.06L8 6.94l-1.72-1.72a.75.75 0 0 0-1.06 1.06L6.94 8l-1.72 1.72a.75.75 0 1 0 1.06 1.06L8 9.06l1.72 1.72a.75.75 0 0 0 1.06 0Z" clip-rule="evenodd" />
+                    </svg>
+                </button>
+            </div>
+            `;
+        if (fileList) fileList.appendChild(fileElement);
+    });
+
+    document.querySelectorAll('.delete-file-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const indexToDelete = parseInt(e.currentTarget.dataset.index);
+            deleteFile(indexToDelete);
+        });
+    });
+}
+
+function deleteFile(index) {
+    if (index > -1 && index < uploadedFiles.length) {
+        uploadedFiles.splice(index, 1); // Remove the file at the given index
+        renderFileList(); // Re-render the list
+    }
+}
+
+// --- Fetch Languages ---
+const fetchLanguages = async () => {
+    try {
+        const response = await fetch('/userLanguages');
+        if (!response.ok) {
+            throw new Error(`Language fetching failed: ${response.statusText}`);
+        }
+        languages = await response.json();
+    } catch (error) {
+        console.error("Failed to fetch languages:", error);
+    }
+};
+
+const fetchIsoCodes = async () => {
+    try {
+        const response = await fetch('/isoCodes');
+        if (!response.ok) {
+            throw new Error(`Iso Codes fetching failed: ${response.statusText}`);
+        }
+
+        allIsoCodes = await response.json();
+    } catch (error) {
+        console.error("Failed to fetch Iso Codes:", error);
+    }
+}
+
+const createLanguageSelect = (name, all_langs = false) => {
+    const select = document.createElement('select');
+    select.name = name;
+    select.className = "w-full sm:w-auto flex-1 px-3 py-1.5 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500";
+    var langs;
+
+    if (all_langs) {
+        langs = allIsoCodes;
+    } else {
+        langs = languages;
+    }
+
+    langs.forEach((code) => {
+        const option = document.createElement('option');
+        option.value = code;
+        option.textContent = code;
+        select.appendChild(option);
+    });
+    return select;
+};
+
+const addMappingRow = () => {
+    // TODO: fix padding
+    const row = document.createElement('div');
+    row.className = 'flex items-center gap-2 animate-fade-in';
+
+    const insteadOfText = document.createElement('span');
+    insteadOfText.textContent = t('Instead of');
+    insteadOfText.className = 'text-slate-600 dark:text-slate-300';
+
+    const fromSelect = createLanguageSelect('from_lang', true);
+
+    const useText = document.createElement('span');
+    useText.textContent = t('use');
+    useText.className = 'text-slate-600 dark:text-slate-300';
+
+    const toSelect = createLanguageSelect('to_lang');
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'p-1 text-slate-400 hover:text-red-500 dark:hover:text-red-400 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700';
+    deleteBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>';
+    deleteBtn.onclick = () => {
+        if (languageMappingRows.children.length > 1) {
+            row.remove();
+            showOrHideDelButtons(Array.from(languageMappingRows.children));
+        }
+    }
+
+    row.append(insteadOfText, fromSelect, useText, toSelect, deleteBtn);
+    languageMappingRows.appendChild(row);
+
+    showOrHideDelButtons(Array.from(languageMappingRows.children));
+};
+
+function getVersion() {
+    fetch('/version')
+        .then(response => response.text())
+        .then(version => {
+            const versionElement = document.getElementById('help-version');
+            if (versionElement) {
+                versionElement.textContent = `${version}`;
+            }
+        })
+        .catch(error => console.error('Error fetching version:', error));
+}
+
+function getTheme() {
+    fetch('/theme')
+        .then(response => response.text())
+        .then(theme => {
+            // select theme in the dropdown
+            const themeSelect = document.getElementById('popup-theme');
+            if (themeSelect) {
+                themeSelect.value = theme;
+            }
+            // apply dark mode based on the theme
+            applyDarkMode(theme === 'dark');
+        })
+        .catch(error => console.error('Error fetching theme:', error));
+
+    // print response.text to console
+    fetch('/theme')
+        .then(response => response.text())
+        .then(theme => console.log('Current theme:', theme))
+        .catch(error => console.error('Error fetching theme:', error));
+}
+
+function setTheme(theme) {
+    fetch('/theme', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'text/plain'
+        },
+        body: theme
+    })
+        .then(response => {
+            if (!response.ok) {
+                console.error('Failed to set theme:', response.statusText);
+            }
+        })
+        .catch(error => console.error('Error setting theme:', error));
+}
+
+async function uploadFile(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('/upload', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            console.error('File upload failed:', response.statusText);
+        }
+    } catch (error) {
+        console.error('Error uploading file:', error);
+    }
+}
+
+async function startConversion() {
+    for (const file of uploadedFiles) {
+        await uploadFile(file);
+    }
+
+    const settings = {
+        brightness: document.getElementById('brightness-slider').value,
+        edit: document.getElementById('edit-before-muxing').checked,
+        saveImages: document.getElementById('save-pgs-images').checked,
+        keepFiles: document.getElementById('keep-original-mkv').checked,
+        keepOldSubs: document.getElementById('keep-copy-old').checked,
+        keepNewSubs: document.getElementById('keep-copy-new').checked,
+        useDiffLang: document.getElementById('use-different-languages').checked,
+        diffLangs: Array.from(document.querySelectorAll('#language-mapping-rows > div')).map(row => {
+            const fromLang = row.querySelector('select[name="from_lang"]').value;
+            const toLang = row.querySelector('select[name="to_lang"]').value;
+            return { from: fromLang, to: toLang };
+        })
+    };
+
+    try {
+        const response = await fetch('/convert', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(settings)
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            alert('Konvertierung erfolgreich!');
+        } else {
+            alert('Fehler bei der Konvertierung: ' + data.error);
+        }
+    } catch (error) {
+        console.error('Error during conversion:', error);
+    }
+}
+
+function applyTranslations() {
+    document.querySelectorAll('[i18n]').forEach(element => {
+        const key = element.getAttribute('i18n');
+        element.textContent = t(key);
+    });
+}
 
 function showOrHideDelButtons(rows) {
     rows.forEach((row) => {

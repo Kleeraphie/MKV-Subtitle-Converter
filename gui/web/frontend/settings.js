@@ -31,3 +31,20 @@ document.getElementById('close-settings-help').addEventListener('click', functio
 document.getElementById('close-settings-help-2').addEventListener('click', function() {
     document.getElementById('settings-help-modal').classList.add('hidden');
 });
+
+function getUserConfig() {
+    fetch('/userSettings')
+        .then(response => response.json())
+        .then(config => {
+            console.log('User config loaded:', config);
+            // Apply user config settings to the UI
+            document.getElementById('popup-language').value = config.General.sLanguage;
+            document.getElementById('popup-updates').checked = config.General.bUpdates;
+            document.getElementById('popup-theme').value = config.General.sTheme;
+        })
+        .catch(error => console.error('Error loading user config:', error));
+}
+document.addEventListener('DOMContentLoaded', function() {
+    // Load user configuration
+    getUserConfig();
+});

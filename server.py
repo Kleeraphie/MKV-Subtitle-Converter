@@ -111,5 +111,12 @@ def convert():
     })
     return make_response(response, 200, {'Content-Type': 'application/json'})
 
+@app.route('/userSettings')
+def get_user_settings():
+    config = Config()
+    settings = config.get_json()
+    response = make_response(json.dumps(settings), 200, {'Content-Type': 'application/json'})
+    return response
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

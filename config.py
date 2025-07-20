@@ -198,3 +198,15 @@ class Config:
             theme = 'Dark' if darkdetect.isDark() else 'Light'
 
         return theme.lower()
+    
+    def get_json(self) -> str:
+        data = {}
+
+        for setting in self.Settings:
+            section = self._get_section(setting)
+            if section not in data:
+                data[section] = {}
+            data[section][setting.value] = self.get_value(setting)
+
+        return data
+

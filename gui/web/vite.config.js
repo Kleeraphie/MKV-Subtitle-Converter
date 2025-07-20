@@ -15,7 +15,8 @@ export default defineConfig({
       '/upload': 'http://127.0.0.1:5000',
       '/convert': 'http://127.0.0.1:5000',
       '/userLanguages': 'http://127.0.0.1:5000',
-      '/isoCodes': 'http://127.0.0.1:5000'
+      '/isoCodes': 'http://127.0.0.1:5000',
+      '/userSettings': 'http://127.0.0.1:5000'
     }
   },
   build: {

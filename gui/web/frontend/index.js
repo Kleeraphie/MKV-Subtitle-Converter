@@ -104,12 +104,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (addMappingBtn) {
         addMappingBtn.addEventListener('click', addMappingRow);
     }
+    
+    convertButton.addEventListener('click', startConversion);
 
     // Fetch the version when the page loads
     getVersion();
     getTheme();
-
-    convertButton.addEventListener('click', startConversion);
 });
 
 // --- Dark Mode Logic ---

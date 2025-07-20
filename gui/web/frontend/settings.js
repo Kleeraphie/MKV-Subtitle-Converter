@@ -44,7 +44,27 @@ function getUserConfig() {
         })
         .catch(error => console.error('Error loading user config:', error));
 }
-document.addEventListener('DOMContentLoaded', function() {
-    // Load user configuration
-    getUserConfig();
+
+getUserConfig();
+
+document.getElementById('save-settings').addEventListener('click', function() {
+    const settings = {
+        General: {
+            sLanguage: document.getElementById('popup-language').value,
+            bUpdates: document.getElementById('popup-updates').checked,
+            sTheme: document.getElementById('popup-theme').value
+        }
+    };
+
+    fetch('/userSettings', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(settings)
+    })
+    .then(() => {
+        document.getElementById('settings-modal').classList.add('hidden');
+    })
+    .catch(error => console.error('Error saving settings:', error));
 });

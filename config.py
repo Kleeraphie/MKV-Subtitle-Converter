@@ -210,3 +210,14 @@ class Config:
 
         return data
 
+    def from_json(self, config: dict):
+        settings = {}
+
+        for section, values in config.items():
+            for key, value in values.items():
+                setting = self.Settings(key)
+                settings[setting] = value
+
+        self.save_settings(settings)
+        self.save_config()
+        self.logger.debug('Config loaded from JSON.')

@@ -111,12 +111,18 @@ def convert():
     })
     return make_response(response, 200, {'Content-Type': 'application/json'})
 
-@app.route('/userSettings')
-def get_user_settings():
-    config = Config()
-    settings = config.get_json()
-    response = make_response(json.dumps(settings), 200, {'Content-Type': 'application/json'})
-    return response
+@app.route('/userSettings', methods=['GET', 'POST'])
+def user_settings():  # TODO: rename function
+    if request.method == 'GET':
+        config = Config()
+        settings = config.get_json()
+        response = make_response(json.dumps(settings), 200, {'Content-Type': 'application/json'})
+        return response
+    else:
+        config = Config()
+        print(type(request.json))
+        config.from_json(request.json)
+        return make_response("Settings updated successfully", 200)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

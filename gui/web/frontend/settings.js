@@ -36,7 +36,7 @@ function getUserConfig() {
     fetch('/userSettings')
         .then(response => response.json())
         .then(config => {
-            console.log('User config loaded:', config);
+            console.log('User config loaded.');
             // Apply user config settings to the UI
             document.getElementById('popup-language').value = config.General.sLanguage;
             document.getElementById('popup-updates').checked = config.General.bUpdates;

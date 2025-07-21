@@ -9,7 +9,7 @@ import pytesseract
 
 app = Flask(__name__)
 
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = 'input'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
@@ -22,10 +22,15 @@ def get_version():
     response.mimetype = "text/plain"
     return response
 
+# TODO: remove in favor of userSettings
 @app.route('/theme', methods=['GET', 'POST'])
-def get_theme():
+def theme():
     config = Config()
-    if request.method == 'POST':
+    if request.method == 'GET':
+        response = make_response(config.get_theme(), 200)
+        response.mimetype = "text/plain"
+        return response
+    else:
         # Assuming the theme is in plain text format
         theme = request.data.decode('utf-8')
         settings = {
@@ -35,10 +40,6 @@ def get_theme():
         config.save_settings(settings)
         config.save_config()
         return make_response("Theme updated successfully", 200)  # Add this line
-    else:
-        response = make_response(config.get_theme(), 200)
-        response.mimetype = "text/plain"
-        return response
 
 @app.route('/checkForUpdate')
 def check_for_update():
@@ -112,7 +113,7 @@ def convert():
     return make_response(response, 200, {'Content-Type': 'application/json'})
 
 @app.route('/userSettings', methods=['GET', 'POST'])
-def user_settings():  # TODO: rename function
+def user_settings():
     if request.method == 'GET':
         config = Config()
         settings = config.get_json()
@@ -123,6 +124,25 @@ def user_settings():  # TODO: rename function
         print(type(request.json))
         config.from_json(request.json)
         return make_response("Settings updated successfully", 200)
+    
+def build_tree(root_dir):
+    tree = {}
+    for entry in os.scandir(root_dir):
+        if entry.is_file():
+            tree[entry.name] = {
+                'size': os.path.getsize(entry.path),
+                'path': entry.path
+            }
+        elif entry.is_dir():
+            tree[entry.name] = build_tree(entry.path)
+    return tree
+
+@app.route('/files')
+def video_files():
+    # iterate over UPLOAD_FOLDER and put all files with the size in a json dir. Keep the dir structure.
+    files = build_tree(app.config['UPLOAD_FOLDER'])
+    response = make_response(json.dumps(files), 200, {'Content-Type': 'application/json'})
+    return response
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

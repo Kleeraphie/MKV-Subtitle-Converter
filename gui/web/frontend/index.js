@@ -9,11 +9,20 @@ const languageMappingContainer = document.getElementById('language-mapping-conta
 const languageMappingRows = document.getElementById('language-mapping-rows');
 const addMappingBtn = document.getElementById('add-language-mapping');
 
+const fileInput = document.getElementById('file-input');
 const fileList = document.getElementById('file-list');
 const uploadPrompt = document.getElementById('upload-prompt');
 const sunIcon = document.getElementById('sun-icon');
 const moonIcon = document.getElementById('moon-icon');
 let uploadedFiles = [];
+let availableVideos = {};
+
+// Elements for file browser modal
+const fileBrowserModal = document.getElementById('file-browser-modal');
+const availableVideosContainer = document.getElementById('available-videos-container');
+const closeFileBrowserBtn = document.getElementById('close-file-browser');
+const closeFileBrowserBtn2 = document.getElementById('close-file-browser-2');
+
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Set default language and load translations
@@ -27,8 +36,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     setLanguage(userLanguage);
 
     // --- DOM Elements ---
-    const dropArea = document.getElementById('drop-area');
-    const fileInput = document.getElementById('file-input');
     const brightnessSlider = document.getElementById('brightness-slider');
     const brightnessValue = document.getElementById('brightness-value');
     const darkModeToggle = document.getElementById('dark-mode-toggle');
@@ -49,30 +56,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     applyDarkMode(savedMode);
 
     // --- File Handling Logic ---
-    if (dropArea) {
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, preventDefaults, false);
-            document.body.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropArea.addEventListener(eventName, () => dropArea.classList.add('bg-blue-50', 'dark:bg-blue-900/50', 'border-blue-500'), false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, () => dropArea.classList.remove('bg-blue-50', 'dark:bg-blue-900/50', 'border-blue-500'), false);
-        });
-
-        dropArea.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files), false);
-    }
-
     if (fileInput) {
-        fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+        // We listen on the label, not the hidden input itself
+        fileInput.parentElement.addEventListener('click', (e) => {
+            // Only open modal if not clicking a delete button or inside the file list
+            if (e.target.closest('.delete-file-btn') || e.target.closest('#file-list')) return;
+            e.preventDefault();
+            if (fileBrowserModal) {
+                fileBrowserModal.classList.remove('hidden');
+            }
+        });
+    }
+    
+    // --- NEU: Event-Listener zum Schließen des Modals ---
+    if (closeFileBrowserBtn) {
+        closeFileBrowserBtn.addEventListener('click', () => fileBrowserModal.classList.add('hidden'));
+    }
+    if (closeFileBrowserBtn2) {
+        closeFileBrowserBtn2.addEventListener('click', () => fileBrowserModal.classList.add('hidden'));
     }
 
     // --- Slider Logic ---
@@ -105,11 +106,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         addMappingBtn.addEventListener('click', addMappingRow);
     }
     
-    convertButton.addEventListener('click', startConversion);
+    if(convertButton) {
+        convertButton.addEventListener('click', startConversion);
+    }
 
     // Fetch the version when the page loads
     getVersion();
     getTheme();
+    fetchVideos();
 });
 
 // --- Dark Mode Logic ---
@@ -155,14 +159,16 @@ function renderFileList() {
     }
 
     uploadedFiles.forEach((file, index) => {
+        const truncatedName = truncateMiddle(file.name, 48);
+        
         const fileElement = document.createElement('div');
         fileElement.className = 'flex items-center justify-between bg-white dark:bg-slate-700 p-2 rounded-md border border-slate-200 dark:border-slate-600 mb-2';
         fileElement.innerHTML = `
-            <div class="flex items-center overflow-hidden">
+            <div class="flex items-center overflow-hidden" title="${file.name}">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-4 text-slate-500 dark:text-slate-400">
                     <path fill-rule="evenodd" d="M1 3.5A1.5 1.5 0 0 1 2.5 2h11A1.5 1.5 0 0 1 15 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9Zm1.5.25a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1Zm3.75-.25a.25.25 0 0 0-.25.25v3.5c0 .138.112.25.25.25h3.5a.25.25 0 0 0 .25-.25v-3.5a.25.25 0 0 0-.25-.25h-3.5ZM6 8.75a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.5a.25.25 0 0 1-.25.25h-3.5a.25.25 0 0 1-.25-.25v-3.5Zm5.75-5.25a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5ZM2.5 11.25a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1Zm9.25-.25a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5ZM2.5 8.75a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1Zm9.25-.25a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5ZM2.5 6.25A.25.25 0 0 1 2.75 6h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1ZM11.75 6a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5Z" clip-rule="evenodd" />
                 </svg>
-                <span class="ml-3 text-sm text-slate-700 dark:text-slate-200 truncate">${file.name}</span>
+                <span class="ml-3 text-sm text-slate-700 dark:text-slate-200">${truncatedName}</span>
             </div>
             <div class="flex items-center">
                 <span class="text-xs text-slate-500 dark:text-slate-400 flex-shrink-0 ml-2">${filesize(file.size)}</span>
@@ -186,9 +192,21 @@ function renderFileList() {
 
 function deleteFile(index) {
     if (index > -1 && index < uploadedFiles.length) {
-        uploadedFiles.splice(index, 1); // Remove the file at the given index
-        renderFileList(); // Re-render the list
+        const deletedFile = uploadedFiles.splice(index, 1)[0];
+        renderFileList();
+        const fileElement = document.querySelector(`.file-item[data-path="${deletedFile.name}"]`);
+        if (fileElement) {
+            fileElement.classList.remove('font-bold');
+        }
     }
+}
+
+function truncateMiddle(text, maxLength) {
+    if (text.length <= maxLength) {
+        return text;
+    }
+    const half = Math.floor(maxLength / 2) - 2; // -2 for the ellipsis
+    return `${text.substring(0, half)}...${text.substring(text.length - half)}`;
 }
 
 // --- Fetch Languages ---
@@ -321,24 +339,6 @@ function setTheme(theme) {
         .catch(error => console.error('Error setting theme:', error));
 }
 
-async function uploadFile(file) {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-        const response = await fetch('/upload', {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) {
-            console.error('File upload failed:', response.statusText);
-        }
-    } catch (error) {
-        console.error('Error uploading file:', error);
-    }
-}
-
 async function startConversion() {
     for (const file of uploadedFiles) {
         await uploadFile(file);
@@ -395,4 +395,88 @@ function showOrHideDelButtons(rows) {
             deleteBtn.classList.remove('hidden');
         }
     });
+}
+
+const fetchVideos = async () => {
+    try {
+        const response = await fetch('/files');
+        if (!response.ok) {
+            throw new Error(`File fetching failed: ${response.statusText}`);
+        }
+        const data = await response.json();
+        if (data && typeof data === 'object' && !Array.isArray(data)) {
+            availableVideos = data;
+            if (availableVideosContainer) {
+                renderAvailableVideos(availableVideos, availableVideosContainer);
+            }
+        } else {
+            console.error("Unexpected data structure for videos:", data);
+            availableVideos = {};
+        }
+    } catch (error) {
+        console.error("Failed to fetch videos:", error);
+        availableVideos = {};
+    }
+};
+
+function renderAvailableVideos(node, container, path = '') {
+    container.innerHTML = '';
+    const ul = document.createElement('ul');
+    ul.className = 'space-y-1';
+    for (const key in node) {
+        const fullPath = path ? `${path}/${key}` : key;
+        const li = document.createElement('li');
+        const isDirectory = typeof node[key] === 'object' && node[key] !== null && !node[key].size;
+        if (isDirectory) {
+            li.innerHTML = `
+                <div class="flex items-center cursor-pointer folder-toggle p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-5 text-slate-500 dark:text-slate-400 mr-2 flex-shrink-0">
+                        <path d="M3.5 2A1.5 1.5 0 0 0 2 3.5v9A1.5 1.5 0 0 0 3.5 14h9a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 12.5 4H9.379a1.5 1.5 0 0 1-1.06-.44L7.257 2.5A1.5 1.5 0 0 0 6.197 2H3.5Z" />
+                    </svg>
+                    <span class="font-medium text-slate-800 dark:text-slate-200">${key}</span>
+                </div>
+            `;
+            const subContainer = document.createElement('div');
+            subContainer.className = 'ml-4 pl-2 border-l border-slate-200 dark:border-slate-700 hidden';
+            li.appendChild(subContainer);
+            li.querySelector('.folder-toggle').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isHidden = subContainer.classList.toggle('hidden');
+                if (!isHidden && subContainer.innerHTML === '') {
+                    renderAvailableVideos(node[key], subContainer, fullPath);
+                }
+            });
+        } else {
+            const fileData = node[key];
+            li.innerHTML = `
+                <div class="flex items-center cursor-pointer file-item p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700" data-path="${fullPath}">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-5 text-slate-500 dark:text-slate-400 mr-2 flex-shrink-0">
+                        <path fill-rule="evenodd" d="M1 3.5A1.5 1.5 0 0 1 2.5 2h11A1.5 1.5 0 0 1 15 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9Zm1.5.25a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1Zm3.75-.25a.25.25 0 0 0-.25.25v3.5c0 .138.112.25.25.25h3.5a.25.25 0 0 0 .25-.25v-3.5a.25.25 0 0 0-.25-.25h-3.5ZM6 8.75a.25.25 0 0 1 .25-.25h3.5a.25.25 0 0 1 .25.25v3.5a.25.25 0 0 1-.25.25h-3.5a.25.25 0 0 1-.25-.25v-3.5Zm5.75-5.25a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5ZM2.5 11.25a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1Zm9.25-.25a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5ZM2.5 8.75a.25.25 0 0 1 .25-.25h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1Zm9.25-.25a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5ZM2.5 6.25A.25.25 0 0 1 2.75 6h1.5a.25.25 0 0 1 .25.25v1a.25.25 0 0 1-.25.25h-1.5a.25.25 0 0 1-.25-.25v-1ZM11.75 6a.25.25 0 0 0-.25.25v1c0 .138.112.25.25.25h1.5a.25.25 0 0 0 .25-.25v-1a.25.25 0 0 0-.25-.25h-1.5Z" clip-rule="evenodd" />
+                    </svg>
+                    <span class="truncate flex-grow text-sm text-slate-700 dark:text-slate-300">${key}</span>
+                    <span class="text-xs text-slate-500 dark:text-slate-400 flex-shrink-0 ml-2">${filesize(fileData.size)}</span>
+                </div>
+            `;
+            li.querySelector('.file-item').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const target = e.currentTarget;
+                const isSelected = target.classList.contains('font-bold');
+
+                if (isSelected) {
+                    // Deselect
+                    const indexToDeselect = uploadedFiles.findIndex(f => f.name === fullPath);
+                    if (indexToDeselect > -1) {
+                        deleteFile(indexToDeselect);
+                    }
+                } else {
+                    // Select
+                    const file = { name: fullPath, size: fileData.size };
+                    handleFiles([file]);
+                    target.classList.add('font-bold');
+                }
+            });
+        }
+        ul.appendChild(li);
+    }
+    container.appendChild(ul);
 }

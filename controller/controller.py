@@ -14,7 +14,6 @@ class Controller:
         if not cls.controller:
             cls.controller = super(Controller, cls).__new__(cls, *args, **kwargs)
             cls.controller._initialize_controller()
-            cls.controller.start_program()
         return cls.controller
 
     def _initialize_controller(self):
@@ -36,20 +35,15 @@ class Controller:
         self.subconverter = subconverter
 
     def start_program(self):
-        # start the program
-        gui = GUI()
-        self.register_gui(gui)
         if self.config.check_for_updates():
-            gui.check_for_updates()
+            self.gui.check_for_updates()
 
         while self.exit_code != 1:
             self.run_program()
 
     def run_program(self):
         exit_code, values = self.gui.run()
-        self.exit_code = exit_code
-        self.sc_values = values
-        self.file_counter = len(values['selected_paths'])
+        self.gui_send_values(exit_code, values)
 
         if self.exit_code == 1:
             return
@@ -60,7 +54,7 @@ class Controller:
         else:
             self.gui.show_no_files_selected_dialog()
 
-    def gui_send_values(self, exit_code, values):
+    def gui_send_values(self, exit_code: int, values: dict):
         self.exit_code = exit_code
         self.sc_values = values
         self.file_counter = len(values['selected_paths'])
@@ -107,7 +101,7 @@ class Controller:
                     shared_dict['continue_flag'] = self.gui.continue_flag
                 if self.gui.edit_flag is not None:
                     shared_dict['edit_flag'] = self.gui.edit_flag
-                if self.gui.stop_flag.get():
+                if self.gui.get_stop_flag():
                     # Handle stop flag if needed
                     thread.terminate()
                     break

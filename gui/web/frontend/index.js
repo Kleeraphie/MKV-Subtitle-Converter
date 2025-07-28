@@ -14,7 +14,7 @@ const fileList = document.getElementById('file-list');
 const uploadPrompt = document.getElementById('upload-prompt');
 const sunIcon = document.getElementById('sun-icon');
 const moonIcon = document.getElementById('moon-icon');
-let uploadedFiles = [];
+let selectedFiles = [];
 let availableVideos = {};
 
 // Elements for file browser modal
@@ -134,7 +134,7 @@ function handleFiles(files) {
 
     const newFilesToAdd = [];
     for (const newFile of files) {
-        const isDuplicate = uploadedFiles.some(existingFile =>
+        const isDuplicate = selectedFiles.some(existingFile =>
             existingFile.name === newFile.name && existingFile.size === newFile.size
         );
 
@@ -143,14 +143,14 @@ function handleFiles(files) {
         }
     }
 
-    uploadedFiles = [...uploadedFiles, ...newFilesToAdd];
+    selectedFiles = [...selectedFiles, ...newFilesToAdd];
     renderFileList(); // Call a new function to render the list
 }
 
 function renderFileList() {
     if (fileList) fileList.innerHTML = '';
 
-    if (uploadedFiles.length > 0) {
+    if (selectedFiles.length > 0) {
         if (uploadPrompt) uploadPrompt.classList.add('hidden');
         if (fileList) fileList.classList.remove('hidden');
     } else {
@@ -158,7 +158,7 @@ function renderFileList() {
         if (fileList) fileList.classList.add('hidden');
     }
 
-    uploadedFiles.forEach((file, index) => {
+    selectedFiles.forEach((file, index) => {
         const truncatedName = truncateMiddle(file.name, 48);
         
         const fileElement = document.createElement('div');
@@ -191,8 +191,8 @@ function renderFileList() {
 }
 
 function deleteFile(index) {
-    if (index > -1 && index < uploadedFiles.length) {
-        const deletedFile = uploadedFiles.splice(index, 1)[0];
+    if (index > -1 && index < selectedFiles.length) {
+        const deletedFile = selectedFiles.splice(index, 1)[0];
         renderFileList();
         const fileElement = document.querySelector(`.file-item[data-path="${deletedFile.name}"]`);
         if (fileElement) {
@@ -339,12 +339,18 @@ function setTheme(theme) {
         .catch(error => console.error('Error setting theme:', error));
 }
 
+async function getConversionStatus() {
+    const response = await fetch('/conversionStatus');
+}
+
 async function startConversion() {
-    for (const file of uploadedFiles) {
-        await uploadFile(file);
-    }
+    // for (const file of selectedFiles) {
+    //     await uploadFile(file);
+    // }
 
     const settings = {
+        files: selectedFiles.map(file => file.name),
+        format: document.getElementById('subtitle-format').value,
         brightness: document.getElementById('brightness-slider').value,
         edit: document.getElementById('edit-before-muxing').checked,
         saveImages: document.getElementById('save-pgs-images').checked,
@@ -368,14 +374,35 @@ async function startConversion() {
             body: JSON.stringify(settings)
         });
 
-        const data = await response.json();
-        if (data.success) {
-            alert('Konvertierung erfolgreich!');
-        } else {
-            alert('Fehler bei der Konvertierung: ' + data.error);
-        }
+        // const data = await response.json();
+        // if (data.success) {
+        //     alert('Konvertierung erfolgreich!');
+        // } else {
+        //     alert('Fehler bei der Konvertierung: ' + data.error);
+        // }
     } catch (error) {
         console.error('Error during conversion:', error);
+    }
+
+
+    // Now poll for status
+    function pollStatus() {
+        fetch('/conversionStatus')
+            .then(res => res.json())
+            .then(status => {
+                if (status.finished_files_counter === status.file_counter) {
+                    // Conversion done!
+                    // ...do something here...
+                } else {
+                    // Not done, poll again after a short delay
+                    setTimeout(pollStatus, 1000);
+                }
+            });
+    }
+    while (true) {
+        pollStatus();
+        // wait one second
+        await new Promise(resolve => setTimeout(resolve, 1000));
     }
 }
 
@@ -419,12 +446,12 @@ const fetchVideos = async () => {
     }
 };
 
-function renderAvailableVideos(node, container, path = '') {
+function renderAvailableVideos(node, container, filePath = '') {
     container.innerHTML = '';
     const ul = document.createElement('ul');
     ul.className = 'space-y-1';
     for (const key in node) {
-        const fullPath = path ? `${path}/${key}` : key;
+        const fullPath = filePath ? `${filePath}/${key}` : key;
         const li = document.createElement('li');
         const isDirectory = typeof node[key] === 'object' && node[key] !== null && !node[key].size;
         if (isDirectory) {
@@ -464,7 +491,7 @@ function renderAvailableVideos(node, container, path = '') {
 
                 if (isSelected) {
                     // Deselect
-                    const indexToDeselect = uploadedFiles.findIndex(f => f.name === fullPath);
+                    const indexToDeselect = selectedFiles.findIndex(f => f.name === fullPath);
                     if (indexToDeselect > -1) {
                         deleteFile(indexToDeselect);
                     }

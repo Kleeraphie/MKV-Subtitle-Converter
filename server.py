@@ -1,6 +1,6 @@
 from flask import Flask, make_response, request
 from config import Config
-from controller.controller import Controller
+from controller.controller import Controller, Jobs
 import json
 import os
 import logging
@@ -179,12 +179,11 @@ class ServerGUI:
     def update(self, file_counter, finished_files_counter, files_with_error_counter, job, sc_error_code, sc_error_msg, sc_edit_flag, sc_sub_dir):
             """Update the GUI while the subconverter is running"""
 
-            print('\n Update \n')
-
             self.conversion_status['file_counter'] = file_counter
             self.conversion_status['finished_files_counter'] = finished_files_counter
             self.conversion_status['files_with_error_counter'] = files_with_error_counter
             self.conversion_status['job'] = job.value
+            self.conversion_status['job_progress'] = Jobs.get_percentage(job)
             self.conversion_status['sc_error_code'] = sc_error_code
             self.conversion_status['sc_error_msg'] = sc_error_msg
             self.conversion_status['sc_edit_flag'] = sc_edit_flag
@@ -204,6 +203,15 @@ class ServerGUI:
     
     def get_stop_flag(self):
         return self.stop_flag
+    
+    def show_progress(self):
+        pass
+
+    def hide_progress(self):
+        pass
+
+    def show_finish_dialog(self):
+        pass
 
 if __name__ == '__main__':
     server = Server()

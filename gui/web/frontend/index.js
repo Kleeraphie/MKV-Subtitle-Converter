@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         convertButton.addEventListener('click', startConversion);
     }
 
-    // Fetch the version when the page loads
+    // Fetch initial data
     getVersion();
     getTheme();
     fetchVideos();
@@ -339,14 +339,35 @@ function setTheme(theme) {
         .catch(error => console.error('Error setting theme:', error));
 }
 
+// --- Conversion and Progress Logic ---
 async function getConversionStatus() {
     const response = await fetch('/conversionStatus');
 }
 
 async function startConversion() {
-    // for (const file of selectedFiles) {
-    //     await uploadFile(file);
-    // }
+    const convertButton = document.getElementById('convert-button');
+    const progressSection = document.getElementById('progress-section');
+    const currentFileProgressBar = document.getElementById('current-file-progress-bar');
+    const totalProgressBar = document.getElementById('total-progress-bar');
+    const currentFileLabel = document.getElementById('current-file-label');
+    const totalProgressLabel = document.getElementById('total-progress-label');
+
+    if (selectedFiles.length === 0) {
+        alert(t('Please select at least one file.'));
+        return;
+    }
+
+    // --- UI Update: Start Process ---
+    progressSection.classList.remove('hidden');
+    convertButton.disabled = true;
+    
+    // Reset progress bars and labels
+    currentFileProgressBar.style.width = '0%';
+    totalProgressBar.style.width = '0%';
+    totalProgressLabel.textContent = '0%';
+    currentFileLabel.textContent = t('Preparing...');
+    totalProgressBar.classList.remove('bg-red-500');
+    totalProgressBar.classList.add('bg-green-500');
 
     const settings = {
         files: selectedFiles.map(file => file.name),
@@ -358,51 +379,90 @@ async function startConversion() {
         keepOldSubs: document.getElementById('keep-copy-old').checked,
         keepNewSubs: document.getElementById('keep-copy-new').checked,
         useDiffLang: document.getElementById('use-different-languages').checked,
-        diffLangs: Array.from(document.querySelectorAll('#language-mapping-rows > div')).map(row => {
-            const fromLang = row.querySelector('select[name="from_lang"]').value;
-            const toLang = row.querySelector('select[name="to_lang"]').value;
-            return { from: fromLang, to: toLang };
-        })
+        diffLangs: Array.from(document.querySelectorAll('#language-mapping-rows > div')).map(row => ({
+            from: row.querySelector('select[name="from_lang"]').value,
+            to: row.querySelector('select[name="to_lang"]').value
+        }))
     };
 
     try {
+        // 1. Start the conversion process on the backend
         const response = await fetch('/convert', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(settings)
         });
 
-        // const data = await response.json();
-        // if (data.success) {
-        //     alert('Konvertierung erfolgreich!');
-        // } else {
-        //     alert('Fehler bei der Konvertierung: ' + data.error);
-        // }
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to start conversion.');
+        }
+
+        // 2. Start polling for status updates
+        pollStatus();
+
     } catch (error) {
-        console.error('Error during conversion:', error);
+        console.error('Error starting conversion:', error);
+        currentFileLabel.textContent = t('A critical error occurred.');
+        totalProgressBar.classList.replace('bg-green-500', 'bg-red-500');
+        convertButton.disabled = false;
+        setTimeout(() => {
+            progressSection.classList.add('hidden');
+        }, 5000);
     }
 
-
-    // Now poll for status
+    // --- Polling Function ---
     function pollStatus() {
         fetch('/conversionStatus')
-            .then(res => res.json())
+            .then(res => {
+                if (!res.ok) throw new Error('Polling request failed.');
+                return res.json();
+            })
             .then(status => {
-                if (status.finished_files_counter === status.file_counter) {
-                    // Conversion done!
-                    // ...do something here...
-                } else {
-                    // Not done, poll again after a short delay
-                    setTimeout(pollStatus, 1000);
+                const totalFiles = status.file_counter || selectedFiles.length;
+                const finishedFiles = status.finished_files_counter || 0;
+                const jobProgress = status.job_progress || 0;
+
+                // Update current file progress bar
+                currentFileProgressBar.style.width = `${jobProgress}%`;
+
+                // Update current file label (if conversion is in progress)
+                if (finishedFiles < selectedFiles.length) {
+                    const currentFile = selectedFiles[finishedFiles];
+                    currentFileLabel.textContent = `${t('Processing')} ${truncateMiddle(currentFile.name, 40)}...`;
                 }
+
+                // Update total progress bar and label
+                var totalPercentage = totalFiles > 0 ? Math.round((finishedFiles / totalFiles) * 100) : 0;
+                const totalPercentagePartialAdd = jobProgress < 100 ? jobProgress / totalFiles : 0
+                totalPercentage += totalPercentagePartialAdd
+                totalProgressBar.style.width = `${totalPercentage}%`;
+                totalProgressLabel.textContent = `${totalPercentage}%`;
+
+                // Check if conversion is complete
+                if (status.finished_files_counter !== undefined && status.file_counter !== undefined && status.finished_files_counter === status.file_counter) {
+                    currentFileLabel.textContent = t('Conversion successful!');
+                    currentFileProgressBar.style.width = '100%'; // Ensure it fills up
+                    totalProgressBar.style.width = '100%';
+                    totalProgressLabel.textContent = '100%';
+                    convertButton.disabled = false;
+                    setTimeout(() => {
+                        progressSection.classList.add('hidden');
+                    }, 5000);
+                } else {
+                    // If not finished, schedule the next poll
+                    setTimeout(pollStatus, 1000); // Poll every 1s
+                }
+            })
+            .catch(err => {
+                console.error('Error during polling:', err);
+                currentFileLabel.textContent = t('A critical error occurred during polling.');
+                totalProgressBar.classList.replace('bg-green-500', 'bg-red-500');
+                convertButton.disabled = false;
+                setTimeout(() => {
+                    progressSection.classList.add('hidden');
+                }, 5000);
             });
-    }
-    while (true) {
-        pollStatus();
-        // wait one second
-        await new Promise(resolve => setTimeout(resolve, 1000));
     }
 }
 

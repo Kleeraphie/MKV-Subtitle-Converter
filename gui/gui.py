@@ -384,4 +384,7 @@ class GUI:
 
     def show_no_files_selected_dialog(self):
         tk.messagebox.showerror(self.translate("Error"), self.translate("No files selected. Please select at least one file."))
+
+    def get_stop_flag(self):
+        return self.stop_flag.get()
         

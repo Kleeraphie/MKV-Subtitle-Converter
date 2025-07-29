@@ -17,7 +17,8 @@ export default defineConfig({
       '/userLanguages': 'http://127.0.0.1:5000',
       '/isoCodes': 'http://127.0.0.1:5000',
       '/userSettings': 'http://127.0.0.1:5000',
-      '/files': 'http://127.0.0.1:5000'
+      '/files': 'http://127.0.0.1:5000',
+      '/conversionStatus': 'http://127.0.0.1:5000'
     }
   },
   build: {
